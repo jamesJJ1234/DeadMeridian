@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Season Order — Apocalypse Nation</title>
+<style>
+  :root {
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --blue:#3a7abf; --purple:#8b5fcf;
+    --food:#7aaa40; --water:#4ab0cc; --prion:#9acc44;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:1.5rem 1rem 2rem;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),
+      radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),
+      radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:720px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:1.4rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.4rem auto;width:70%;}
+  .stamp-row{display:flex;justify-content:center;gap:.7rem;margin-bottom:.5rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.48rem;letter-spacing:.2em;padding:2px 7px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1deg);} .stamp:last-child{transform:rotate(.6deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.2rem,4vw,2rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12);margin:.2rem 0;}
+  .subtitle{font-size:.58rem;color:var(--faded);letter-spacing:.22em;text-transform:uppercase;}
+
+  /* PHASE BLOCKS */
+  .phases{display:flex;flex-direction:column;gap:.4rem;margin-top:1rem;}
+
+  .phase{border:1px solid var(--border-mid);overflow:hidden;}
+  .phase-head{display:flex;align-items:center;gap:.7rem;padding:.45rem .75rem;border-bottom:1px solid var(--border);}
+  .phase-num{font-family:var(--fd);font-size:1.5rem;line-height:1;flex-shrink:0;width:1.8rem;text-align:center;}
+  .phase-info{flex:1;}
+  .phase-title{font-family:var(--fd);font-size:.82rem;letter-spacing:.06em;}
+  .phase-sub{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.05rem;}
+  .phase-ref{font-size:.5rem;color:var(--faded);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;padding:2px 6px;border:1px solid var(--faded);}
+
+  .ph-supply{border-color:rgba(122,170,64,.3);}
+  .ph-supply .phase-head{background:rgba(122,170,64,.03);}
+  .ph-supply .phase-num{color:var(--food);}
+  .ph-supply .phase-title{color:var(--food);}
+  .ph-supply .phase-sub{color:rgba(122,170,64,.6);}
+
+  .ph-prion{border-color:rgba(154,204,68,.3);}
+  .ph-prion .phase-head{background:rgba(154,204,68,.03);}
+  .ph-prion .phase-num{color:var(--prion);}
+  .ph-prion .phase-title{color:var(--prion);}
+  .ph-prion .phase-sub{color:rgba(154,204,68,.55);}
+
+  .ph-diplo{border-color:rgba(58,122,191,.3);}
+  .ph-diplo .phase-head{background:rgba(58,122,191,.03);}
+  .ph-diplo .phase-num{color:var(--blue);}
+  .ph-diplo .phase-title{color:var(--blue);}
+  .ph-diplo .phase-sub{color:rgba(58,122,191,.6);}
+
+  .ph-pop{border-color:rgba(201,149,42,.3);}
+  .ph-pop .phase-head{background:rgba(201,149,42,.03);}
+  .ph-pop .phase-num{color:var(--amber);}
+  .ph-pop .phase-title{color:var(--amber);}
+  .ph-pop .phase-sub{color:rgba(201,149,42,.55);}
+
+  .ph-action{border-color:rgba(139,95,207,.3);}
+  .ph-action .phase-head{background:rgba(139,95,207,.03);}
+  .ph-action .phase-num{color:var(--purple);}
+  .ph-action .phase-title{color:var(--purple);}
+  .ph-action .phase-sub{color:rgba(139,95,207,.55);}
+
+  /* STEP LIST */
+  .steps{padding:.35rem .75rem .45rem;}
+  .step{display:flex;gap:.55rem;padding:.22rem 0;border-bottom:1px solid var(--border);align-items:flex-start;font-size:.62rem;color:var(--ink-dim);line-height:1.5;}
+  .step:last-child{border-bottom:none;}
+  .step-n{font-family:var(--fd);font-size:.62rem;color:var(--faded);flex-shrink:0;width:1.1rem;text-align:right;margin-top:.05rem;}
+  .step b{color:var(--ink);}
+  .step .flag{font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid;padding:1px 4px;white-space:nowrap;vertical-align:middle;margin-left:3px;}
+  .f-gm{color:var(--faded);border-color:rgba(74,64,32,.5);}
+  .f-p{color:var(--amber);border-color:rgba(201,149,42,.4);}
+  .f-warn{color:var(--red);border-color:rgba(160,58,42,.4);}
+
+  /* ARROW CONNECTOR */
+  .arrow{text-align:center;font-size:.7rem;color:var(--faded);line-height:1;padding:.05rem 0;}
+
+  /* QUICK THRESHOLDS STRIP */
+  .thresh-strip{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:1rem;}
+  .tbox{border:1px solid var(--border-mid);padding:.4rem .6rem;}
+  .tbox-head{font-family:var(--fd);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faded);margin-bottom:.3rem;border-bottom:1px solid var(--border);padding-bottom:.15rem;}
+  .tline{display:flex;justify-content:space-between;font-size:.6rem;padding:.1rem 0;border-bottom:1px solid var(--border);color:var(--ink-dim);}
+  .tline:last-child{border-bottom:none;}
+  .tline span:first-child{color:var(--ink);}
+  .tv-pos{color:var(--green);} .tv-warn{color:var(--amber);} .tv-neg{color:var(--red);}
+
+  /* SCHOLAR DEFECTION */
+  .defect-sec{margin-top:1.2rem;border:1px solid rgba(160,58,42,.35);overflow:hidden;}
+  .defect-head{padding:.45rem .75rem;background:rgba(160,58,42,.06);border-bottom:1px solid rgba(160,58,42,.25);display:flex;align-items:center;gap:.6rem;}
+  .defect-title{font-family:var(--fd);font-size:.82rem;color:var(--red);letter-spacing:.06em;flex:1;}
+  .defect-sub{font-size:.55rem;color:rgba(160,58,42,.7);letter-spacing:.1em;text-transform:uppercase;}
+  .defect-ref{font-size:.5rem;color:var(--faded);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border:1px solid var(--faded);}
+
+  .defect-body{padding:.5rem .75rem;}
+  .defect-trigger{font-size:.62rem;color:var(--ink-dim);line-height:1.65;margin-bottom:.5rem;padding:.4rem .6rem;border:1px solid rgba(160,58,42,.2);background:rgba(160,58,42,.03);}
+  .defect-trigger b{color:var(--red);}
+
+  .defect-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.5rem;}
+  .dbox{border:1px solid var(--border-mid);padding:.4rem .6rem;}
+  .dbox-head{font-family:var(--fd);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faded);margin-bottom:.3rem;border-bottom:1px solid var(--border);padding-bottom:.15rem;}
+  .dline{font-size:.61rem;color:var(--ink-dim);line-height:1.6;padding:.1rem 0;border-bottom:1px solid var(--border);}
+  .dline:last-child{border-bottom:none;}
+  .dline b{color:var(--ink);}
+  .dline .roll{color:var(--amber);font-family:var(--fd);}
+  .dline .bad{color:var(--red);}
+  .dline .good{color:var(--green);}
+
+  .defect-table{width:100%;border-collapse:collapse;font-size:.61rem;margin-top:.4rem;}
+  .defect-table th{font-family:var(--fd);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid rgba(160,58,42,.25);padding:.28rem .45rem;text-align:left;font-weight:normal;}
+  .defect-table td{padding:.34rem .45rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .defect-table tr:last-child td{border-bottom:none;}
+  .defect-table tr:hover td{background:rgba(200,168,75,.02);}
+  .defect-table td:first-child{color:var(--ink);font-family:var(--fd);font-size:.65rem;white-space:nowrap;}
+
+  footer{text-align:center;margin-top:1.5rem;padding-top:.6rem;border-top:1px solid var(--border);
+    font-size:.48rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+
+  @media(max-width:500px){
+    .thresh-strip{grid-template-columns:1fr;}
+    .defect-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">GM Quick Reference</span>
+  </div>
+  <h1>Season Order</h1>
+  <p class="subtitle">Run these phases in sequence before players act</p>
+</header>
+
+<div class="phases">
+
+  <div class="phase ph-supply">
+    <div class="phase-head">
+      <div class="phase-num">1</div>
+      <div class="phase-info">
+        <div class="phase-title">🌾 Supply &amp; Demand</div>
+        <div class="phase-sub">Food · Water · Stockpile · Spoilage</div>
+      </div>
+      <div class="phase-ref">Settlement Management — Tab 1</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><span>Check buildings for <b>full staffing and upkeep</b>. Mark any offline. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">2</div><span>Apply <b>winter modifiers</b> to crop plots, fishing, trap line, rainwater if applicable. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">3</div><span>Total food output. Subtract <b>Scholar draw (4 each)</b> then <b>population draw (50 base/100 pop)</b>. Record balance. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">4</div><span>Total water output. Subtract <b>Scholar draw (3 each)</b>, <b>crop irrigation (4/plot)</b>, <b>population draw (40 base)</b>. Record balance. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">5</div><span>Determine <b>hunger &amp; hydration state</b>. Apply morale and population effects now.</span></div>
+      <div class="step"><div class="step-n">6</div><span>Add surplus to stockpile. Apply <b>spoilage</b> to stored goods (20% food / 15% water — or 4%/3% with Vault). <span class="flag f-gm">GM</span></span></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="phase ph-prion">
+    <div class="phase-head">
+      <div class="phase-num">2</div>
+      <div class="phase-info">
+        <div class="phase-title">☣ Prion Checks</div>
+        <div class="phase-sub">Exposure · Progression · Outbreak Roll</div>
+      </div>
+      <div class="phase-ref">Settlement Management — Tab 2</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">7</div><span>Run <b>exposure checks</b> for all returning expedition members from Wasteland / Military zones. Detection Lab tests before entry. <span class="flag f-warn">Priority</span></span></div>
+      <div class="step"><div class="step-n">8</div><span>Roll exposure check for any <b>untested animals</b> brought in. D20 below 10 = exposed. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">9</div><span>Advance all known <b>Carriers and Infected</b> one stage. Roll their D20 progression. <span class="flag f-gm">GM · Secret</span></span></div>
+      <div class="step"><div class="step-n">10</div><span>Any loose <b>Carriers in settlement</b>: roll 1D3 new contacts exposed. Add to tracking list. <span class="flag f-gm">GM · Secret</span></span></div>
+      <div class="step"><div class="step-n">11</div><span>Roll <b>Outbreak Check</b> based on active prion buildings. Apply results if triggered. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">12</div><span>Resolve <b>Terminal disposals</b> via Burn Wall. Without it: roll for soil contamination of nearest food tile. <span class="flag f-warn">Priority</span></span></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="phase ph-diplo">
+    <div class="phase-head">
+      <div class="phase-num">3</div>
+      <div class="phase-info">
+        <div class="phase-title">🤝 Diplomacy &amp; Trade</div>
+        <div class="phase-sub">Faction Actions · Offers · Agreements</div>
+      </div>
+      <div class="phase-ref">Settlement Management — Tab 3</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">13</div><span>Roll D6 for each <b>faction Aggression 3+</b>. On ≤ aggression rating: they act (1–2 Raid · 3–4 Expand · 5 Demand · 6 Contact). <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">14</div><span>Resolve any <b>incoming trade offers</b> from Trading or Allied factions. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">15</div><span>Players declare <b>outgoing trade or diplomatic actions</b>. Roll negotiation D20 and apply outcomes. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">16</div><span>Check all <b>existing trade agreements</b> for fulfilment. Apply relationship penalties for missed deliveries. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">17</div><span>Update <b>faction intel decay</b> — any faction unscouted 3+ seasons returns weapon/count to Unknown. <span class="flag f-gm">GM</span></span></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="phase ph-pop">
+    <div class="phase-head">
+      <div class="phase-num">4</div>
+      <div class="phase-info">
+        <div class="phase-title">👥 Population &amp; Morale</div>
+        <div class="phase-sub">Growth · Morale · Scholar Sat · Recovery</div>
+      </div>
+      <div class="phase-ref">Scavenging &amp; Building — Jobs Tab</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">18</div><span>Apply <b>population changes</b> from hunger state, prion outcomes, and last season's combat casualties. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">19</div><span>Sum all <b>morale modifiers</b> for the season. Apply net change. Note if morale is dangerously low. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">20</div><span>Apply all <b>Scholar Satisfaction modifiers</b>. Check thresholds — defection risk at −13, bonus at +13. <span class="flag f-gm">GM</span></span></div>
+      <div class="step"><div class="step-n">21</div><span>Advance all <b>injured/recovering</b> fighters — reduce timer by 1 season. Return fully recovered to duty. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">22</div><span>Confirm final <b>worker allocations</b> for the season. Flag any buildings that will be understaffed. <span class="flag f-p">Players</span></span></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="phase ph-action">
+    <div class="phase-head">
+      <div class="phase-num">5</div>
+      <div class="phase-info">
+        <div class="phase-title">⚡ Player Actions</div>
+        <div class="phase-sub">Builds · Expeditions · Combat</div>
+      </div>
+      <div class="phase-ref">All reference files</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">23</div><span>Declare <b>build projects</b>. Assign workers. Verify blueprints and materials are available. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">24</div><span>Declare <b>expedition assignments</b> — who goes, which zone, which area type, what they're searching for. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">25</div><span>Resolve <b>scavenging rolls</b> — travel time, encounter rolls, D20 search and yield outcomes. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">26</div><span>Resolve any <b>combat events</b> from expedition encounters or faction aggression triggered in Phase 3. <span class="flag f-p">Players</span></span></div>
+      <div class="step"><div class="step-n">27</div><span>At season end: mark any <b>buildings completing</b>. Add their effects to next season's production. <span class="flag f-gm">GM</span></span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- QUICK THRESHOLDS -->
+<div class="thresh-strip">
+  <div class="tbox">
+    <div class="tbox-head">🌾 Food (per 100 pop)</div>
+    <div class="tline"><span>Well Fed</span><span class="tv-pos">65+ units</span></div>
+    <div class="tline"><span>Adequate</span><span>50–64 units</span></div>
+    <div class="tline"><span>Rationing</span><span class="tv-warn">35–49 units</span></div>
+    <div class="tline"><span>Hungry</span><span class="tv-warn">15–34 units</span></div>
+    <div class="tline"><span>Starvation</span><span class="tv-neg">Below 15</span></div>
+    <div class="tline"><span style="color:var(--blue);">Per Scholar</span><span style="color:var(--blue);">+4 draw</span></div>
+  </div>
+  <div class="tbox">
+    <div class="tbox-head">💧 Water (per 100 pop)</div>
+    <div class="tline"><span>Well Hydrated</span><span class="tv-pos">50+ units</span></div>
+    <div class="tline"><span>Adequate</span><span>40–49 units</span></div>
+    <div class="tline"><span>Shortage</span><span class="tv-warn">25–39 units</span></div>
+    <div class="tline"><span>Crisis</span><span class="tv-neg">10–24 units</span></div>
+    <div class="tline"><span>Collapse</span><span class="tv-neg">Below 10</span></div>
+    <div class="tline"><span style="color:var(--blue);">Per Scholar</span><span style="color:var(--blue);">+3 draw</span></div>
+  </div>
+  <div class="tbox">
+    <div class="tbox-head">☣ Prion Outbreak Roll</div>
+    <div class="tline"><span>No buildings</span><span class="tv-neg">Below 12 = outbreak</span></div>
+    <div class="tline"><span>Detection Lab only</span><span class="tv-warn">Below 8</span></div>
+    <div class="tline"><span>Quarantine only</span><span class="tv-warn">Below 6</span></div>
+    <div class="tline"><span>Lab + Quarantine</span><span class="tv-pos">Below 4</span></div>
+    <div class="tline"><span>Full chain</span><span class="tv-pos">Nat 1 only</span></div>
+  </div>
+  <div class="tbox">
+    <div class="tbox-head">🤝 Negotiation Roll</div>
+    <div class="tline"><span>Refused + penalty</span><span class="tv-neg">1–4</span></div>
+    <div class="tline"><span>Countered (−30%)</span><span class="tv-warn">5–7</span></div>
+    <div class="tline"><span>Accepted standard</span><span>8–11</span></div>
+    <div class="tline"><span>Favourable (+10%)</span><span class="tv-pos">12–15</span></div>
+    <div class="tline"><span>Excellent (+20%)</span><span class="tv-pos">16–19</span></div>
+    <div class="tline"><span>Breakthrough</span><span class="tv-pos">Nat 20</span></div>
+  </div>
+</div>
+
+<!-- SCHOLAR DEFECTION PROTOCOLS -->
+<div class="defect-sec">
+  <div class="defect-head">
+    <div>
+      <div class="defect-title">🎓 Scholar Defection Protocols</div>
+      <div class="defect-sub">Triggers · Procedure · Consequences · Recovery</div>
+    </div>
+    <div class="defect-ref">Scholars &amp; Blueprints — Scholar Tab</div>
+  </div>
+  <div class="defect-body">
+
+    <div class="defect-trigger">
+      <b>Defection triggers during Phase 4 (Population &amp; Morale)</b> when a Scholar's Satisfaction reaches −13 or lower at the end of Satisfaction resolution (Step 20). At −13 they enter <b>Breaking Point</b> — roll each season. At −20 they defect automatically with no roll. Defection is declared by the GM and takes effect immediately before player actions begin.
+    </div>
+
+    <div class="defect-grid">
+      <div class="dbox">
+        <div class="dbox-head">Breaking Point Roll (−13 to −19)</div>
+        <div class="dline">Roll <b>D20</b> at the end of each season the Scholar is at Breaking Point.</div>
+        <div class="dline"><span class="roll">1–6</span> — <span class="bad">Defects this season.</span> Proceed to defection procedure below.</div>
+        <div class="dline"><span class="roll">7–13</span> — Stays but visibly unstable. Refuses one assignment next season (GM chooses which).</div>
+        <div class="dline"><span class="roll">14–19</span> — Holds on. No immediate action but Sat cannot improve above −10 until a major gesture is made.</div>
+        <div class="dline"><span class="roll">20</span> — <span class="good">Committed despite everything.</span> Sat resets to −8. They have found a reason to stay — roleplay the reason.</div>
+      </div>
+      <div class="dbox">
+        <div class="dbox-head">Automatic Defection (−20)</div>
+        <div class="dline">No roll — Scholar <b>leaves immediately</b> at the end of the season.</div>
+        <div class="dline">They take any <b>personal blueprints</b> they were assigned to (items they physically held). Shared settlement blueprints remain — they cannot carry what is locked in storage.</div>
+        <div class="dline">If <b>Vault Storage</b> is built: all blueprints are secured. Scholar departs empty-handed on knowledge items.</div>
+        <div class="dline">Remaining Scholars each take <span class="bad">−3 Sat immediately</span> (witnessing a colleague leave is demoralising regardless of reason).</div>
+      </div>
+    </div>
+
+    <div class="dbox-head" style="font-family:var(--fd);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faded);margin-bottom:.3rem;">Where They Go — D6 Destination Roll</div>
+    <table class="defect-table">
+      <thead>
+        <tr><th>D6</th><th>Destination</th><th>Immediate Effect</th><th>Long-Term Consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Joins The Reapers</td>
+          <td>Reapers gain access to Scholar's domain knowledge. Their weapon or build tier may improve within 2 seasons.</td>
+          <td>Reapers now know your settlement's blueprint layout. Raids become more targeted — they go for specific resources.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Joins The Covenant</td>
+          <td>Covenant relationship improves one step (they value the Scholar). Scholar is treated well — high Sat within 1 season.</td>
+          <td>Covenant may use Scholar's knowledge as leverage in trade negotiations. Expect inflated prices on Scholar-relevant goods.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Joins The Drowned</td>
+          <td>The Drowned gain your Scholar's domain. An Engineering or Electronics Scholar is especially dangerous here — they may improve their vessel or electronics capability.</td>
+          <td>The Drowned start denying you access to submerged zones unless you pay a sharply increased toll.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Goes Solo — Wasteland</td>
+          <td>Scholar disappears into wasteland. No faction gains their knowledge immediately.</td>
+          <td>After 1D3 seasons, they either: die (50%), are found by The Silent and become a bargaining chip (30%), or return willing to negotiate re-hire (20%) at significant cost.</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Joins Remnant Authority</td>
+          <td>Remnant Authority gains Scholar. This is the most dangerous outcome — they already have the most resources and this strengthens their position further.</td>
+          <td>Remnant Authority may use Scholar knowledge to identify your weaknesses and apply targeted diplomatic pressure or increase tribute demands.</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Stays Local — Independent</td>
+          <td>Scholar leaves your settlement but does not join a faction. Sets up independently within 20–40 blocks of your bunker.</td>
+          <td>Can be re-recruited at a cost (see Recovery below). If left uncontacted for 2+ seasons, roll D6: on 1–3 they are absorbed by a random faction.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="dbox-head" style="font-family:var(--fd);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faded);margin:.6rem 0 .3rem;">Recovery — Getting Them Back</div>
+    <table class="defect-table">
+      <thead>
+        <tr><th>Situation</th><th>Recovery Method</th><th>Cost</th><th>Roll Required</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Independent (D6 result 6)</td>
+          <td>Send a diplomatic envoy. Offer improved conditions — address whatever caused the Sat collapse (food, domain work, safety).</td>
+          <td>30 food + 10 medicine + a guaranteed domain-relevant build within 1 season.</td>
+          <td>D20 + Diplomacy Mod. <b>12+:</b> returns at Sat +2. Below 12: refuses. Retry next season at −1 cumulative.</td>
+        </tr>
+        <tr>
+          <td>Joined a Neutral/Trading faction</td>
+          <td>Negotiate Scholar return as a trade item. Faction will not give them up cheaply — they see the Scholar as an asset.</td>
+          <td>1 Tier III Blueprint + 20 steel + 20 food minimum. Faction may demand more based on Scholar's K-tier.</td>
+          <td>D20 + Diplomacy Mod at Trading or better. <b>14+:</b> faction releases Scholar. Scholar returns at Sat 0.</td>
+        </tr>
+        <tr>
+          <td>Joined a Hostile faction</td>
+          <td>Cannot negotiate directly. Options: military retrieval (raid to extract), wait for faction relationship to improve, or accept the loss and train a replacement.</td>
+          <td>Military retrieval: combat event. Scholar must survive the extraction. D6: 1–2 severely injured in the attempt.</td>
+          <td>No diplomacy option while Hostile. Combat retrieval: standard raid rules apply.</td>
+        </tr>
+        <tr>
+          <td>Gone Solo — Wasteland</td>
+          <td>Send scouts to search the wasteland. Expedition to locate them.</td>
+          <td>Scout expedition (Zone 2–3). Uses 1 expedition slot. Prion checks on return.</td>
+          <td>D20 search roll, Tricky (10+). On success: found and can be offered re-hire at the Independent cost above.</td>
+        </tr>
+        <tr>
+          <td>Scholar is K3 (Master)</td>
+          <td>All recovery costs doubled. Factions holding a K3 Scholar know exactly what they have.</td>
+          <td>Effectively: 2× all resource costs listed above.</td>
+          <td>All recovery rolls at −3. A K3 Scholar who defected has likely found someone who treats them better — make it personal.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="defect-trigger" style="margin-top:.5rem;border-color:rgba(61,138,74,.25);background:rgba(61,138,74,.03);">
+      <b style="color:var(--green);">Prevention is always cheaper than recovery.</b> The most common Sat collapse causes are: food rationing (−2/season), wrong domain assigned (−2/season), and water shortage (−3/season) — all of which compound silently over 3–4 seasons before hitting Breaking Point. Check Scholar Sat every Phase 4 without skipping it. A Scholar sitting at −8 for two seasons is a crisis waiting to happen.
+    </div>
+
+  </div>
+</div>
+
+<div style="border:1px solid rgba(160,58,42,.5);background:rgba(160,58,42,.04);padding:.6rem .85rem;margin:.8rem 0;">
+  <div style="font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--red);padding:.2rem 0 .3rem;border-bottom:1px solid rgba(160,58,42,.3);margin-bottom:.4rem;">Ground Zero Expedition — Special Season Rules</div>
+  <div style="font-size:.62rem;color:var(--ink-dim);line-height:1.65;">
+    <b style="color:var(--ink);">Prerequisites before sending:</b> Prion Detection Lab built · Quarantine Suite built · Scout Training Grounds built · Watchtower Network built · Minimum 10 expedition members · Quarantine protocol assigned for return.<br><br>
+    <b style="color:var(--ink);">Travel cost:</b> 2 full seasons minimum (1 there, 1 back). Expedition is offline for the full duration — cannot be recalled.<br><br>
+    <b style="color:var(--ink);">On return:</b> All members undergo mandatory Quarantine Suite processing before re-entering the settlement. This takes 0.5 seasons. Even with Quarantine Suite, run prion checks at the Ground Zero threshold (+4 to all base thresholds) for every member.<br><br>
+    <b style="color:var(--ink);">Faction awareness:</b> Any expedition to Ground Zero triggers the Reapers awareness check (D6: 1–3 = patrol sent next season). After 3 player expeditions, the Remnant Authority also becomes aware and begins their own archive push.<br><br>
+    <b style="color:var(--ink);">Archive access:</b> Reaching the Government Quarter requires 3 separate expeditions minimum — first to locate, second to assess, third to extract. A Medicine Scholar present on all three reduces this to 2. The Silent can reduce it to 1 if relationship is Friendly or above.
+  </div>
+</div>
+<footer>Dead Meridian · Season Order Quick Reference · GM Edition</footer>
+</div>
+</body>
+</html>

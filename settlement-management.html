@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settlement Management — Dead Meridian</title>
+<style>
+
+  :root {
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --blue:#3a7abf;
+    --purple:#8b5fcf; --sea:#2a7a8a;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:2rem 1rem 3rem;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:1080px;margin:0 auto;}
+  header{text-align:center;margin-bottom:1.8rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.5rem auto;width:75%;}
+  .stamp-row{display:flex;justify-content:center;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.5rem;letter-spacing:.22em;padding:2px 8px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1.2deg);}.stamp:last-child{transform:rotate(.7deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.3rem,4vw,2.4rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12),0 2px 0 rgba(0,0,0,.9);margin:.3rem 0;}
+  .subtitle{font-size:.63rem;color:var(--faded);letter-spacing:.25em;text-transform:uppercase;}
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:1rem;}
+  .info-card{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.02);}
+  .info-title{font-family:var(--fd);font-size:.68rem;color:var(--ink);letter-spacing:.08em;margin-bottom:.25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+  .info-line{font-size:.62rem;color:var(--ink-dim);line-height:1.65;}.info-line b{color:var(--ink);}
+  .sec-head{font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faded);padding:.3rem 0 .25rem;border-bottom:1px solid var(--border-mid);margin:.9rem 0 .5rem;}
+  .mtable{width:100%;border-collapse:collapse;font-size:.63rem;margin:.5rem 0;}
+  .mtable th{font-family:var(--fd);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.3rem .5rem;text-align:left;font-weight:normal;}
+  .mtable td{padding:.38rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .mtable tr:last-child td{border-bottom:none;}.mtable tr:hover td{background:rgba(200,168,75,.02);}
+  .mtable td:first-child{color:var(--ink);font-family:var(--fd);font-size:.68rem;}
+  .state-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .spip{flex:1;min-width:115px;border:1px solid;padding:.4rem .6rem;}
+  .s-surplus{border-color:rgba(61,138,74,.4);background:rgba(61,138,74,.03);}
+  .s-stable{border-color:rgba(200,168,75,.25);background:rgba(200,168,75,.015);}
+  .s-ration{border-color:rgba(201,149,42,.4);background:rgba(201,149,42,.03);}
+  .s-short{border-color:rgba(160,80,30,.4);background:rgba(160,80,30,.03);}
+  .s-crisis{border-color:rgba(160,58,42,.5);background:rgba(160,58,42,.04);}
+  .sname{font-family:var(--fd);font-size:.72rem;letter-spacing:.05em;margin-bottom:.12rem;}
+  .s-surplus .sname{color:var(--green);}.s-stable .sname{color:var(--ink);}
+  .s-ration .sname{color:var(--amber);}.s-short .sname{color:#c06020;}.s-crisis .sname{color:var(--red);}
+  .sthresh{font-size:.56rem;color:var(--faded);font-style:italic;margin-bottom:.2rem;}
+  .seffect{font-size:.6rem;line-height:1.55;}.seffect b{color:var(--ink-dim);}
+  .ledger{border:1px solid var(--border-mid);background:rgba(200,168,75,.01);margin:.5rem 0;}
+  .ledger-head{padding:.4rem .8rem;border-bottom:1px solid var(--border-mid);font-family:var(--fd);font-size:.67rem;color:var(--ink);display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.4rem;}
+  .ledger-head span{font-size:.56rem;color:var(--faded);font-family:var(--fm);}
+  .ledger-row{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;border-bottom:1px solid var(--border);}
+  .ledger-row:last-child{border-bottom:none;}.hrow{background:rgba(200,168,75,.03);}
+  .lc{padding:.3rem .6rem;font-size:.61rem;color:var(--ink-dim);border-right:1px solid var(--border);}
+  .lc:last-child{border-right:none;}
+  .lc.lbl{color:var(--ink);font-family:var(--fd);font-size:.64rem;}
+  .lc.hd{color:var(--faded);font-size:.51rem;letter-spacing:.12em;text-transform:uppercase;}
+  .lc.pos{color:var(--green);}.lc.neg{color:var(--red);}.lc.warn{color:var(--amber);}
+  .lc.total{font-family:var(--fd);font-weight:bold;}
+  .ldivider{background:rgba(200,168,75,.02);}
+  .prion-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .ppip{flex:1;min-width:120px;border:1px solid;padding:.4rem .55rem;}
+  .p-clear{border-color:rgba(61,138,74,.4);background:rgba(61,138,74,.03);}
+  .p-exposed{border-color:rgba(154,170,48,.4);background:rgba(154,170,48,.025);}
+  .p-infected{border-color:rgba(201,149,42,.4);background:rgba(201,149,42,.03);}
+  .p-symp{border-color:rgba(160,80,30,.4);background:rgba(160,80,30,.03);}
+  .p-term{border-color:rgba(160,58,42,.5);background:rgba(160,58,42,.04);}
+  .pstage{font-family:var(--fd);font-size:.7rem;margin-bottom:.1rem;}
+  .p-clear .pstage{color:var(--green);}.p-exposed .pstage{color:#9aaa30;}
+  .p-infected .pstage{color:var(--amber);}.p-symp .pstage{color:#c06020;}.p-term .pstage{color:var(--red);}
+  .ptime{font-size:.54rem;color:var(--faded);font-style:italic;margin-bottom:.18rem;}
+  .pdesc{font-size:.59rem;color:var(--ink-dim);line-height:1.5;}.pdesc b{color:var(--ink);}
+  .psource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.4rem;margin:.5rem 0;}
+  .pscard{border:1px solid var(--border);padding:.4rem .6rem;background:rgba(200,168,75,.01);}
+  .pscard-name{font-family:var(--fd);font-size:.67rem;color:var(--ink);margin-bottom:.15rem;}
+  .pscard-risk{font-size:.58rem;margin-bottom:.12rem;}
+  .pscard-body{font-size:.58rem;color:var(--faded);line-height:1.5;}
+  .tval-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.4rem;margin:.5rem 0;}
+  .tcard{border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .tcard-name{font-family:var(--fd);font-size:.67rem;color:var(--ink);margin-bottom:.15rem;border-bottom:1px solid var(--border);padding-bottom:.12rem;}
+  .tcard-val{font-family:var(--fd);font-size:1.05rem;font-weight:bold;color:var(--amber);line-height:1;margin-bottom:.06rem;}
+  .tcard-unit{font-size:.5rem;color:var(--faded);letter-spacing:.08em;text-transform:uppercase;}
+  .tcard-note{font-size:.56rem;color:var(--faded);margin-top:.18rem;line-height:1.4;}
+  .diplo-track{display:flex;height:22px;border:1px solid var(--border-mid);overflow:hidden;margin:.4rem 0;}
+  .dt-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:.43rem;font-family:var(--fd);color:rgba(255,255,255,.4);letter-spacing:.04em;}
+  .dt-war{background:#4a0e06;}.dt-hostile{background:#6a1a0c;}.dt-wary{background:#3a2808;}
+  .dt-neutral{background:#222216;}.dt-cautious{background:#162814;}.dt-friendly{background:#1a3a1c;}.dt-allied{background:#1c4820;}
+  .dt-labels{display:flex;justify-content:space-between;font-size:.5rem;color:var(--faded);margin-top:.1rem;}
+  .faction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:.5rem;margin:.5rem 0;}
+  .fcard{border:1px solid var(--border-mid);overflow:hidden;}
+  .fcard-head{padding:.4rem .75rem;border-bottom:1px solid var(--border-mid);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  .fcard-name{font-family:var(--fd);font-size:.75rem;flex:1;}
+  .fcard-rel{font-size:.52rem;border:1px solid;padding:1px 5px;white-space:nowrap;font-family:var(--fd);}
+  .fcard-body{display:grid;grid-template-columns:1fr 1fr;}
+  .fcard-col{padding:.4rem .75rem;font-size:.6rem;color:var(--faded);line-height:1.6;}
+  .fcard-col:first-child{border-right:1px solid var(--border);}
+  .fch{font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:.2rem;display:block;}
+  .note-box{border:1px solid rgba(201,149,42,.3);background:rgba(201,149,42,.04);padding:.5rem .75rem;font-size:.62rem;color:var(--ink-dim);line-height:1.6;margin:.5rem 0;}
+  .note-box b{color:var(--amber);}
+  .danger-box{border:1px solid rgba(160,58,42,.35);background:rgba(160,58,42,.04);padding:.5rem .75rem;font-size:.62rem;color:var(--ink-dim);line-height:1.6;margin:.5rem 0;}
+  .danger-box b{color:var(--red);}
+  .c-pos{color:var(--green);}.c-neg{color:var(--red);}.c-warn{color:var(--amber);}
+  footer{text-align:center;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.5rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+  @media(max-width:700px){
+    .state-track,.prion-track{flex-direction:column;}
+    .info-grid,.psource-grid,.tval-grid,.faction-grid{grid-template-columns:1fr;}
+    .ledger-row{grid-template-columns:1.5fr 1fr 1fr;}
+    .fcard-body{grid-template-columns:1fr;}
+    .fcard-col:first-child{border-right:none;border-bottom:1px solid var(--border);}
+  }
+
+
+  /* Active tab highlight */
+
+
+
+  /* ── RADIO TAB SYSTEM ── */
+  .tab-radio{display:none;}
+  .tabs{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tab-lbl{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--faded);background:transparent;color:var(--faded);padding:.4rem .9rem;cursor:pointer;transition:all .15s;user-select:none;display:inline-block;}
+  .tab-lbl:hover{border-color:var(--ink-dim);color:var(--ink-dim);}
+  .tab-panels{border:1px solid var(--border-mid);border-top:none;}
+  .tab-panel{display:none;padding:1rem;}
+  #panel-supply { display:block; }
+  .tab-lbl[for="r-sm-supply"] { border-color:var(--ink); color:var(--ink); background:rgba(200,168,75,.06); }
+  #r-sm-supply:checked ~ .tab-panels #panel-supply { display:block; }
+  #r-sm-supply:checked ~ .tabs .tab-lbl[for="r-sm-supply"] { border-color:var(--ink); color:var(--ink); background:rgba(200,168,75,.06); }
+  #r-sm-supply:checked ~ .tab-panels #panel-prion { display:none; }
+  #r-sm-prion:checked ~ .tab-panels #panel-prion { display:block; }
+  #r-sm-prion:checked ~ .tabs .tab-lbl[for="r-sm-prion"] { border-color:var(--ink); color:var(--ink); background:rgba(200,168,75,.06); }
+  #r-sm-prion:checked ~ .tab-panels #panel-supply { display:none; }
+  #r-sm-prion:checked ~ .tabs .tab-lbl[for="r-sm-supply"] { border-color:var(--faded); color:var(--faded); background:transparent; }
+
+
+  /* Morale tab */
+  #r-sm-morale:checked ~ .tabs .tab-lbl[for="r-sm-morale"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sm-morale:checked ~ .tabs .tab-lbl[for="r-sm-supply"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #r-sm-morale:checked ~ .tabs .tab-lbl[for="r-sm-prion"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #r-sm-morale:checked ~ .tab-panels #panel-morale{display:block;}
+  #r-sm-morale:checked ~ .tab-panels #panel-supply{display:none;}
+  #r-sm-morale:checked ~ .tab-panels #panel-prion{display:none;}
+  #r-sm-supply:checked ~ .tab-panels #panel-morale{display:none;}
+  #r-sm-prion:checked ~ .tab-panels #panel-morale{display:none;}
+
+  /* Morale track */
+  .morale-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .mpip{flex:1;min-width:110px;border:1px solid;padding:.4rem .55rem;}
+  .m-high{border-color:rgba(61,138,74,.45);background:rgba(61,138,74,.03);}
+  .m-stable{border-color:rgba(200,168,75,.28);background:rgba(200,168,75,.015);}
+  .m-low{border-color:rgba(201,149,42,.4);background:rgba(201,149,42,.03);}
+  .m-poor{border-color:rgba(160,80,30,.4);background:rgba(160,80,30,.03);}
+  .m-broken{border-color:rgba(160,58,42,.5);background:rgba(160,58,42,.04);}
+  .mstage{font-family:var(--fd);font-size:.7rem;letter-spacing:.04em;margin-bottom:.1rem;}
+  .m-high .mstage{color:var(--green);}
+  .m-stable .mstage{color:var(--ink);}
+  .m-low .mstage{color:var(--amber);}
+  .m-poor .mstage{color:#c06020;}
+  .m-broken .mstage{color:var(--red);}
+  .mscore{font-size:.54rem;color:var(--faded);font-style:italic;margin-bottom:.18rem;}
+  .mdesc{font-size:.59rem;color:var(--ink-dim);line-height:1.5;}
+  .mdesc b{color:var(--ink);}
+
+  /* Modifier cards */
+  .mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.4rem;margin:.5rem 0;}
+  .mod-card{border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .mod-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.2rem;border-bottom:1px solid var(--border);padding-bottom:.18rem;}
+  .mod-name{font-family:var(--fd);font-size:.67rem;color:var(--ink);}
+  .mod-val{font-family:var(--fd);font-size:.78rem;font-weight:bold;}
+  .mod-pos{color:var(--green);}
+  .mod-neg{color:var(--red);}
+  .mod-body{font-size:.58rem;color:var(--faded);line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">Settlement Management</span>
+    <span class="stamp">Supply &middot; Prion &middot; Morale</span>
+  </div>
+  <h1>Settlement Management</h1>
+  <p class="subtitle">Supply &amp; Demand &middot; Prion Exposure &amp; Control &middot; Community Morale</p>
+</header>
+
+<input type="radio" class="tab-radio" name="sm-tabs" id="r-sm-supply" checked>
+<input type="radio" class="tab-radio" name="sm-tabs" id="r-sm-prion">
+<input type="radio" class="tab-radio" name="sm-tabs" id="r-sm-morale">
+
+
+<div class="tabs">
+  <label class="tab-lbl" for="r-sm-supply">&#127807; Supply &amp; Demand</label>
+  <label class="tab-lbl" for="r-sm-prion">&#9763; Prion</label>
+  <label class="tab-lbl" for="r-sm-morale">&#9829; Morale</label>
+
+</div>
+
+<div class="tab-panels">
+
+<div id="panel-supply" class="tab-panel">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// How Supply Works</div>
+      <div class="info-line">At the <b>end of each season</b>, total food and water produced is compared to total consumed. The difference is your <b>surplus</b> (stored) or <b>deficit</b> (shortage). Track food and water separately.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Storage caps:</b> Food spoils after 2 seasons without Vault Storage. Water cannot be stored beyond 1 season without a Dug Well or Sand Filtration Tower.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Base Consumption per Season</div>
+      <div class="info-line"><b>Food:</b> 1 unit per person = <b>100 food/season</b> at 100 population</div>
+      <div class="info-line"><b>Water:</b> 0.8 units per person = <b>80 water/season</b> at 100 population</div>
+      <div class="info-line" style="margin-top:.2rem;">Scholars consume separately before the general pool: <b>4 food + 3 water each/season.</b> Each +1 pop adds 1 food and 0.8 water demand permanently.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Seasonal Modifiers</div>
+      <div class="info-line"><b>Winter:</b> +20% food demand. Fishing -50%. Open crop plots yield 0.</div>
+      <div class="info-line"><b>Drought:</b> Natural water sources -40%. Crops -40%.</div>
+      <div class="info-line"><b>Flood:</b> Crop plots destroyed unless Greenhouse or Irrigation built. Water contamination +30%.</div>
+      <div class="info-line"><b>Post-raid:</b> Up to 50% unprotected stores looted. Vault protects entirely.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// The Grain Mill Effect</div>
+      <div class="info-line">The Grain Mill's <b>+25% caloric efficiency</b> means your population extracts more nutrition from the same food. In practice: effective food demand drops from 100 to <b>~80/season</b> for 100 people.</div>
+      <div class="info-line" style="margin-top:.2rem;">This is the highest-impact early building for food security. Build it before expanding population.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Food Production Sources</div>
+  <table class="mtable">
+    <thead><tr><th>Source</th><th>Output/Season</th><th>Conditions &amp; Risks</th><th>Tier</th></tr></thead>
+    <tbody>
+      <tr><td>Open Crop Plot x1</td><td><span class="c-pos">+12 food</span></td><td>Weather risk each season. -40% drought/flood. <b>0 in winter.</b> Stackable to 8 plots.</td><td>T1 - no Scholar</td></tr>
+      <tr><td>Animal Trap Line</td><td><span class="c-pos">+8 food, +3 hides</span></td><td>Prion test required (10% risk untested). Passive - no workers once built.</td><td>T1 - no Scholar</td></tr>
+      <tr><td>Grain Mill</td><td><span class="c-pos">+15 food flat, -20% effective demand</span></td><td>Efficiency applies to all production. Reduces demand by ~20/season for 100 pop.</td><td>T2 - Agriculture Scholar</td></tr>
+      <tr><td>Animal Husbandry Pen</td><td><span class="c-pos">+18 food, +6 hides</span></td><td>15% prion outbreak risk/season without Detection Lab. Requires 4 live animals.</td><td>T2 - Agriculture Scholar</td></tr>
+      <tr><td>Fishing Net Rig</td><td><span class="c-pos">+20 food (+35 coastal)</span></td><td>-50% winter. Prion-safe. No weather risk.</td><td>T2 SEA - Agriculture Scholar</td></tr>
+      <tr><td>Enclosed Greenhouse</td><td><span class="c-pos">+30 food, weather-immune</span></td><td>100% prion-safe. No winter or weather penalty. Requires glass.</td><td>T3 - Agri + Engineering Scholar</td></tr>
+      <tr><td>Closed Irrigation System</td><td><span class="c-pos">+40% to all crop plot yields</span></td><td>Multiplies all active crop output. -30% water used by crops. Stacks with Grain Mill.</td><td>T3 - Agri + Engineering Scholar</td></tr>
+      <tr><td>Deep Sea Fishing Rig</td><td><span class="c-pos">+35 food</span></td><td>Ocean access required. Sustains crew during voyages.</td><td>T4 SEA - Eng + Agri Scholar</td></tr>
+      <tr><td>Vertical Farm Complex</td><td><span class="c-pos">+80 food, no risk</span></td><td>Requires electricity. 100% prion-safe. No seasonal penalty at all.</td><td>T5 - Agri + Engineering Scholar</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Water Production Sources</div>
+  <table class="mtable">
+    <thead><tr><th>Source</th><th>Output/Season</th><th>Conditions &amp; Risks</th><th>Tier</th></tr></thead>
+    <tbody>
+      <tr><td>Rainwater Collection</td><td><span class="c-warn">+10 water</span></td><td><b>30% contamination risk</b> unfiltered. Must boil without Filtration. Drought: -40%.</td><td>T1 - no Scholar</td></tr>
+      <tr><td>Sand Filtration Tower</td><td><span class="c-pos">+20 clean water capacity</span></td><td><b>Does NOT remove prion</b> — physical contaminants only.</td><td>T2 - Engineering Scholar</td></tr>
+      <tr><td>Dug Well System</td><td><span class="c-pos">+22 water</span></td><td>10% contamination if unsealed. Clay lining eliminates risk. Drought: -20%.</td><td>T2 - Engineering Scholar</td></tr>
+      <tr><td>Fermentation and Brewing</td><td><span class="c-pos">Substitutes 40% water demand</span></td><td>Up to ~32 water/season replaced during contamination events. Not usable for crops or buildings.</td><td>T2 - Agri + Chemistry Scholar</td></tr>
+      <tr><td>Prion Neutralisation Compound</td><td><span class="c-pos">Purifies 1 water source per unit</span></td><td>4 compound units/season. Each treats 1 water source. With Adv. Purification: fully prion-safe.</td><td>T4 - Chemistry + Medicine Scholar</td></tr>
+      <tr><td>Advanced Water Purification</td><td><span class="c-pos">+45 clean water</span></td><td>-90% contamination risk. With Neutralisation Compound: all contamination eliminated.</td><td>T4 - Eng + Chemistry Scholar</td></tr>
+      <tr><td>Desalination Plant</td><td><span class="c-pos">+60 clean water</span></td><td>Coastal + electricity required. Removes ocean voyage water constraint.</td><td>T5 SEA - Chemistry + Eng Scholar</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Supply States - Food and Water Tracked Separately</div>
+  <p style="font-size:.62rem;color:var(--faded);margin-bottom:.5rem;line-height:1.6;">Determined at season end. Both food and water states apply simultaneously if both are in deficit.</p>
+  <div class="state-track">
+    <div class="spip s-surplus">
+      <div class="sname">Surplus</div>
+      <div class="sthresh">Production &gt; demand by 20%+</div>
+      <div class="seffect"><b>Food:</b> <span class="c-pos">+2 pop/season, +2 morale</span><br><b>Water:</b> <span class="c-pos">+1 morale, surplus stored</span><br><span style="font-size:.57rem;color:var(--faded);">Food stored up to 2 seasons, water 1 season.</span></div>
+    </div>
+    <div class="spip s-stable">
+      <div class="sname">Stable</div>
+      <div class="sthresh">Production within +/-20% of demand</div>
+      <div class="seffect">No population change. No morale effect.<br>This is the baseline target for a functional settlement.</div>
+    </div>
+    <div class="spip s-ration">
+      <div class="sname">Rationing</div>
+      <div class="sthresh">Production 20-40% below demand</div>
+      <div class="seffect"><b>Food:</b> <span class="c-warn">Growth halts, -3 morale/season</span><br><b>Water:</b> <span class="c-warn">-2 morale, crop yield -20%</span><br>Scholar Sat: -2/season (food), -3/season (water).</div>
+    </div>
+    <div class="spip s-short">
+      <div class="sname">Shortage</div>
+      <div class="sthresh">Production 40-60% below demand</div>
+      <div class="seffect"><b>Food:</b> <span class="c-neg">-1 pop/season, -5 morale, illness +10%</span><br><b>Water:</b> <span class="c-neg">-1 pop/season, -4 morale, crops fail</span><br>Scholar Sat: -4/season.</div>
+    </div>
+    <div class="spip s-crisis">
+      <div class="sname">Crisis</div>
+      <div class="sthresh">Production below 40% of demand</div>
+      <div class="seffect"><b>Food:</b> <span class="c-neg">-3 pop/season, -8 morale, illness +25%</span><br><b>Water:</b> <span class="c-neg">-3 pop/season, -6 morale, all crops die</span><br>Scholar Sat: -5/season.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Worked Example Ledgers</div>
+
+  <div class="ledger">
+    <div class="ledger-head">Early Game - Winter Season, 100 Pop, 1 Scholar
+      <span>Demand: 100 x 1 = 100. Scholar: +4. Winter +20% = +21. Total: 125 food required.</span>
+    </div>
+    <div class="ledger-row hrow">
+      <div class="lc hd">Source</div><div class="lc hd">Base</div><div class="lc hd">Winter modifier</div><div class="lc hd">Net</div>
+    </div>
+    <div class="ledger-row">
+      <div class="lc lbl">Open Crop Plots x2</div><div class="lc">24 food</div><div class="lc neg">Winter - zero yield</div><div class="lc neg">0</div>
+    </div>
+    <div class="ledger-row">
+      <div class="lc lbl">Animal Trap Line</div><div class="lc">8 food</div><div class="lc">No modifier</div><div class="lc pos">8</div>
+    </div>
+    <div class="ledger-row ldivider">
+      <div class="lc lbl" style="color:var(--faded);">Total produced</div><div class="lc total warn" style="grid-column:2/-1;">8 food produced vs 125 required</div>
+    </div>
+    <div class="ledger-row">
+      <div class="lc lbl" style="color:var(--red);">Result</div><div class="lc neg" style="grid-column:2/-1;">-117 deficit - Crisis state. Consume reserves immediately. If reserves under 117: starvation begins.</div>
+    </div>
+  </div>
+
+  <div class="ledger" style="margin-top:.6rem;">
+    <div class="ledger-head">Mid Game - Spring, 110 Pop, 2 Scholars, Grain Mill + Husbandry Pen + Greenhouse built
+      <span>Demand: 110 x 0.8 (Grain Mill efficiency) = 88 + 8 (2 Scholars) = 96 effective demand.</span>
+    </div>
+    <div class="ledger-row hrow">
+      <div class="lc hd">Source</div><div class="lc hd">Base</div><div class="lc hd">Modifier</div><div class="lc hd">Net</div>
+    </div>
+    <div class="ledger-row"><div class="lc lbl">Open Crop Plots x2</div><div class="lc">24</div><div class="lc pos">Spring - full yield</div><div class="lc pos">24</div></div>
+    <div class="ledger-row"><div class="lc lbl">Animal Trap Line</div><div class="lc">8</div><div class="lc">-</div><div class="lc pos">8</div></div>
+    <div class="ledger-row"><div class="lc lbl">Grain Mill flat bonus</div><div class="lc">+15</div><div class="lc">-</div><div class="lc pos">15</div></div>
+    <div class="ledger-row"><div class="lc lbl">Animal Husbandry Pen</div><div class="lc">18</div><div class="lc pos">Animals tested</div><div class="lc pos">18</div></div>
+    <div class="ledger-row"><div class="lc lbl">Enclosed Greenhouse</div><div class="lc">30</div><div class="lc pos">Weather-immune</div><div class="lc pos">30</div></div>
+    <div class="ledger-row ldivider">
+      <div class="lc lbl" style="color:var(--faded);">Total produced</div><div class="lc total pos" style="grid-column:2/-1;">95 food produced</div>
+    </div>
+    <div class="ledger-row">
+      <div class="lc lbl" style="color:var(--green);">Result</div><div class="lc pos" style="grid-column:2/-1;">95 - 96 = -1 - Stable. No penalty. Add one more food source to tip into Surplus and start population growth.</div>
+    </div>
+  </div>
+
+  <div class="note-box"><b>The Winter Problem:</b> Open Crop Plots produce zero in winter. A settlement relying solely on crops will hit Crisis every winter until a Greenhouse or year-round alternative is built. The Fishing Net Rig and Animal Trap Line both operate year-round - prioritise at least one before your first winter arrives.</div>
+</div><!-- /panel-supply -->
+
+<!-- TAB 2 PRION -->
+
+<div id="panel-prion" class="tab-panel">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// What Prion Disease Is</div>
+      <div class="info-line">A mutated prion strain released by the collapse. <b>Cannot be killed by boiling, burning, or antibiotics.</b> Destroyed only by the Neutralisation Compound (T4) or prevented by the Vaccine (T5).</div>
+      <div class="info-line" style="margin-top:.2rem;">Spreads via: contaminated water, untested animals, infected returnees, wasteland proximity. <b>Not contagious person-to-person</b> unless a Symptomatic individual is unquarantined.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// The Exposure Roll</div>
+      <div class="info-line">When a trigger event occurs, roll <b>D20.</b> Result <b>at or below the threshold = exposure triggered.</b></div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Building threshold reductions:</b><br>Detection Lab: -5<br>Quarantine Suite: -8<br>Vaccine (vaccinated pop): -10<br>Prion Barrier: -4 (external sources)</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Individual vs Outbreak</div>
+      <div class="info-line"><b>Individual:</b> A named person is exposed. Track them through the stage track. They may recover or spread to others if uncontained.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Settlement outbreak:</b> Uncontained exposure reaches general population. Tracked as a population event with immediate pop and morale consequences.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Prion vs Physical Contamination</div>
+      <div class="info-line">Sand Filtration and boiling handle <b>physical contamination</b> only. <b>Prion requires the Neutralisation Compound</b> - nothing simpler works.</div>
+      <div class="info-line" style="margin-top:.2rem;">The Detection Lab identifies which type you are dealing with. Without it you cannot distinguish prion from dirty water and cannot begin correct treatment.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Individual Exposure - Stage Track</div>
+  <p style="font-size:.62rem;color:var(--faded);margin-bottom:.4rem;line-height:1.6;">Each stage lasts <b>1 season</b> without intervention. Progression is automatic unless treatment is applied. Track each exposed person by name.</p>
+  <div class="prion-track">
+    <div class="ppip p-clear">
+      <div class="pstage">Clear</div>
+      <div class="ptime">Baseline state</div>
+      <div class="pdesc">No prion present. Free settlement movement. <b>Detection Lab check on return:</b> D20 at 12 or above confirms clear.</div>
+    </div>
+    <div class="ppip p-exposed">
+      <div class="pstage">Exposed</div>
+      <div class="ptime">Detectable if tested immediately</div>
+      <div class="pdesc">Traces present, not yet systemic. <b>Quarantine Suite:</b> 90% full clearance after 1 season. <b>Without Quarantine:</b> progresses to Infected. <b>No work penalty this season.</b></div>
+    </div>
+    <div class="ppip p-infected">
+      <div class="pstage">Infected</div>
+      <div class="ptime">1 season after Exposed, untreated</div>
+      <div class="pdesc">Active replication. <b>-50% work effectiveness.</b> Any animal or water they contact: 30% chance of new exposure source. Scholar drops to Weakened condition. <b>Quarantine:</b> 40% clearance chance.</div>
+    </div>
+    <div class="ppip p-symp">
+      <div class="pstage">Symptomatic</div>
+      <div class="ptime">1 season after Infected, untreated</div>
+      <div class="pdesc"><b>Cannot work or fight.</b> If unquarantined: D6 roll per close contact each season - on 1 or 2 they become Exposed. <b>Quarantine:</b> 15% clearance only. Can be stabilised but rarely cured now.</div>
+    </div>
+    <div class="ppip p-term">
+      <div class="pstage">Terminal</div>
+      <div class="ptime">1 season after Symptomatic</div>
+      <div class="pdesc">Fatal within the season. <b>Remove from population.</b> If Symptomatic and unquarantined: D6 per close contact - on 1 they become Exposed. Scholar: full inheritance rules apply.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Exposure Sources and Risk Thresholds</div>
+  <p style="font-size:.62rem;color:var(--faded);margin-bottom:.4rem;">Roll D20 when these events occur. Result at or below threshold triggers exposure. Apply building reductions before rolling.</p>
+  <div class="psource-grid">
+    <div class="pscard">
+      <div class="pscard-name">Expedition returns from Military or Wasteland</div>
+      <div class="pscard-risk" style="color:var(--amber);"><b>Threshold 6</b> (30% chance per member)</div>
+      <div class="pscard-body">Detection Lab reduces to 1. Quarantine Suite: exposed cleared before entering settlement. No lab: threshold 8.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Expedition returns from Submerged City</div>
+      <div class="pscard-risk" style="color:var(--amber);"><b>Threshold 4</b> (20% chance)</div>
+      <div class="pscard-body">Bodies in submerged areas are contamination sources. Detection Lab reduces to 1. Quarantine Suite clears before entry.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Untested animals entering settlement</div>
+      <div class="pscard-risk" style="color:var(--amber);"><b>Threshold 3 per animal</b> (15%)</div>
+      <div class="pscard-body">Detection Lab: threshold drops to 0 - no roll needed. Husbandry Pen with untested animals: 15% outbreak risk per season.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Contaminated water source in active use</div>
+      <div class="pscard-risk" style="color:var(--red);"><b>Threshold 5 per season</b> (25%)</div>
+      <div class="pscard-body">Advanced Purification + Neutralisation: eliminates risk entirely. Sand Filtration alone: no effect on prion contamination.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Field collection of prion samples</div>
+      <div class="pscard-risk" style="color:var(--amber);"><b>Threshold 6</b> (30% chance)</div>
+      <div class="pscard-body">Quarantine Suite drops threshold to 0. Med Scholar on site: -2 to threshold.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Symptomatic person not quarantined</div>
+      <div class="pscard-risk" style="color:var(--red);"><b>D6 per close contact/season: 1-2 = Exposed</b></div>
+      <div class="pscard-body">Anyone sharing a work role or shelter block. Quarantine Suite stops this entirely. The most dangerous ongoing risk in a late-stage outbreak.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Wasteland-adjacent settlement, no Barrier</div>
+      <div class="pscard-risk" style="color:var(--amber);"><b>Threshold 3 per season</b> (15%)</div>
+      <div class="pscard-body">Passive environmental infiltration from wasteland tile. Prion Barrier/Burn Wall (T3) reduces threshold to 0.</div>
+    </div>
+    <div class="pscard">
+      <div class="pscard-name">Prion Wanderer Swarm contact</div>
+      <div class="pscard-risk" style="color:var(--red);"><b>Threshold 8 per contact</b> (40%)</div>
+      <div class="pscard-body">Each militia member in contact during swarm event. Detection Lab: threshold 4. Prion Barrier: -3. Quarantine Suite: exposed isolated before spreading.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Settlement Outbreak Levels</div>
+  <table class="mtable">
+    <thead><tr><th>Level</th><th>Trigger</th><th>Immediate Effect</th><th>Containment</th></tr></thead>
+    <tbody>
+      <tr><td>Trace</td><td>1-2 individuals Exposed, no spread yet</td><td>No population loss. Scholar Sat -3. Detection Lab confirms scope.</td><td>Quarantine Suite: cleared in 1 season. Without it: 50% chance escalates to Minor next season.</td></tr>
+      <tr><td>Minor Outbreak</td><td>1-2 Infected, or 3+ at Exposed</td><td><span class="c-neg">-5 population, -5 morale, 2 seasons recovery.</span> 1 water source may become contaminated.</td><td>Quarantine + Detection Lab: 1 season. Quarantine only: 2 seasons. Neither: D6 each season, on 1-3 escalates to Major.</td></tr>
+      <tr><td>Major Outbreak</td><td>3+ Infected, or Symptomatic unquarantined</td><td><span class="c-neg">Roll 2D10+5 population lost. Morale collapse (-15, takes 3 seasons to recover). All food contamination-checked.</span></td><td>Requires Quarantine Suite + Neutralisation Compound + Detection Lab. Without all three: -5 pop/season continues.</td></tr>
+      <tr><td>Endemic State</td><td>Major outbreak uncontained 2+ seasons</td><td><span class="c-neg">Ongoing -3 pop/season. Settlement cannot grow. Scholars refuse non-essential field work (Sat -5/season).</span></td><td>Only Prion Vaccine Prototype (T5) reverses this. Research Lab needs 10 Research Points first - estimated 10+ seasons from scratch.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Prion Defence Chain - Recommended Build Order</div>
+  <table class="mtable">
+    <thead><tr><th>#</th><th>Building</th><th>What It Adds</th><th>Without It</th></tr></thead>
+    <tbody>
+      <tr><td>1 - Detect</td><td>Prion Detection Lab (T3)</td><td>Tests animals and returnees before entry. -50% minor outbreak chance. Identifies prion vs physical contamination.</td><td>Cannot distinguish prion from ordinary contamination. All animal and expedition risk is completely blind.</td></tr>
+      <tr><td>2 - Block</td><td>Prion Barrier / Burn Wall (T3)</td><td>-60% external infiltration. Eliminates passive wasteland border risk. Required before Neutralisation Compound.</td><td>15% passive infiltration per season from any wasteland-adjacent tile.</td></tr>
+      <tr><td>3 - Isolate</td><td>Prion Quarantine Protocol Suite (T4)</td><td>-90% internal spread from returnees. Exposed individuals cleared before entering. Prevents Symptomatic spread entirely.</td><td>Exposed individuals must be kept away manually with no game mechanism to enforce it.</td></tr>
+      <tr><td>4 - Neutralise</td><td>Prion Neutralisation Compound (T4)</td><td>-70% prion in treated areas. 4 units/season - each treats 1 water source or 3 tiles.</td><td>Contaminated water sources remain permanently infected with no recovery path.</td></tr>
+      <tr><td>5 - Research</td><td>Prion Research Laboratory (T5)</td><td>+1 Research Point/season toward Vaccine. -15% all prion risks passively. Requires electricity.</td><td>Vaccine cannot be developed. Endemic state becomes permanent.</td></tr>
+      <tr><td>6 - Cure</td><td>Prion Vaccine Prototype (T5)</td><td>-75% infection for vaccinated population. Reverses Endemic State. +6 morale/season. 50 pop per cycle.</td><td>Endemic state is irreversible. Long-term settlement survival becomes impossible.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="danger-box" style="border-color:rgba(160,58,42,.5);background:rgba(160,58,42,.04);">
+    <b style="color:var(--red);">☣ Ground Zero — City Ruins Prion Rules</b><br><br>
+    The city ruins at the map centre carry the original aggressive prion mutation. Standard threshold reductions still apply, but all base thresholds at Ground Zero are <b>+4 higher</b> than their normal values regardless of what buildings you have.<br><br>
+    <b>City strain wound rule:</b> Any fighter wounded at Ground Zero rolls D6. On a 1: permanently exposed to the city strain — their personal prion threshold is +2 higher for all future checks, even after recovery. This is irreversible without the Vaccine Prototype.<br><br>
+    <b>City strain prion samples:</b> Samples collected at Ground Zero count as <b>2 Research Points</b> each in the Prion Research Laboratory rather than 1. They are the fastest path to the Vaccine but the hardest to obtain safely.<br><br>
+    <b>Mandatory prerequisites for Ground Zero expeditions:</b> Prion Detection Lab + Quarantine Suite are not optional here — without both, all returning members are automatically Exposed on return regardless of roll result.
+  </div>
+  <div class="danger-box"><b>Most Common Mistake:</b> Players delay the Detection Lab because it produces nothing visible. By the time an outbreak starts it is too late. Without the Lab you cannot confirm exposure, and without confirmation you cannot begin quarantine. <b>Build the Detection Lab as your first T3 priority</b> - before irrigation, before the Blast Furnace, before anything else. One undetected infected animal can cascade into a Major Outbreak killing 20+ people before you can respond.</div>
+</div><!-- /panel-prion -->
+
+
+
+
+<div id="panel-morale" class="tab-panel">
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// The Morale Score</div>
+      <div class="info-line">Your settlement has a single <b>Morale Score</b> tracked from −10 to +10. It starts at <b>0 (Stable)</b> at game start. It moves up and down based on events each season. Check the current score at the start of each season and apply its effects before any other actions.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// How It Moves</div>
+      <div class="info-line">Morale changes by the sum of all modifier events that occurred last season. Multiple events stack. There is no roll — modifiers are applied directly from the table. Score is capped at +10 and −10.</div>
+      <div class="info-line" style="margin-top:.25rem;">Morale recovers naturally by <b>+1 per season</b> when food supply is Adequate or above and no negative events occurred.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// When It Matters</div>
+      <div class="info-line">Morale affects <b>worker efficiency, militia combat rolls, Scholar satisfaction,</b> and whether population growth occurs. High morale accelerates everything. Broken morale is a genuine crisis — workers slow down, fighters lose nerve, and people start leaving.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Morale vs. Prion</div>
+      <div class="info-line">The two systems interact. A prion outbreak in the settlement is one of the largest morale hits in the game. Conversely, low morale increases the chance that people cut corners on prion protocols — at Poor or Broken, workers returning from expeditions have a 15% chance of skipping the Detection Lab check.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Morale Track</div>
+  <div class="morale-track">
+    <div class="mpip m-high">
+      <div class="mstage">High</div>
+      <div class="mscore">+6 to +10</div>
+      <div class="mdesc"><b>Workers:</b> +15% efficiency. <b>Militia:</b> +2 all morale rolls. <b>Population:</b> +3/season growth. <b>Scholars:</b> +2 satisfaction. <b>Special:</b> Idle reserve workers volunteer for tasks — reduce minimum Idle threshold to 5 this season.</div>
+    </div>
+    <div class="mpip m-stable">
+      <div class="mstage">Stable</div>
+      <div class="mscore">+1 to +5</div>
+      <div class="mdesc"><b>Workers:</b> Normal efficiency. <b>Militia:</b> Normal morale rolls. <b>Population:</b> +2/season growth. <b>Scholars:</b> No modifier. Standard operating baseline.</div>
+    </div>
+    <div class="mpip m-stable" style="border-color:rgba(200,168,75,.18);">
+      <div class="mstage" style="color:var(--faded);">Neutral</div>
+      <div class="mscore">0</div>
+      <div class="mdesc">Starting position. No bonuses or penalties. Population grows at <b>+1/season</b> base. Natural recovery applies if supply is Adequate.</div>
+    </div>
+    <div class="mpip m-low">
+      <div class="mstage">Low</div>
+      <div class="mscore">−1 to −4</div>
+      <div class="mdesc"><b>Workers:</b> −10% efficiency. <b>Militia:</b> −1 all morale rolls. <b>Population:</b> No growth this season. <b>Scholars:</b> −1 satisfaction per season at Low. Natural recovery is halved.</div>
+    </div>
+    <div class="mpip m-poor">
+      <div class="mstage">Poor</div>
+      <div class="mscore">−5 to −8</div>
+      <div class="mdesc"><b>Workers:</b> −25% efficiency. <b>Militia:</b> −2 all morale rolls, 10% chance of desertion each season. <b>Population:</b> −1/season (people leave). <b>Scholars:</b> −2 satisfaction. Prion protocol risk active.</div>
+    </div>
+    <div class="mpip m-broken">
+      <div class="mstage">Broken</div>
+      <div class="mscore">−9 to −10</div>
+      <div class="mdesc"><b>Workers:</b> −40% efficiency. <b>Militia:</b> −4 morale rolls, 25% desertion risk. <b>Population:</b> −3/season. <b>Scholars:</b> Auto-defection risk check each season. Prion protocol risk active. <b>Cannot build or upgrade buildings this season.</b></div>
+    </div>
+  </div>
+
+  <div class="sec-head">Morale Modifiers — Negative</div>
+  <div class="mod-grid">
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Raid — Successful Defence</span><span class="mod-val mod-neg">−1</span></div>
+      <div class="mod-body">Even a win costs morale. People are shaken. Successful with under 10% casualties: no penalty.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Raid — Perimeter Breached</span><span class="mod-val mod-neg">−3</span></div>
+      <div class="mod-body">Settlement was entered. Applies on top of the base raid penalty. Structural damage visible to all.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Casualties — 5–15%</span><span class="mod-val mod-neg">−1</span></div>
+      <div class="mod-body">People knew those who died. Applies after any raid, accident, or event.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Casualties — 15%+</span><span class="mod-val mod-neg">−3</span></div>
+      <div class="mod-body">Significant loss. Replaces the −1 modifier, does not stack with it.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Rationing</span><span class="mod-val mod-neg">−1</span></div>
+      <div class="mod-body">Applies each season the settlement is at Rationing supply state.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Hungry / Starvation</span><span class="mod-val mod-neg">−4</span></div>
+      <div class="mod-body">Applies each season at Hungry or Starvation. Replaces the Rationing modifier.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Prion Case — Internal</span><span class="mod-val mod-neg">−2</span></div>
+      <div class="mod-body">A confirmed case inside the settlement. Fear spreads fast. −1 instead if Detection Lab is operational.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Prion Outbreak</span><span class="mod-val mod-neg">−5</span></div>
+      <div class="mod-body">Multiple simultaneous cases or a Carrier not caught. Replaces the single-case modifier.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Scholar Lost</span><span class="mod-val mod-neg">−2</span></div>
+      <div class="mod-body">Community relied on them. −4 instead if the Scholar was K3 or domain-unique.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">No Progress (2+ seasons)</span><span class="mod-val mod-neg">−1</span></div>
+      <div class="mod-body">No new buildings completed, no territory expanded, no notable achievements. Stagnation penalty.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Broken Deal / Betrayal</span><span class="mod-val mod-neg">−2</span></div>
+      <div class="mod-body">Your settlement broke an agreement or was publicly betrayed by an ally. Word travels.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Harsh Winter / Disaster</span><span class="mod-val mod-neg">−2</span></div>
+      <div class="mod-body">GM-triggered weather event, structural collapse, or environmental crisis. Applies for the affected season only.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Morale Modifiers — Positive</div>
+  <div class="mod-grid">
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Raid — Decisively Repelled</span><span class="mod-val mod-pos">+2</span></div>
+      <div class="mod-body">Attackers fled with under 10% of your casualties. Settlement feels protected.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">New Building Completed</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">Visible progress. Applies once per season regardless of how many buildings completed.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Major Building Completed</span><span class="mod-val mod-pos">+2</span></div>
+      <div class="mod-body">T4 or T5 building finished. Replaces the standard +1. Something the community can be proud of.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Surplus Supply</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">Settlement is at Surplus food state. People are eating well. Applies each season at Surplus.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Successful Trade Deal</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">A notable trade completed — goods in, goodwill between factions. One-off, not recurring.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">New Alliance</span><span class="mod-val mod-pos">+2</span></div>
+      <div class="mod-body">Formal alliance or Friendly+ relationship reached with a new faction. Security feels real.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Prion Threat Contained</span><span class="mod-val mod-pos">+2</span></div>
+      <div class="mod-body">A confirmed case caught and quarantined successfully with no spread. Detection Lab essential.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Scholar Achievement</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">A Scholar reaches K3, completes a major research, or produces a T4+ blueprint. Community pride.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Population Milestone</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">Settlement reaches 125, 150, 175, or 200 people for the first time. Growth feels meaningful.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Fermentation &amp; Brewing</span><span class="mod-val mod-pos">+1</span></div>
+      <div class="mod-body">Applies each season this building is producing. Small comfort, consistent effect. Stacks with Surplus.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Ground Zero Expedition — Return</span><span class="mod-val mod-pos">+2</span></div>
+      <div class="mod-body">Expedition returned safely from the city ruins. The community knows where they went. Applies once per successful return regardless of yield.</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-head"><span class="mod-name">Archive Discovery</span><span class="mod-val mod-pos">+3</span></div>
+      <div class="mod-body">A Burn Team field note or government document recovered. Hope is tangible. Applies once per discovery.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Recovery &amp; Crisis Rules</div>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// Natural Recovery</div>
+      <div class="info-line">If no negative events occurred last season and food supply is Adequate or better: morale recovers <b>+1 automatically</b> at the start of the next season before any other modifiers are applied. This means sustained stability gradually pulls the score upward without any specific action required.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Breaking Out of Poor / Broken</div>
+      <div class="info-line">Natural recovery alone is not enough to climb out of Poor or Broken morale. The settlement needs a <b>deliberate positive event</b> — a major building, a decisive raid win, a successful alliance, or an archive discovery. Without one, the score stagnates at the floor.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Desertion at Poor / Broken</div>
+      <div class="info-line">At Poor morale: roll D6 at season end. On a 1, D3 workers leave permanently. At Broken: roll D6 on a 1–2, D6 workers leave. Scholars at Broken morale trigger their normal defection check at −5 to their satisfaction score on top of any existing modifiers.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Morale &amp; The End Game</div>
+      <div class="info-line">Launching the Ocean Ark Fleet requires morale to be at <b>Neutral or above</b>. A community that has broken down cannot mount a coordinated ocean voyage. If morale is Poor or Broken when the Fleet is otherwise ready, the launch is delayed until recovery — which can itself become a race against the Remnant Authority.</div>
+    </div>
+  </div>
+
+  <div class="danger-box" style="margin-top:.5rem;"><b>⚠ Most Common Mistake:</b> Ignoring morale until it becomes a crisis. The −1 modifiers from Rationing and slow seasons accumulate quietly over many seasons, and by the time a raid happens on top of them, the score drops into Broken territory faster than any single positive event can counteract. Check the score every season and act early.</div>
+
+</div><!-- /panel-morale -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian &middot; Settlement Management &middot; Supply &middot; Prion</footer>
+</div>
+</body>
+</html>

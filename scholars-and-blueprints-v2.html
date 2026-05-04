@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scholars &amp; Blueprints — Dead Meridian</title>
+<style>
+  :root {
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --t1:#888; --t2:#4a9e5c; --t3:#3a7abf; --t4:#8b5fcf; --t5:#c9952a;
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --sea:#2a7a8a;
+    --k1:#777; --k2:#c9952a; --k3:#c8a84b;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:2rem 1rem 3rem;
+    background-image:
+      repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),
+      radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),
+      radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:1060px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:1.8rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.5rem auto;width:75%;}
+  .stamp-row{display:flex;justify-content:center;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.5rem;letter-spacing:.22em;padding:2px 8px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1.2deg);} .stamp:last-child{transform:rotate(.7deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.3rem,4vw,2.4rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12),0 2px 0 rgba(0,0,0,.9);margin:.3rem 0;}
+  .subtitle{font-size:.63rem;color:var(--faded);letter-spacing:.25em;text-transform:uppercase;}
+
+  /* ── RADIO TAB SYSTEM — works in all local files, zero JS ── */
+  .tab-radio{display:none;}
+  .tabs{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tab-lbl{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid var(--faded);background:transparent;color:var(--faded);
+    padding:.4rem .9rem;cursor:pointer;transition:all .15s;user-select:none;}
+  .tab-lbl:hover{border-color:var(--ink-dim);color:var(--ink-dim);}
+  .tab-panels{border:1px solid var(--border-mid);border-top:none;}
+  .tab-panel{display:none;padding:1rem;}
+  /* Default: show scholars */
+  #panel-scholars{display:block;}
+  /* When blueprints radio checked: show blueprints, hide scholars */
+  #tab-r-bp:checked ~ .tabs .tab-lbl[for="tab-r-bp"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #tab-r-bp:checked ~ .tab-panels #panel-blueprints{display:block;}
+  #tab-r-bp:checked ~ .tab-panels #panel-scholars{display:none;}
+  /* When scholars radio checked: show scholars label as active */
+  #tab-r-sc:checked ~ .tabs .tab-lbl[for="tab-r-sc"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  /* Default scholars label active when nothing explicitly checked */
+  .tab-lbl[for="tab-r-sc"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #tab-r-bp:checked ~ .tabs .tab-lbl[for="tab-r-sc"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+
+  /* ── CONTENT STYLES ── */
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:1rem;}
+  .info-card{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.02);}
+  .info-title{font-family:var(--fd);font-size:.68rem;color:var(--ink);letter-spacing:.08em;margin-bottom:.25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+  .info-line{font-size:.62rem;color:var(--ink-dim);line-height:1.65;}
+  .info-line b{color:var(--ink);}
+  .sec-head{font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faded);padding:.3rem 0 .25rem;border-bottom:1px solid var(--border-mid);margin:.9rem 0 .5rem;}
+  .num{display:inline-block;font-family:var(--fd);font-size:.72rem;font-weight:bold;padding:1px 6px;border:1px solid;white-space:nowrap;}
+  .n-pos{color:#5aaa6a;border-color:rgba(90,170,106,.45);}
+  .n-neg{color:#cc5540;border-color:rgba(204,85,64,.4);}
+  .n-neu{color:var(--ink-dim);border-color:var(--border-mid);}
+  .n-warn{color:var(--amber);border-color:rgba(201,149,42,.45);}
+  .n-cost{color:#7abccc;border-color:rgba(122,188,204,.4);}
+  .tag{display:inline-block;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid;padding:1px 5px;margin:1px 2px 1px 0;line-height:1.5;}
+  .tag-warn{border-color:rgba(201,149,42,.45);color:var(--amber);}
+  .tag-bad{border-color:rgba(160,58,42,.45);color:var(--red);}
+  .tag-good{border-color:rgba(61,138,74,.45);color:var(--green);}
+  .sat-bar{display:flex;height:20px;border:1px solid var(--border-mid);overflow:hidden;margin:.4rem 0 .2rem;}
+  .sat-seg{flex:1;border-right:1px solid rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:.46rem;font-family:var(--fd);color:rgba(0,0,0,.55);}
+  .sat-seg:last-child{border-right:none;}
+  .sn4{background:#6a1a10;}.sn3{background:#862212;}.sn2{background:#a02a18;}.sn1{background:#ba4020;}.sn0{background:#cc5530;}
+  .sz{background:#3a3628;border-left:2px solid var(--ink-dim);border-right:2px solid var(--ink-dim);}
+  .sp0{background:#1e4a28;}.sp1{background:#265a30;}.sp2{background:#2e6a38;}.sp3{background:#367c42;}.sp4{background:#3d8a4a;}
+  .sat-labels{display:flex;justify-content:space-between;font-size:.52rem;color:var(--faded);margin-top:.15rem;letter-spacing:.08em;}
+  .ktier-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;}
+  .ktier{border:1px solid;padding:.45rem .7rem;flex:1;min-width:140px;text-align:center;}
+  .kt1{border-color:rgba(119,119,119,.35);}.kt2{border-color:rgba(201,149,42,.35);}.kt3{border-color:rgba(200,168,75,.45);}
+  .ktnum{font-family:var(--fd);font-size:1.4rem;line-height:1;margin-bottom:.15rem;}
+  .kt1 .ktnum{color:var(--k1);}.kt2 .ktnum{color:var(--k2);}.kt3 .ktnum{color:var(--k3);}
+  .ktlabel{font-family:var(--fd);font-size:.68rem;letter-spacing:.1em;}
+  .kt1 .ktlabel{color:var(--k1);}.kt2 .ktlabel{color:var(--k2);}.kt3 .ktlabel{color:var(--k3);}
+  .ktbody{font-size:.6rem;color:var(--faded);line-height:1.6;margin-top:.3rem;text-align:left;border-top:1px solid var(--border);padding-top:.3rem;}
+  .ktbody b{color:var(--ink-dim);}
+  .cond-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0;}
+  .cpip{flex:1;min-width:90px;border:1px solid;padding:.35rem .5rem;text-align:center;}
+  .c-healthy{border-color:rgba(61,138,74,.4);}.c-injured{border-color:rgba(201,149,42,.4);}
+  .c-weakened{border-color:rgba(160,112,42,.4);}.c-critical{border-color:rgba(160,58,42,.5);}
+  .c-retired{border-color:rgba(80,70,50,.35);}
+  .cname{font-family:var(--fd);font-size:.7rem;letter-spacing:.06em;}
+  .c-healthy .cname{color:var(--green);}.c-injured .cname{color:var(--amber);}
+  .c-weakened .cname{color:#a07030;}.c-critical .cname{color:var(--red);}
+  .c-retired .cname{color:#666;}
+  .cmod{font-size:.65rem;font-family:var(--fd);margin:.1rem 0;}
+  .cdesc{font-size:.57rem;color:var(--faded);line-height:1.4;}
+  .mod-table,.role-table,.inh-table{width:100%;border-collapse:collapse;font-size:.63rem;margin:.4rem 0;}
+  .mod-table th,.role-table th,.inh-table th{font-family:var(--fd);font-size:.54rem;letter-spacing:.15em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.28rem .45rem;text-align:left;font-weight:normal;}
+  .mod-table td,.role-table td,.inh-table td{padding:.32rem .45rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .mod-table tr:last-child td,.role-table tr:last-child td,.inh-table tr:last-child td{border-bottom:none;}
+  .mod-table tr:hover td,.role-table tr:hover td,.inh-table tr:hover td{background:rgba(200,168,75,.02);}
+  .mod-table td:first-child{color:var(--ink);font-size:.66rem;}
+  .role-table td:first-child{color:var(--ink);font-family:var(--fd);}
+  .domain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin:.5rem 0;}
+  .dom-card{border:1px solid var(--border);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .dom-name{font-family:var(--fd);font-size:.72rem;margin-bottom:.2rem;}
+  .dom-card p{font-size:.62rem;color:var(--faded);line-height:1.5;}
+  .bp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.5rem 0;}
+  .bp-table{width:100%;min-width:680px;border-collapse:collapse;font-size:.63rem;}
+  .bp-table th{font-family:var(--fd);font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.28rem .45rem;text-align:left;font-weight:normal;white-space:nowrap;}
+  .bp-table td{padding:.38rem .45rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.55;}
+  .bp-table tr:last-child td{border-bottom:none;}
+  .bp-table tr:hover td{background:rgba(200,168,75,.02);}
+  .bp-table td:nth-child(3),.bp-table th:nth-child(3){white-space:nowrap;min-width:2.5rem;text-align:center;}
+  .bp-tier{font-family:var(--fd);font-size:.68rem;font-weight:bold;white-space:nowrap;}
+  .bpt1{color:var(--t1);}.bpt2{color:var(--t2);}.bpt3{color:var(--t3);}.bpt4{color:var(--t4);}.bpt5{color:var(--t5);}
+  .bp-name{color:var(--ink);font-family:var(--fd);font-size:.72rem;}
+  .bp-roll{font-family:var(--fd);font-size:.9rem;font-weight:bold;white-space:nowrap;display:inline-block;}
+  .bpr1{color:var(--t1);}.bpr2{color:var(--t2);}.bpr3{color:var(--t3);}.bpr4{color:var(--t4);}.bpr5{color:var(--t5);}
+  .dom-tag{display:inline-block;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid;padding:1px 4px;margin:1px 1px 1px 0;white-space:nowrap;}
+  .dt-eng{color:#7abccc;border-color:rgba(122,188,204,.4);}
+  .dt-agr{color:#5aaa6a;border-color:rgba(90,170,106,.4);}
+  .dt-med{color:#cc7070;border-color:rgba(204,112,112,.4);}
+  .dt-che{color:#aacc66;border-color:rgba(170,204,102,.4);}
+  .dt-met{color:#ccaa44;border-color:rgba(204,170,68,.4);}
+  .dt-ele{color:#9a7acc;border-color:rgba(154,122,204,.4);}
+  .dt-any{color:var(--ink-dim);border-color:var(--border-mid);}
+  .bp-warn{color:var(--amber);font-size:.58rem;}
+  .bp-note{color:var(--faded);font-size:.58rem;font-style:italic;}
+  .acq-row{display:flex;gap:.45rem;flex-wrap:wrap;margin:.5rem 0 .9rem;}
+  .acq-card{flex:1;min-width:160px;border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .acq-head{font-family:var(--fd);font-size:.68rem;color:var(--ink);margin-bottom:.2rem;letter-spacing:.05em;}
+  .acq-body{font-size:.6rem;color:var(--faded);line-height:1.55;}
+  .acq-body b{color:var(--ink-dim);}
+  footer{text-align:center;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.5rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+  @media(max-width:640px){
+    .domain-grid{grid-template-columns:1fr 1fr;}
+    .ktier-row,.cond-track,.acq-row{flex-direction:column;}
+    .info-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">Scholar &amp; Blueprint Registry</span>
+    <span class="stamp">Personnel · Knowledge · Construction</span>
+  </div>
+  <h1>Scholars &amp; Blueprints</h1>
+  <p class="subtitle">Character System · Knowledge Domains · Blueprint Index · D20 Discovery Rolls</p>
+</header>
+
+<!-- Radio inputs MUST be before tabs and panels -->
+<input type="radio" class="tab-radio" name="sb-tabs" id="tab-r-sc" checked>
+<input type="radio" class="tab-radio" name="sb-tabs" id="tab-r-bp">
+
+<div class="tabs">
+  <label class="tab-lbl" for="tab-r-sc">🎓 Scholars</label>
+  <label class="tab-lbl" for="tab-r-bp">📄 Blueprints</label>
+</div>
+
+<div class="tab-panels">
+
+<!-- ═══ SCHOLARS ═══ -->
+<div id="panel-scholars" class="tab-panel">
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// What is a Scholar?</div>
+      <div class="info-line">Scholars are <b>named individual characters</b> — the rarest human resource in the game. They are the only people who retain deep pre-collapse technical knowledge. Without them, <b>Tier III blueprints and above are unreadable.</b> Each Scholar has: Domain, Knowledge Tier (K1–K3), Condition, and Satisfaction (−20 to +20).</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Upkeep Costs (per Scholar/season)</div>
+      <div class="info-line"><b>Food:</b> <span class="num n-cost">4 units/season</span> — drawn from settlement food pool</div>
+      <div class="info-line"><b>Water:</b> <span class="num n-cost">3 units/season</span> — drawn from clean water supply</div>
+      <div class="info-line" style="margin-top:.3rem;">Rationing: <span class="num n-neg">−2 Sat/season</span> · Starvation: <span class="num n-neg">−5 Sat/season</span> · Water shortage: <span class="num n-neg">−3 Sat/season</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Scholars vs Worker Pool</div>
+      <div class="info-line">Scholars are <b>not drawn from the 80-worker pool.</b> They are tracked independently as named characters. Their upkeep (food + water) is still deducted from the settlement supply each season.</div>
+      <div class="info-line" style="margin-top:.2rem;">A settlement can theoretically hold as many Scholars as it can feed, but each one above 3 competes for blueprint-relevant work.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Dual-Domain Scholars</div>
+      <div class="info-line">Cannot be trained — only discovered or recruited. Count as two Scholars for blueprint interpretation.</div>
+      <div class="info-line" style="margin-top:.2rem;">Upkeep: <span class="num n-cost">+50%</span> · Max Satisfaction: <span class="num n-warn">+16</span> (reduced ceiling due to cognitive burden)</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Acquisition Routes</div>
+  <div class="acq-row">
+    <div class="acq-card"><div class="acq-head">🔍 Discovery</div><div class="acq-body">Found during an expedition — an encounter event. Situation must be resolved (negotiation, rescue, or persuasion). Starting Sat: <b>+2 to +8</b> depending on circumstances.</div></div>
+    <div class="acq-card"><div class="acq-head">🤝 Recruitment</div><div class="acq-body">Hired through NPC faction diplomacy or trade. Sat on arrival: <b>+2 to +6.</b> May come with demands — always specify working conditions in negotiation.</div></div>
+    <div class="acq-card"><div class="acq-head">🎓 Training</div><div class="acq-body">Apprenticeship Programme (T3 building). 3–4 seasons. Trained Scholar starts at <b>K1, Sat +5.</b> Partial Scholar (interrupted) starts K1, Sat +3. Requires an existing Scholar to teach.</div></div>
+  </div>
+
+  <div class="sec-head">Knowledge Domains</div>
+  <div class="domain-grid">
+    <div class="dom-card"><div class="dom-name" style="color:#7abccc;">⚙ Engineering</div><p>Structures, water systems, mechanical devices, vessel construction. Most broadly useful domain. Almost every mid and late-game build touches Engineering.</p></div>
+    <div class="dom-card"><div class="dom-name" style="color:#5aaa6a;">🌱 Agriculture</div><p>Crop systems, livestock, irrigation, food preservation. Without one, food output plateaus at Tier II permanently.</p></div>
+    <div class="dom-card"><div class="dom-name" style="color:#cc7070;">🩺 Medicine</div><p>Surgery, disease treatment, prion management. Most directly responsible for keeping your other Scholars alive.</p></div>
+    <div class="dom-card"><div class="dom-name" style="color:#aacc66;">🧪 Chemistry</div><p>Purification, compounds, prion neutralisation and vaccine chain. Pairs with Medicine on most critical late-game technologies.</p></div>
+    <div class="dom-card"><div class="dom-name" style="color:#ccaa44;">⚒ Metallurgy</div><p>Forging, steel production, armour, advanced tools. Less urgent early but gates the entire military and structural branch by mid-game.</p></div>
+    <div class="dom-card"><div class="dom-name" style="color:#9a7acc;">⚡ Electronics</div><p>All electrical systems. Dormant until Tier IV generator unlocks, then instantly one of the rarest and most sought-after domains on the map.</p></div>
+  </div>
+
+  <div class="sec-head">Knowledge Tier (K1–K3)</div>
+  <p style="font-size:.65rem;color:var(--faded);margin-bottom:.5rem;">K1→K2: requires <b>3 successful builds overseen.</b> K2→K3: requires <b>6 successful builds</b> + <b>at least 1 completed apprentice.</b> Failed or abandoned builds do not count.</p>
+  <div class="ktier-row">
+    <div class="ktier kt1"><div class="ktnum">K1</div><div class="ktlabel">Novice</div><div class="ktbody"><b>Build failure:</b> Standard rate<br><b>Read speed:</b> Slow<br><b>Damaged BPs:</b> Cannot read<br><b>Apprentice output:</b> Partial Scholar likely (70/30)<br><b>Starts at:</b> Training or fresh recruitment</div></div>
+    <div class="ktier kt2"><div class="ktnum">K2</div><div class="ktlabel">Practiced</div><div class="ktbody"><b>Build failure:</b> <span class="num n-warn" style="font-size:.6rem;">−15% vs standard</span><br><b>Read speed:</b> Normal<br><b>Damaged BPs:</b> Minor damage only<br><b>Apprentice output:</b> Full Scholar likely (70/30)<br><b>Sat bonus:</b> <span class="num n-pos" style="font-size:.6rem;">+3 on T4–T5 build</span></div></div>
+    <div class="ktier kt3"><div class="ktnum">K3</div><div class="ktlabel">Master</div><div class="ktbody"><b>Build failure:</b> <span class="num n-pos" style="font-size:.6rem;">−35% vs standard</span><br><b>Read speed:</b> Fast<br><b>Damaged BPs:</b> Can read most partial BPs<br><b>Apprentice output:</b> Full Scholar guaranteed (95%+)<br><b>Death penalty:</b> <span class="num n-neg" style="font-size:.6rem;">−3 Sat ALL Scholars</span> (extra, on top of standard)</div></div>
+  </div>
+
+  <div class="sec-head">Condition States</div>
+  <div class="cond-track">
+    <div class="cpip c-healthy"><div class="cname">Healthy</div><div class="cmod"><span class="num n-pos" style="font-size:.62rem;">No penalty</span></div><div class="cdesc">Full output. Normal upkeep. Standard assignment.</div></div>
+    <div class="cpip c-injured"><div class="cname">Injured</div><div class="cmod"><span class="num n-neg" style="font-size:.62rem;">−4 Sat/season</span></div><div class="cdesc">Reduced build speed. No field assignments. Requires Field Surgery Theatre to fully recover.</div></div>
+    <div class="cpip c-weakened"><div class="cname">Weakened</div><div class="cmod"><span class="num n-neg" style="font-size:.62rem;">−2 Sat/season</span></div><div class="cdesc">Performs one K-level below actual. Permanent without Surgical Implant Tools.</div></div>
+    <div class="cpip c-critical"><div class="cname">Critical</div><div class="cmod"><span class="num n-neg" style="font-size:.62rem;">−8 Sat/season</span></div><div class="cdesc">Death risk. Needs Med Scholar + Field Surgery this season. Without both: dies.</div></div>
+    <div class="cpip c-retired"><div class="cname">Retired</div><div class="cmod"><span class="num n-neu" style="font-size:.62rem;">— inactive</span></div><div class="cdesc">No active contribution. Passive value if Archive exists.</div></div>
+  </div>
+  <div class="info-line" style="font-size:.62rem;margin-top:.4rem;color:var(--faded);"><b style="color:var(--red);">⚠ Prion Exposure:</b> Scholars returning from Military Installations, Submerged Cities, or Sealed Archives must pass through the Prion Detection Lab before re-entering. A positive result not quarantined triggers: <span class="num n-neg" style="font-size:.58rem;">−10 Sat all Scholars</span> + potential outbreak event.</div>
+
+  <div class="sec-head">Satisfaction Scale (−20 to +20)</div>
+  <div class="sat-bar">
+    <div class="sat-seg sn4">−20</div><div class="sat-seg sn4">−16</div><div class="sat-seg sn3">−12</div>
+    <div class="sat-seg sn2">−8</div><div class="sat-seg sn1">−4</div><div class="sat-seg sz">0</div>
+    <div class="sat-seg sp0">+4</div><div class="sat-seg sp1">+8</div><div class="sat-seg sp2">+12</div>
+    <div class="sat-seg sp3">+16</div><div class="sat-seg sp4">+20</div>
+  </div>
+  <div class="sat-labels"><span style="color:var(--red);">◄ DEFECT</span><span>DISAFFECTED</span><span>STABLE</span><span>COMMITTED</span><span style="color:var(--green);">BONUS ►</span></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.7rem;">
+    <div>
+      <div class="sec-head" style="margin-top:0;">// Threshold Effects</div>
+      <table class="mod-table">
+        <thead><tr><th>Range</th><th>State</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--green);">+13 to +20</td><td>Committed</td><td>+15% build speed · Apprentice output +1 grade</td></tr>
+          <tr><td>+1 to +12</td><td>Stable</td><td>Standard performance across all functions</td></tr>
+          <tr><td>−5 to 0</td><td>Uncertain</td><td>Occasional assignment refusals — warning visible</td></tr>
+          <tr><td>−12 to −6</td><td>Disaffected</td><td>Withholds knowledge (+10% build failure). May refuse field assignments.</td></tr>
+          <tr><td style="color:var(--red);">−13 to −20</td><td>Breaking Point</td><td>Defection risk each season. At −20: defects automatically.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="sec-head" style="margin-top:0;">// Satisfaction Modifiers</div>
+      <table class="mod-table">
+        <thead><tr><th>Event</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>Population well-fed</td><td><span class="num n-pos" style="font-size:.58rem;">+1/season</span></td></tr>
+          <tr><td>Correct domain work assigned</td><td><span class="num n-pos" style="font-size:.58rem;">+1/season</span></td></tr>
+          <tr><td>Apprentice completes training</td><td><span class="num n-pos" style="font-size:.58rem;">+4 one-time</span></td></tr>
+          <tr><td>T4–T5 build supervised</td><td><span class="num n-pos" style="font-size:.58rem;">+3 one-time</span></td></tr>
+          <tr><td>Settlement morale bonus season</td><td><span class="num n-pos" style="font-size:.58rem;">+1/season</span></td></tr>
+          <tr><td>Rationing lifted</td><td><span class="num n-pos" style="font-size:.58rem;">+2 one-time</span></td></tr>
+          <tr><td>Water shortage</td><td><span class="num n-neg" style="font-size:.58rem;">−3/season</span></td></tr>
+          <tr><td>Food rationing</td><td><span class="num n-neg" style="font-size:.58rem;">−2/season</span></td></tr>
+          <tr><td>Starvation</td><td><span class="num n-neg" style="font-size:.58rem;">−5/season</span></td></tr>
+          <tr><td>Wrong domain assigned</td><td><span class="num n-neg" style="font-size:.58rem;">−2/season</span></td></tr>
+          <tr><td>Condition: Injured</td><td><span class="num n-neg" style="font-size:.58rem;">−4/season</span></td></tr>
+          <tr><td>Condition: Weakened</td><td><span class="num n-neg" style="font-size:.58rem;">−2/season</span></td></tr>
+          <tr><td>Condition: Critical</td><td><span class="num n-neg" style="font-size:.58rem;">−8/season</span></td></tr>
+          <tr><td>Apprentice dies in field</td><td><span class="num n-neg" style="font-size:.58rem;">−6 one-time</span></td></tr>
+          <tr><td>Another Scholar defects</td><td><span class="num n-neg" style="font-size:.58rem;">−3 one-time</span></td></tr>
+          <tr><td>Prion outbreak in settlement</td><td><span class="num n-neg" style="font-size:.58rem;">−5 one-time</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec-head">Scholar Roles</div>
+  <table class="role-table">
+    <thead><tr><th>Role</th><th>Function</th><th>Satisfaction</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>🔬 Researcher</td><td>Interprets blueprints, prepares construction docs. Active builds in domain proceed faster.</td><td><span class="num n-pos" style="font-size:.58rem;">+1/season</span> (correct domain)</td><td>Default role. Safe. Most common assignment.</td></tr>
+      <tr><td>🏗 Supervisor</td><td>Physically oversees one active build. Dramatically reduces failure chance on that build.</td><td><span class="num n-pos" style="font-size:.58rem;">+3 on success</span></td><td>Scholar offline for all other functions. Worth it for critical T4–T5 first builds.</td></tr>
+      <tr><td>🎓 Trainer</td><td>Runs Apprenticeship Programme. No build activity during training.</td><td><span class="num n-pos" style="font-size:.58rem;">+4 on completion</span></td><td>3–4 seasons. Scholar offline. Interrupting: −3 Sat both parties, apprentice back 1 season.</td></tr>
+      <tr><td>🗺 Field Assignment</td><td>Accompanies expedition. Reads field blueprints. Domain decisions on-site.</td><td><span class="num n-neg" style="font-size:.58rem;">−1/season in field</span></td><td><b>Only role with physical danger.</b> Prion exposure risk. Injury/death possible. K3 Masters should rarely be sent.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Knowledge Inheritance — What Survives When a Scholar Dies</div>
+  <table class="inh-table">
+    <thead><tr><th>Situation at Death</th><th>Knowledge Outcome</th><th>Sat Impact (All Scholars)</th></tr></thead>
+    <tbody>
+      <tr><td>No apprentice, no Archive</td><td><span class="tag tag-bad">Domain Lost</span> All domain blueprints unreadable. Active builds stall or fail permanently.</td><td><span class="num n-neg" style="font-size:.6rem;">−4 all</span></td></tr>
+      <tr><td>Apprentice in training</td><td><span class="tag tag-warn">Partial Inheritance</span> Apprentice emerges as K1 with Knowledge Gap flag. Advanced blueprints remain beyond them until experienced.</td><td><span class="num n-neg" style="font-size:.6rem;">−4 all</span> + <span class="num n-neg" style="font-size:.6rem;">−6 apprentice</span></td></tr>
+      <tr><td>Apprentice fully trained</td><td><span class="tag tag-good">Domain Survives</span> Full transfer already occurred. Replacement is K1 — experience is still lost.</td><td><span class="num n-neg" style="font-size:.6rem;">−3 all</span></td></tr>
+      <tr><td>The Archive built</td><td><span class="tag tag-good">Archive Record</span> Replacement Scholar starts at effective K2. Knowledge Gaps fillable through Archive research.</td><td><span class="num n-neg" style="font-size:.6rem;">−2 all</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.62rem;color:var(--faded);margin-top:.4rem;"><b style="color:var(--red);">K3 Master death:</b> Additional <span class="num n-neg" style="font-size:.6rem;">−3 Sat</span> to ALL remaining Scholars on top of the above. This is a settlement-wide event.</p>
+
+</div><!-- /panel-scholars -->
+
+<!-- ═══ BLUEPRINTS ═══ -->
+<div id="panel-blueprints" class="tab-panel">
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// What is a Blueprint?</div>
+      <div class="info-line">Physical documents — schematics, manuals, annotated notes. They exist as objects that must be physically found, carried, and protected. <b>No blueprint = no technology.</b> They can be stolen, burned, or water-damaged permanently.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// D20 Discovery Roll</div>
+      <div class="info-line">Roll D20 on a <b>dedicated blueprint search expedition</b> to a specific site. Blueprints are never found incidentally during normal scavenging. Apply all bonuses before comparing to the required roll.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Scholar on Field Assignment:</b> <span class="num n-pos" style="font-size:.6rem;">+4 flat</span> to ALL blueprint rolls, regardless of tier or domain.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Interpretation Requirements</div>
+      <div class="info-line">Finding a blueprint opens a <b>construction chain.</b> The blueprint must be interpreted before building can begin.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>T1–T2:</b> Basic literacy (no Scholar) · <b>T3:</b> Scholar required · <b>T4:</b> Scholar + domain expertise · <b>T5:</b> Often 2+ Scholars required</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Blueprint Damage &amp; Loss</div>
+      <div class="info-line"><b>Fire:</b> Permanent if unprotected. Raiders may burn deliberately.</div>
+      <div class="info-line"><b>Theft:</b> Undetected until you attempt to use it.</div>
+      <div class="info-line"><b>Water damage:</b> Degrades in poor storage.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Document Printing Press (T4):</b> Creates backup copies — eliminates loss risk from fire or theft.</div>
+    </div>
+  </div>
+
+  <p style="font-size:.6rem;color:var(--faded);font-style:italic;margin-bottom:.6rem;">All blueprints shown. Use Ctrl+F / browser search to find specific items.</p>
+
+  <div class="bp-wrap">
+  <table class="bp-table">
+    <thead><tr><th>Tier</th><th>Blueprint(s)</th><th>Roll</th><th>Scholar to Read</th><th>Where Found</th><th>Bonuses &amp; Notes</th></tr></thead>
+    <tbody>
+      <tr><td><span class="bp-tier bpt1">T·I</span></td><td><span class="bp-name">Hand Tools Workshop · Animal Trap Line · Rain Catcher · Basic Shelter · Palisade Wall · Field Surgery Station · Weapons Rack</span></td><td><span class="bp-roll bpr1">4+</span></td><td><span class="dom-tag dt-any">None</span></td><td>Homes, farmhouses, supply caches, roadside shelters, ruins, bodies</td><td><span class="bp-note">No Scholar needed. Trained Scouts: +1 search.</span></td></tr>
+      <tr><td><span class="bp-tier bpt1">T·I</span></td><td><span class="bp-name">Dugout Canoe <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr1">5+</span></td><td><span class="dom-tag dt-any">None</span></td><td>Riverside shelters, coastal farms, marina ruins, bodies near water</td><td><span class="bp-note">+2 search if coastal or riverside location.</span></td></tr>
+      <tr><td><span class="bp-tier bpt2">T·II</span></td><td><span class="bp-name">Grain Mill · Animal Husbandry Pen · Medicinal Garden</span></td><td><span class="bp-roll bpr2">7+</span></td><td><span class="dom-tag dt-agr">Agriculture</span></td><td>Schools, libraries, farmhouses, NPC faction reward, herbalist stores</td><td><span class="bp-note">+2 search with Agriculture Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt2">T·II</span></td><td><span class="bp-name">Fermentation &amp; Brewing</span></td><td><span class="bp-roll bpr2">7+</span></td><td><span class="dom-tag dt-agr">Agriculture</span> <span class="dom-tag dt-che">Chemistry</span></td><td>Libraries, municipal buildings, NPC faction trade</td><td><span class="bp-note">+2 search with Agri or Chem Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt2">T·II</span></td><td><span class="bp-name">Sand Filtration · Dug Well · Carpentry School · Watchtower Network · Map Printing Press · Tannery · Forge Basics · Cement Kiln</span></td><td><span class="bp-roll bpr2">7–8+</span></td><td><span class="dom-tag dt-eng">Engineering</span></td><td>Schools, libraries, municipal buildings, NPC faction reward</td><td><span class="bp-note">+2 search with Eng Scholar. Forge &amp; Cement Kiln: 8+.</span></td></tr>
+      <tr><td><span class="bp-tier bpt2">T·II</span></td><td><span class="bp-name">Flat-Bottom River Barge · Fishing Net Rig <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr2">8+</span></td><td><span class="dom-tag dt-eng">Engineering</span></td><td>Coastal libraries, riverside municipal buildings, harbour ruins</td><td><span class="bp-note">+2 search Eng Scholar · +2 at coastal/riverside location.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Closed Irrigation System · Enclosed Greenhouse</span></td><td><span class="bp-roll bpr3">11+</span></td><td><span class="dom-tag dt-agr">Agriculture</span> <span class="dom-tag dt-eng">Engineering</span></td><td>Universities, industrial facilities, agricultural research sites</td><td><span class="bp-warn">+4 all BPs (Scholar) · +2 Agri or Eng Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Advanced Field Surgery Theatre</span></td><td><span class="bp-roll bpr3">12+</span></td><td><span class="dom-tag dt-med">Medicine</span></td><td>Hospitals, university medical schools</td><td><span class="bp-warn">+4 all BPs (Scholar) · +2 Medicine Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Prion Detection Laboratory</span></td><td><span class="bp-roll bpr3">12+</span></td><td><span class="dom-tag dt-med">Medicine</span> <span class="dom-tag dt-che">Chemistry</span></td><td>Hospitals, university medical schools, research institutes</td><td><span class="bp-warn">+4 all BPs (Scholar) · +2 Med or Chem Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Prion Barrier &amp; Burn Wall</span></td><td><span class="bp-roll bpr3">11+</span></td><td><span class="dom-tag dt-eng">Engineering</span> <span class="dom-tag dt-med">Medicine</span></td><td>Military installations, industrial facilities</td><td><span class="bp-warn">+4 all BPs (Scholar). Prereq for Prion Neutralisation Compound.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Blast Furnace · Armour Smithy</span></td><td><span class="bp-roll bpr3">11+</span></td><td><span class="dom-tag dt-met">Metallurgy</span></td><td>Industrial facilities, city edge factories, military armouries</td><td><span class="bp-warn">+4 all BPs (Scholar) · +2 Metallurgy Scholar. Blast Furnace unlocks steel.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Crossbow Manufactory · Bullet Press</span></td><td><span class="bp-roll bpr3">11+</span></td><td><span class="dom-tag dt-met">Metallurgy</span> <span class="dom-tag dt-eng">Engineering</span></td><td>Industrial facilities, military armouries</td><td><span class="bp-warn">+4 all BPs (Scholar).</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Scout Training Grounds · Apprenticeship Programme</span></td><td><span class="bp-roll bpr3">11+</span></td><td><span class="dom-tag dt-any">Any Scholar</span></td><td>Universities, military installations, Scholar recruitment events</td><td><span class="bp-warn">+4 all BPs (Scholar). Apprenticeship unlocks Scholar training pipeline.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Coastal Trading Post · Sail-Rigged Coastal Vessel <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr3">12+</span></td><td><span class="dom-tag dt-eng">Engineering</span></td><td>Coastal industrial ruins, harbour remains, marine archives</td><td><span class="bp-warn">+4 all BPs (Scholar) · +2 Eng Scholar + coastal location.</span></td></tr>
+      <tr><td><span class="bp-tier bpt3">T·III</span></td><td><span class="bp-name">Celestial Navigation Chart <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr3">13+</span></td><td><span class="dom-tag dt-eng">Engineering</span></td><td>Universities (astro/geo depts), coastal libraries, naval bases</td><td><span class="bp-warn">+4 all BPs · +2 Eng Scholar. Without Scholar: 40% wrong chart type returned.</span></td></tr>
+      <tr><td><span class="bp-tier bpt4">T·IV</span></td><td><span class="bp-name">Manual Electrical Generator · Radio Receiver (Passive)</span></td><td><span class="bp-roll bpr4">14+</span></td><td><span class="dom-tag dt-ele">Electronics</span> <span class="dom-tag dt-eng">Engineering</span></td><td>Military installations, submerged cities, power station ruins</td><td><span class="bp-warn">+4 all BPs · +2 Electronics Scholar. Unreadable without Electronics Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt4">T·IV</span></td><td><span class="bp-name">Advanced Distillation · Prion Neutralisation Compound · Quarantine Protocol Suite · Surgical Implant Tools</span></td><td><span class="bp-roll bpr4">15+</span></td><td><span class="dom-tag dt-che">Chemistry</span> <span class="dom-tag dt-med">Medicine</span></td><td>Hospitals (deep archive), military medical facilities, submerged cities, government bunkers</td><td><span class="bp-warn">+4 all BPs · +2 Chem or Med Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt4">T·IV</span></td><td><span class="bp-name">Advanced Water Purification · Reinforced Vault Storage · Document Printing Press · Gun Bench</span></td><td><span class="bp-roll bpr4">14+</span></td><td><span class="dom-tag dt-eng">Engineering</span> <span class="dom-tag dt-met">Metallurgy</span></td><td>Military installations, government bunkers, submerged city cores</td><td><span class="bp-warn">+4 all BPs · +2 Eng Scholar.</span></td></tr>
+      <tr><td><span class="bp-tier bpt4">T·IV</span></td><td><span class="bp-name">Deep-Keel Sailing Ship · Deep Sea Fishing Rig <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr4">15+</span></td><td><span class="dom-tag dt-eng">Engineering</span> <span class="dom-tag dt-met">Metallurgy</span></td><td>Submerged harbour districts, military naval bases, maritime archives</td><td><span class="bp-warn">+4 all BPs · +2 Eng Scholar + dive equipment.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">Hydroelectric Turbine · Broadcast Tower</span></td><td><span class="bp-roll bpr5">17+</span></td><td><span class="dom-tag dt-eng">Engineering</span> <span class="dom-tag dt-ele">Electronics</span></td><td>Crashed Research Facility (unique), Sealed Gov. Archive (unique), Split Blueprint (2+ factions)</td><td><span class="bp-warn">+4 all BPs · +2 Eng+Ele Scholar. Requires 2+ Scholars to interpret. Turbine: river tile required.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">Vertical Farm Complex</span></td><td><span class="bp-roll bpr5">17+</span></td><td><span class="dom-tag dt-agr">Agriculture</span> <span class="dom-tag dt-eng">Engineering</span></td><td>Sealed Gov. Archive, Split Blueprint (2+ factions)</td><td><span class="bp-warn">+4 all BPs · Requires electricity already active. 2+ Scholars to interpret.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">Desalination Plant <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span></span></td><td><span class="bp-roll bpr5">17+</span></td><td><span class="dom-tag dt-che">Chemistry</span> <span class="dom-tag dt-eng">Engineering</span></td><td>Pre-Collapse Submarine (unique), Sealed Gov. Archive (unique)</td><td><span class="bp-warn">+4 all BPs · Split Blueprint option available. 2+ Scholars to interpret.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">Prion Research Laboratory · Prion Vaccine Prototype</span></td><td><span class="bp-roll bpr5">17+</span></td><td><span class="dom-tag dt-med">Medicine</span> <span class="dom-tag dt-che">Chemistry</span></td><td>Crashed Research Facility, Pre-Collapse Submarine (both unique)</td><td><span class="bp-warn">+4 all BPs · Med + Chem Scholar both present: +2. Vaccine requires Research Lab first. 2+ Scholars.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">The Archive</span></td><td><span class="bp-roll bpr5">18+</span></td><td><span class="dom-tag dt-any">All 6 Domains Required</span></td><td>Sealed Gov. Archive, Pre-Collapse Submarine</td><td><span class="bp-warn">+4 all BPs · All 6 Scholar domains must be present to interpret. Rarest build in game.</span></td></tr>
+      <tr><td><span class="bp-tier bpt5">T·V</span></td><td><span class="bp-name">Ocean Ark Fleet <span style="color:var(--sea);font-size:.55rem;">⚓SEA</span> <span style="color:var(--t5);font-size:.6rem;">★ WIN CONDITION</span></span></td><td><span class="bp-roll bpr5">19+</span></td><td><span class="dom-tag dt-eng">Engineering</span> <span class="dom-tag dt-met">Metallurgy</span> <span class="dom-tag dt-ele">Electronics</span></td><td>Pre-Collapse Submarine (unique) — or Split Blueprint requiring <b>3+ faction cooperation</b></td><td><span class="bp-warn">+4 all BPs · All 3 Scholars present: +2. Requires Nav Charts + Desalination + Deep Sea Rig. ⚡ Flare risk if Split Blueprint.</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+</div><!-- /panel-blueprints -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian · Scholar &amp; Blueprint Registry · Rev. 3</footer>
+</div>
+</body>
+</html>

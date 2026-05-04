@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scavenging &amp; Building — Dead Meridian</title>
+<style>
+  :root {
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --t1:#888; --t2:#4a9e5c; --t3:#3a7abf; --t4:#8b5fcf; --t5:#c9952a;
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --sea:#2a7a8a;
+    --zone1:#4a9e5c; --zone2:#c9952a; --zone3:#a03a2a; --zone4:#8b5fcf; --zone5:#c06020;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:2rem 1rem 3rem;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:1080px;margin:0 auto;}
+  header{text-align:center;margin-bottom:1.8rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.5rem auto;width:75%;}
+  .stamp-row{display:flex;justify-content:center;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.5rem;letter-spacing:.22em;padding:2px 8px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1.2deg);} .stamp:last-child{transform:rotate(.7deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.3rem,4vw,2.4rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12),0 2px 0 rgba(0,0,0,.9);margin:.3rem 0;}
+  .subtitle{font-size:.63rem;color:var(--faded);letter-spacing:.25em;text-transform:uppercase;}
+  /* ── RADIO TAB SYSTEM — no JS, no :has(), works in all local files ── */
+  .tab-radio{display:none;}
+  .tabs{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tab-lbl{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--faded);background:transparent;color:var(--faded);padding:.4rem .9rem;cursor:pointer;transition:all .15s;user-select:none;display:inline-block;}
+  .tab-lbl:hover{border-color:var(--ink-dim);color:var(--ink-dim);}
+  .tab-panels{border:1px solid var(--border-mid);border-top:none;}
+  .tab-panel{display:none;padding:1rem;}
+  #panel-scav{display:block;}
+  .tab-lbl[for="r-sv-scav"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sv-scav:checked ~ .tab-panels #panel-scav{display:block;}
+  #r-sv-scav:checked ~ .tabs .tab-lbl[for="r-sv-scav"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sv-scav:checked ~ .tab-panels #panel-build{display:none;}
+  #r-sv-scav:checked ~ .tab-panels #panel-areas{display:none;}
+  #r-sv-scav:checked ~ .tab-panels #panel-jobs{display:none;}
+  #r-sv-build:checked ~ .tab-panels #panel-build{display:block;}
+  #r-sv-build:checked ~ .tabs .tab-lbl[for="r-sv-build"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sv-build:checked ~ .tab-panels #panel-scav{display:none;}
+  #r-sv-build:checked ~ .tab-panels #panel-areas{display:none;}
+  #r-sv-build:checked ~ .tab-panels #panel-jobs{display:none;}
+  #r-sv-build:checked ~ .tabs .tab-lbl[for="r-sv-scav"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #r-sv-areas:checked ~ .tab-panels #panel-areas{display:block;}
+  #r-sv-areas:checked ~ .tabs .tab-lbl[for="r-sv-areas"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sv-areas:checked ~ .tab-panels #panel-scav{display:none;}
+  #r-sv-areas:checked ~ .tab-panels #panel-build{display:none;}
+  #r-sv-areas:checked ~ .tab-panels #panel-jobs{display:none;}
+  #r-sv-areas:checked ~ .tabs .tab-lbl[for="r-sv-scav"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #r-sv-jobs:checked ~ .tab-panels #panel-jobs{display:block;}
+  #r-sv-jobs:checked ~ .tabs .tab-lbl[for="r-sv-jobs"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #r-sv-jobs:checked ~ .tab-panels #panel-scav{display:none;}
+  #r-sv-jobs:checked ~ .tab-panels #panel-build{display:none;}
+  #r-sv-jobs:checked ~ .tab-panels #panel-areas{display:none;}
+  #r-sv-jobs:checked ~ .tabs .tab-lbl[for="r-sv-scav"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:1rem;}
+  .info-card{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.02);}
+  .info-title{font-family:var(--fd);font-size:.68rem;color:var(--ink);letter-spacing:.08em;margin-bottom:.25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+  .info-line{font-size:.62rem;color:var(--ink-dim);line-height:1.6;}
+  .info-line b{color:var(--ink);}
+  .zone{display:inline-block;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid;padding:1px 6px;white-space:nowrap;}
+  .z1{color:var(--zone1);border-color:rgba(74,158,92,.5);} .z2{color:var(--zone2);border-color:rgba(201,149,42,.5);}
+  .z3{color:var(--zone3);border-color:rgba(160,58,42,.5);} .z4{color:var(--zone4);border-color:rgba(139,95,207,.5);}
+  .zone-map{display:flex;gap:.4rem;margin:.6rem 0 .9rem;flex-wrap:wrap;}
+  .zm-ring{flex:1;min-width:100px;border:1px solid;padding:.4rem .6rem;text-align:center;}
+  .zm-z1{border-color:rgba(74,158,92,.4);background:rgba(74,158,92,.04);}
+  .zm-z2{border-color:rgba(201,149,42,.4);background:rgba(201,149,42,.04);}
+  .zm-z3{border-color:rgba(160,58,42,.4);background:rgba(160,58,42,.04);}
+  .zm-z4{border-color:rgba(139,95,207,.4);background:rgba(139,95,207,.04);}
+  .zm-label{font-family:var(--fd);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.2rem;}
+  .zm-z1 .zm-label{color:var(--zone1);} .zm-z2 .zm-label{color:var(--zone2);}
+  .zm-z3 .zm-label{color:var(--zone3);} .zm-z4 .zm-label{color:var(--zone4);}
+  .zm-blocks{font-family:var(--fd);font-size:.95rem;font-weight:bold;line-height:1;}
+  .zm-z1 .zm-blocks{color:var(--zone1);} .zm-z2 .zm-blocks{color:var(--zone2);}
+  .zm-z3 .zm-blocks{color:var(--zone3);} .zm-z4 .zm-blocks{color:var(--zone4);}
+  .zm-cost{font-size:.58rem;color:var(--ink-dim);margin:.1rem 0;}
+  .zm-reqs{font-size:.54rem;color:var(--faded);line-height:1.45;margin-top:.15rem;border-top:1px solid rgba(200,168,75,.1);padding-top:.2rem;}
+  .zm-reqs b{color:var(--ink-dim);}
+  .diff{display:inline-block;font-family:var(--fd);font-size:.6rem;font-weight:bold;padding:1px 6px;border:1px solid;white-space:nowrap;}
+  .d-trivial{color:#777;border-color:rgba(119,119,119,.4);} .d-easy{color:var(--zone1);border-color:rgba(74,158,92,.45);}
+  .d-mod{color:#9aaa30;border-color:rgba(154,170,48,.45);} .d-tricky{color:var(--amber);border-color:rgba(201,149,42,.45);}
+  .d-hard{color:#c06020;border-color:rgba(192,96,32,.45);} .d-rare{color:var(--t4);border-color:rgba(139,95,207,.45);}
+  .d-vr{color:var(--red);border-color:rgba(160,58,42,.45);} .d-uniq{color:var(--t5);border-color:rgba(201,149,42,.5);}
+  .sec-head{font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faded);padding:.3rem 0 .25rem;border-bottom:1px solid var(--border-mid);margin:.8rem 0 .4rem;}
+  /* BUILDING CARDS */
+  details.bcard{border:1px solid var(--border-mid);margin-bottom:.5rem;overflow:visible;position:relative;}
+  details.bcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  details.bc-t1::before{background:var(--t1);} details.bc-t2::before{background:var(--t2);}
+  details.bc-t3::before{background:var(--t3);} details.bc-t4::before{background:var(--t4);}
+  details.bc-t5::before{background:var(--t5);}
+  details.bcard > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.45rem .8rem .45rem 1.2rem;flex-wrap:wrap;user-select:none;transition:background .12s;}
+  details.bcard > summary::-webkit-details-marker{display:none;}
+  details.bcard > summary::after{content:'▼';font-size:.52rem;color:var(--faded);margin-left:auto;flex-shrink:0;transition:transform .2s;}
+  details.bcard[open] > summary::after{transform:rotate(180deg);}
+  details.bcard[open] > summary{border-bottom:1px solid var(--border-mid);}
+  details.bc-t1 > summary:hover{background:rgba(136,136,136,.05);}
+  details.bc-t2 > summary:hover{background:rgba(74,158,92,.05);}
+  details.bc-t3 > summary:hover{background:rgba(58,122,191,.05);}
+  details.bc-t4 > summary:hover{background:rgba(139,95,207,.05);}
+  details.bc-t5 > summary:hover{background:rgba(201,149,42,.05);}
+  .bc-badge{font-family:var(--fd);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border:1px solid currentColor;flex-shrink:0;}
+  details.bc-t1 .bc-badge{color:var(--t1);} details.bc-t2 .bc-badge{color:var(--t2);}
+  details.bc-t3 .bc-badge{color:var(--t3);} details.bc-t4 .bc-badge{color:var(--t4);}
+  details.bc-t5 .bc-badge{color:var(--t5);}
+  .bc-name{font-family:var(--fd);font-size:.88rem;letter-spacing:.05em;flex:1;}
+  details.bc-t1 .bc-name{color:var(--t1);} details.bc-t2 .bc-name{color:var(--t2);}
+  details.bc-t3 .bc-name{color:var(--t3);} details.bc-t4 .bc-name{color:var(--t4);}
+  details.bc-t5 .bc-name{color:var(--t5);}
+  .bc-meta{font-size:.58rem;color:var(--faded);letter-spacing:.1em;}
+  .bc-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem .8rem;padding:.6rem .8rem .7rem 1.2rem;}
+  .bc-body > div{min-width:0;overflow-wrap:break-word;word-break:break-word;}
+  .bc-col-label{font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--faded);margin-bottom:.25rem;}
+  .bc-stat{display:inline-block;font-size:.6rem;padding:1px 5px;border:1px solid;margin:1px 2px 1px 0;white-space:normal;max-width:100%;}
+  .s-pos{color:var(--green);border-color:rgba(61,138,74,.4);}
+  .s-neg{color:var(--red);border-color:rgba(160,58,42,.4);}
+  .s-warn{color:var(--amber);border-color:rgba(201,149,42,.4);}
+  .s-neu{color:var(--ink-dim);border-color:var(--border-mid);}
+  .s-sea{color:var(--sea);border-color:rgba(42,122,138,.4);}
+  .bc-desc{font-size:.62rem;color:var(--ink-dim);line-height:1.55;font-style:italic;margin-top:.3rem;overflow-wrap:break-word;word-break:break-word;min-width:0;}
+  .res-list{font-size:.62rem;color:var(--ink-dim);line-height:1.6;}
+  .ri{padding-left:.75rem;position:relative;margin-bottom:.1rem;}
+  .ri::before{content:'·';position:absolute;left:0;color:var(--faded);}
+  .ri b{color:var(--ink);}
+  .ri small{display:block;padding-left:.5rem;color:var(--faded);font-size:.57rem;}
+  .bp-req{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.2rem;}
+  .bpr{font-size:.55rem;letter-spacing:.07em;border:1px solid;padding:2px 6px;white-space:nowrap;}
+  .bpr-t1{color:var(--t1);border-color:rgba(136,136,136,.4);} .bpr-t2{color:var(--t2);border-color:rgba(74,158,92,.4);}
+  .bpr-t3{color:var(--t3);border-color:rgba(58,122,191,.4);} .bpr-t4{color:var(--t4);border-color:rgba(139,95,207,.4);}
+  .bpr-t5{color:var(--t5);border-color:rgba(201,149,42,.4);}
+  .sea-mark{display:inline-block;font-size:.48rem;letter-spacing:.08em;color:var(--sea);border:1px solid var(--sea);padding:0 4px;vertical-align:middle;margin-left:3px;opacity:.85;}
+  /* GUN SYSTEM */
+  .gq{display:inline-block;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid;padding:1px 6px;white-space:nowrap;font-family:var(--fd);}
+  .gq-crude{color:#888;border-color:rgba(136,136,136,.4);} .gq-standard{color:var(--t2);border-color:rgba(74,158,92,.4);}
+  .gq-reliable{color:var(--t3);border-color:rgba(58,122,191,.4);} .gq-masterwork{color:var(--t5);border-color:rgba(201,149,42,.5);}
+  .gp-tag{display:inline-block;font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid;padding:1px 5px;white-space:nowrap;}
+  .gp-basic{color:#9aaa30;border-color:rgba(154,170,48,.4);} .gp-adv{color:var(--t4);border-color:rgba(139,95,207,.4);}
+  .gp-ammo-s{color:#7abccc;border-color:rgba(122,188,204,.4);} .gp-ammo-l{color:#cc8844;border-color:rgba(204,136,68,.4);}
+  .gun-craft-table{width:100%;border-collapse:collapse;font-size:.61rem;margin:.4rem 0;}
+  .gun-craft-table th{font-family:var(--fd);font-size:.51rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.25rem .4rem;text-align:left;font-weight:normal;}
+  .gun-craft-table td{padding:.32rem .4rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .gun-craft-table tr:last-child td{border-bottom:none;}
+  .gun-craft-table td:first-child{color:var(--ink);white-space:nowrap;}
+  .gun-craft-table{table-layout:fixed;width:100%;}
+  .gun-craft-table td{overflow-wrap:break-word;word-break:break-word;}
+  /* RESOURCE CARDS (scav tab) */
+  .res-list-wrap{display:flex;flex-direction:column;gap:.35rem;margin:.4rem 0;}
+  .res-card{border:1px solid var(--border);background:rgba(200,168,75,.015);overflow:hidden;}
+  .res-card-top{display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+  .rc-name{font-family:var(--fd);font-size:.72rem;color:var(--ink);flex:1;min-width:120px;}
+  .rc-zones{display:flex;gap:.2rem;flex-wrap:wrap;}
+  .res-card-bot{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.4rem .6rem;padding:.35rem .6rem;font-size:.61rem;color:var(--ink-dim);line-height:1.5;overflow-wrap:break-word;word-break:break-word;}
+  .rc-lbl{font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faded);display:block;margin-bottom:.1rem;}
+  .bonus-v{color:var(--green);} .pen-v{color:var(--red);} .yf{color:var(--red);font-size:.58rem;}
+  .area-tag{display:inline-block;font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid;padding:1px 5px;white-space:nowrap;}
+  .at-urban{color:#c8a84b;border-color:rgba(200,168,75,.45);} .at-rural{color:#4a9e5c;border-color:rgba(74,158,92,.45);}
+  .at-coast{color:#2a9aaa;border-color:rgba(42,154,170,.45);} .at-mil{color:#8b5fcf;border-color:rgba(139,95,207,.45);}
+  .at-waste{color:#a06030;border-color:rgba(160,96,48,.45);}
+  .diff-tag{display:inline-block;font-family:var(--fd);font-size:.6rem;font-weight:bold;padding:1px 6px;border:1px solid;white-space:nowrap;}
+  .d-easy{color:var(--zone1);border-color:rgba(74,158,92,.45);} .d-mod{color:#9aaa30;border-color:rgba(154,170,48,.45);}
+  .d-tricky{color:var(--amber);border-color:rgba(201,149,42,.45);} .d-hard{color:#c06020;border-color:rgba(192,96,32,.45);}
+  .d-rare{color:var(--t4);border-color:rgba(139,95,207,.45);} .d-vr{color:var(--red);border-color:rgba(160,58,42,.45);}
+  /* AREAS TAB */
+  .area-card{border:1px solid var(--border-mid);margin-bottom:.9rem;overflow:hidden;}
+  .area-card-head{padding:.55rem .85rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+  .area-icon{font-size:1.1rem;line-height:1;flex-shrink:0;}
+  .area-name{font-family:var(--fd);font-size:1rem;letter-spacing:.06em;flex:1;}
+  .area-sub{font-size:.6rem;color:var(--faded);letter-spacing:.12em;text-transform:uppercase;}
+  .ac-urban{border-color:rgba(200,168,75,.3);background:rgba(200,168,75,.02);} .ac-urban .area-name{color:#c8a84b;}
+  .ac-rural{border-color:rgba(74,158,92,.3);background:rgba(74,158,92,.02);} .ac-rural .area-name{color:#4a9e5c;}
+  .ac-coast{border-color:rgba(42,154,170,.3);background:rgba(42,154,170,.02);} .ac-coast .area-name{color:#2a9aaa;}
+  .ac-mil{border-color:rgba(139,95,207,.3);background:rgba(139,95,207,.02);} .ac-mil .area-name{color:#8b5fcf;}
+  .ac-waste{border-color:rgba(160,96,48,.3);background:rgba(160,96,48,.02);} .ac-waste .area-name{color:#a06030;}
+  .area-body{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:0;border-top:1px solid var(--border-mid);min-width:0;}
+  .area-col{padding:.55rem .85rem;border-right:1px solid var(--border);}
+  .area-col:last-child{border-right:none;}
+  .area-col-head{font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faded);margin-bottom:.35rem;}
+  .threat-row{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.3rem;}
+  .threat-icon{font-size:.75rem;line-height:1.3;flex-shrink:0;}
+  .threat-text{font-size:.62rem;color:var(--ink-dim);line-height:1.5;}
+  .threat-text b{color:var(--ink);}
+  .threat-text small{display:block;color:var(--faded);font-size:.57rem;}
+  .struct-item{margin-bottom:.35rem;}
+  .struct-name{font-family:var(--fd);font-size:.68rem;color:var(--ink);display:block;}
+  .struct-desc{font-size:.58rem;color:var(--faded);line-height:1.45;}
+  .res-yield-list{font-size:.62rem;color:var(--ink-dim);line-height:1.65;}
+  .ry{padding-left:.7rem;position:relative;margin-bottom:.1rem;}
+  .ry::before{content:'·';position:absolute;left:0;color:var(--faded);}
+  .ry b{color:var(--ink);}
+  .ry .tag-bonus{color:var(--green);font-size:.57rem;}
+  .ry .tag-warn{color:var(--amber);font-size:.57rem;}
+  .ry .tag-rare{color:var(--t4);font-size:.57rem;}
+  .area-note{grid-column:1/-1;padding:.4rem .85rem;border-top:1px solid var(--border);font-size:.6rem;color:var(--faded);font-style:italic;line-height:1.55;}
+  .area-note b{color:var(--amber);}
+  /* JOBS TAB */
+  .job-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.6rem;margin:.6rem 0;}
+  .job-card{border:1px solid var(--border-mid);padding:.6rem .8rem;background:rgba(200,168,75,.015);position:relative;overflow:hidden;}
+  .job-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .jc-farm::before{background:#4a9e5c;} .jc-build::before{background:#3a7abf;}
+  .jc-def::before{background:#a03a2a;} .jc-scout::before{background:#8b5fcf;}
+  .jc-work::before{background:#c9952a;} .jc-idle::before{background:#4a4020;}
+  .jc-farm{border-color:rgba(74,158,92,.25);} .jc-build{border-color:rgba(58,122,191,.25);}
+  .jc-def{border-color:rgba(160,58,42,.25);} .jc-scout{border-color:rgba(139,95,207,.25);}
+  .jc-work{border-color:rgba(201,149,42,.25);} .jc-idle{border-color:rgba(74,64,32,.3);}
+  .job-head{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.3rem;padding-left:.5rem;}
+  .job-role{font-family:var(--fd);font-size:.78rem;letter-spacing:.05em;flex:1;}
+  .jc-farm .job-role{color:#4a9e5c;} .jc-build .job-role{color:#3a7abf;}
+  .jc-def .job-role{color:#a03a2a;} .jc-scout .job-role{color:#8b5fcf;}
+  .jc-work .job-role{color:#c9952a;} .jc-idle .job-role{color:var(--faded);}
+  .job-num{font-family:var(--fd);font-size:1.5rem;font-weight:bold;line-height:1;}
+  .jc-farm .job-num{color:#4a9e5c;} .jc-build .job-num{color:#3a7abf;}
+  .jc-def .job-num{color:#a03a2a;} .jc-scout .job-num{color:#8b5fcf;}
+  .jc-work .job-num{color:#c9952a;} .jc-idle .job-num{color:var(--faded);}
+  .job-pct{font-size:.6rem;color:var(--faded);padding-left:.5rem;}
+  .job-body{font-size:.62rem;color:var(--ink-dim);line-height:1.55;padding-left:.5rem;}
+  .job-body b{color:var(--ink);}
+  .job-note{font-size:.58rem;color:var(--faded);font-style:italic;margin-top:.2rem;border-top:1px solid var(--border);padding-top:.25rem;}
+  .pop-bar{height:16px;background:rgba(200,168,75,.04);border:1px solid var(--border-mid);display:flex;overflow:hidden;margin:.5rem 0 .2rem;}
+  .pb-seg{display:flex;align-items:center;justify-content:center;font-size:.42rem;color:rgba(0,0,0,.6);font-family:var(--fd);}
+  .pb-farm{background:#3a6e40;flex:20;} .pb-build{background:#2a5580;flex:15;}
+  .pb-def{background:#6e2a1a;flex:15;} .pb-scout{background:#5a3a80;flex:12;}
+  .pb-work{background:#7a5a18;flex:15;} .pb-idle{background:#2a2416;flex:23;}
+  .pb-labels{display:flex;gap:1rem;flex-wrap:wrap;font-size:.52rem;color:var(--faded);margin-bottom:.8rem;}
+  .pb-dot{width:8px;height:8px;display:inline-block;margin-right:3px;vertical-align:middle;}
+  .event-table{width:100%;border-collapse:collapse;font-size:.63rem;margin:.4rem 0;}
+  .event-table th{font-family:var(--fd);font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.3rem .45rem;text-align:left;font-weight:normal;}
+  .event-table td{padding:.38rem .45rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .event-table tr:last-child td{border-bottom:none;}
+  .event-table tr:hover td{background:rgba(200,168,75,.02);}
+  .event-table td:first-child{color:var(--ink);font-family:var(--fd);font-size:.68rem;}
+  .c-pos{color:var(--green);} .c-neg{color:var(--red);} .c-warn{color:var(--amber);}
+  footer{text-align:center;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.5rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+  @media(max-width:750px){.area-body{grid-template-columns:1fr;}.area-col{border-right:none;border-bottom:1px solid var(--border);}.area-col:last-child{border-bottom:none;}}
+  @media(max-width:700px){.bc-body{grid-template-columns:1fr 1fr;}.info-grid,.job-grid{grid-template-columns:1fr;}.zone-map{flex-direction:column;}}
+
+  /* RESTORATION ENTRY CARDS */
+  .rest-entry{border:1px solid var(--border-mid);background:rgba(200,168,75,.015);overflow:hidden;}
+  .re-head{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;padding:.35rem .6rem;border-bottom:1px solid var(--border);background:rgba(200,168,75,.02);}
+  .re-found{font-family:var(--fd);font-size:.65rem;color:var(--ink);flex-shrink:0;}
+  .re-arrow{color:var(--faded);font-size:.6rem;flex-shrink:0;}
+  .re-becomes{font-family:var(--fd);font-size:.65rem;color:var(--amber);flex-shrink:0;}
+  .re-tier{font-family:var(--fd);font-size:.62rem;flex-shrink:0;margin-left:.1rem;}
+  .re-bp{font-size:.52rem;color:var(--faded);border:1px solid var(--border);padding:1px 5px;flex-shrink:0;margin-left:auto;}
+  .re-area{font-size:.48rem;letter-spacing:.08em;border:1px solid;padding:1px 4px;flex-shrink:0;}
+  .re-rural{color:#4a9e5c;border-color:rgba(74,158,92,.35);}
+  .re-urban{color:#c8a84b;border-color:rgba(200,168,75,.35);}
+  .re-coast{color:#2a9aaa;border-color:rgba(42,154,170,.35);}
+  .re-mil{color:#8b5fcf;border-color:rgba(139,95,207,.35);}
+  .re-body{display:grid;grid-template-columns:1fr 1fr;gap:0;min-width:0;}
+  .re-cost,.re-tradeoff{font-size:.6rem;color:var(--ink-dim);line-height:1.55;padding:.3rem .6rem;min-width:0;overflow-wrap:break-word;word-break:break-word;}
+  .re-cost{border-right:1px solid var(--border);}
+  .re-lbl{font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faded);display:block;margin-bottom:.1rem;}
+  @media(max-width:600px){.re-body{grid-template-columns:1fr;}.re-cost{border-right:none;border-bottom:1px solid var(--border);}.re-head{gap:.25rem;}}
+
+  /* ROLL RESULT CARDS */
+  .roll-cards{display:flex;flex-direction:column;gap:.3rem;margin:.4rem 0;}
+  .roll-card{display:flex;align-items:baseline;gap:.7rem;border:1px solid var(--border-mid);padding:.4rem .7rem;background:rgba(200,168,75,.015);}
+  .rc-roll{font-family:var(--fd);font-size:.85rem;min-width:2.4rem;flex-shrink:0;color:var(--ink);}
+  .rc-content{font-size:.62rem;color:var(--ink-dim);line-height:1.6;min-width:0;overflow-wrap:break-word;}
+  .rc-cond{font-family:var(--fd);font-size:.68rem;color:var(--ink);margin-right:.35rem;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">Field &amp; Construction Reference</span>
+    <span class="stamp">280×200 Minecraft Flat World</span>
+  </div>
+  <h1>Scavenging &amp; Building</h1>
+  <p class="subtitle">Resource Rolls · Travel Zones · Area Types · Construction · Blueprints · Population</p>
+</header>
+
+<input type="radio" class="tab-radio" name="sv-tabs" id="r-sv-scav" checked>
+<input type="radio" class="tab-radio" name="sv-tabs" id="r-sv-build">
+<input type="radio" class="tab-radio" name="sv-tabs" id="r-sv-areas">
+<input type="radio" class="tab-radio" name="sv-tabs" id="r-sv-jobs">
+
+<div class="tabs">
+  <label class="tab-lbl" for="r-sv-scav">⛏ Scavenging</label>
+  <label class="tab-lbl" for="r-sv-build">🏗 Building</label>
+  <label class="tab-lbl" for="r-sv-areas">🗺 Areas</label>
+  <label class="tab-lbl" for="r-sv-jobs">👥 Population &amp; Jobs</label>
+</div>
+
+<div class="tab-panels">
+
+<div id="panel-scav" class="tab-panel">
+<div class="sec-head" style="margin-top:0;">Travel Distance — From Your Bunker</div>
+  <p style="font-size:.62rem;color:var(--faded);margin-bottom:.5rem;line-height:1.6;">Zones are measured in blocks from <b>your bunker's location</b>, wherever that is on the 280×200 map. They govern travel cost, party size, and required infrastructure only — <b>not</b> what resources exist there. What you find depends on the <b>Area type</b> at that distance (see the Areas tab).</p>
+  <div class="zone-map">
+    <div class="zm-ring zm-z1">
+      <div class="zm-label">Zone 1 · Local</div>
+      <div class="zm-blocks">0–40 blocks</div>
+      <div class="zm-cost">No travel cost</div>
+      <div class="zm-reqs">Any size expedition. No prerequisites. No travel time spent.</div>
+    </div>
+    <div class="zm-ring zm-z2">
+      <div class="zm-label">Zone 2 · Near</div>
+      <div class="zm-blocks">41–90 blocks</div>
+      <div class="zm-cost">+0.25 seasons travel</div>
+      <div class="zm-reqs"><b>Min. 2 members.</b> No building req. −2 all rolls if under 2 members sent.</div>
+    </div>
+    <div class="zm-ring zm-z3">
+      <div class="zm-label">Zone 3 · Far</div>
+      <div class="zm-blocks">91–140 blocks</div>
+      <div class="zm-cost">+0.5 seasons travel</div>
+      <div class="zm-reqs"><b>Min. 4 members.</b> Requires <b>Watchtower Network</b> or −3 all rolls. Prion protocol recommended.</div>
+    </div>
+    <div class="zm-ring zm-z4">
+      <div class="zm-label">Zone 4 · Deep</div>
+      <div class="zm-blocks">141–200 blocks</div>
+      <div class="zm-cost">+1 season travel</div>
+      <div class="zm-reqs"><b>Min. 6 members.</b> Requires <b>Scout Training Grounds</b> or 25% chance of expedition becoming lost (full season wasted, no yield).</div>
+    </div>
+    <div class="zm-ring" style="border-color:rgba(160,58,42,.5);background:rgba(160,58,42,.04);">
+      <div class="zm-label" style="color:#c06020;">Zone 5 · Frontier</div>
+      <div class="zm-blocks" style="color:#c06020;">201–240 blocks</div>
+      <div class="zm-cost">+1.5 seasons travel</div>
+      <div class="zm-reqs"><b>Min. 8 members.</b> Requires Scout Training Grounds. Watchtower Network required or −4 all rolls. Multi-season planning recommended. Prion protocol mandatory.</div>
+    </div>
+    <div class="zm-ring" style="border-color:rgba(160,58,42,.8);background:rgba(160,58,42,.08);">
+      <div class="zm-label" style="color:var(--red);">Ground Zero · The City</div>
+      <div class="zm-blocks" style="color:var(--red);">Fixed location — map centre</div>
+      <div class="zm-cost">+2 seasons travel minimum</div>
+      <div class="zm-reqs"><b>Min. 10 members.</b> Requires Scout Training Grounds + Watchtower Network + Prion Detection Lab + Quarantine Suite. See City Ruins area entry for full special rules.</div>
+    </div>
+  </div>
+
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// D20 Search Roll</div>
+      <div class="info-line">Roll D20, apply bonuses. Meet or beat difficulty to find. On success, roll a second D20 for yield amount.</div>
+      <div class="info-line" style="margin-top:.25rem;"><b>Nat 20 (Search):</b> Auto-succeed. Roll yield D20 twice, take the higher. Roll once more on same table for bonus find.</div>
+      <div class="info-line"><b>Nat 1 (Search):</b> Nothing found. Trigger location hazard roll.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Universal Bonuses</div>
+      <div class="info-line"><b>Trained Scouts:</b> +2 all search rolls</div>
+      <div class="info-line"><b>Scout team 4+:</b> +1 additional</div>
+      <div class="info-line"><b>Scholar on assignment:</b> +2 all rolls (+2 extra if domain-relevant)</div>
+      <div class="info-line"><b>Scholar — Blueprints only:</b> +4 flat to all BP rolls</div>
+      <div class="info-line"><b>Map Printing Press:</b> +2 at mapped locations</div>
+      <div class="info-line"><b>Over-scavenged area (3+ visits):</b> −3 yield rolls</div>
+      <div class="info-line"><b>Submerged sites:</b> Require dive equipment; inaccessible without it</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Difficulty Tiers</div>
+      <div class="info-line"><span class="diff d-trivial">2+ Trivial</span> — Stone, sand, timber</div>
+      <div class="info-line"><span class="diff d-easy">4+ Easy</span> — Cloth, clay, salvaged tools</div>
+      <div class="info-line"><span class="diff d-mod">7+ Moderate</span> — Iron ore, glass, live animals</div>
+      <div class="info-line"><span class="diff d-tricky">10+ Tricky</span> — Metal instruments, chemicals, books</div>
+      <div class="info-line"><span class="diff d-hard">13+ Hard</span> — Salvaged components, copper pipe</div>
+      <div class="info-line"><span class="diff d-rare">15+ Rare</span> — Copper wire, prion samples</div>
+      <div class="info-line"><span class="diff d-vr">17+ Very Rare</span> — Star charts, blueprints T3+</div>
+      <div class="info-line"><span class="diff d-uniq">19+ Unique</span> — Ocean Ark Blueprint</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Non-Renewable Sites</div>
+      <div class="info-line">Pharmacies, surgical wings, and government archives are <b>non-renewable</b> once fully cleared. Track visits.</div>
+      <div class="info-line" style="margin-top:.25rem;">Ore seams, mines, and chemical stockpiles <b>deplete</b> — reduce max yield by −3 per visit after the 2nd.</div>
+      <div class="info-line" style="margin-top:.25rem;"><b>Over-scavenged:</b> Any area visited 3+ times in 2 seasons: −3 to all yield rolls until it recovers (2 seasons unvisited).</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Resource Cards — All Scavengeable Materials</div>
+  <p style="font-size:.6rem;color:var(--faded);font-style:italic;margin-bottom:.6rem;">Every resource used in building, crafting, and upkeep. Difficulty is the D20 search target. Yield is a second D20 roll on success — listed as a range. Area tags show where each resource is most commonly found.</p>
+
+  <div class="res-list-wrap">
+
+    <!-- ── RAW MATERIALS ── -->
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Timber / Scrap Wood</span><span class="diff d-trivial">2+ Trivial</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-urban">Urban</span><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>8–40 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Old-growth woodland (rural — best sustained source), construction sites, residential blocks, collapsed wasteland settlements.</div>
+        <div><span class="rc-lbl">Notes</span>The most used building material in the game. Required for nearly every T1–T3 build. Woodland sites are renewable — leave some standing and return each season. Workers can process raw logs into usable timber.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Large Timber Log</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–8 logs</div>
+        <div><span class="rc-lbl">Best Locations</span>Old-growth woodland only. Logging party of 4+ gives +2 search. Requires clearing and transport — not a quick scavenge run.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Dugout Canoe and hull-framing on maritime builds. Cannot be substituted with regular timber. Rural woodland is the only reliable source — <span class="yf">mark every old-growth site you find.</span></div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Stone</span><span class="diff d-trivial">2+ Trivial</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-waste">Wasteland</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>10–50 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Open-cast mines and rock seams (rural), collapsed wasteland settlements (rubble, vast quantities), construction sites.</div>
+        <div><span class="rc-lbl">Notes</span>Used in almost every building T2 and above. Wasteland rubble fields are the fastest bulk source. Mine seams deplete — track visits. Cement Kiln also consumes Stone as ongoing input.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Iron Ore</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Open-cast mine seams (rural — primary source), exposed seams near old riverbeds in wasteland. <span class="yf">Depletes after 3–4 visits — track carefully.</span></div>
+        <div><span class="rc-lbl">Notes</span>Required for Blast Furnace (build cost and steel production input). The only surface ore on the map. <span class="yf">Finite — once all seams are depleted, steel production stops unless a trading route is established.</span> Secure every mine seam before others do.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Sand</span><span class="diff d-trivial">2+ Trivial</span><div class="rc-zones"><span class="area-tag at-coast">Coastal</span><span class="area-tag at-waste">Wasteland</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>10–50 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Tidal flats and coastal beachfront (inexhaustible), wasteland ash fields, riverbed exposures.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Sand Filtration Tower. Ongoing input for Cement Kiln. Coastal tidal flats are effectively infinite — one trip per season can supply any reasonable demand.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Clay</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>6–25 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Rural riverbanks and clay deposits, wasteland areas with stripped topsoil, garden centres and allotments.</div>
+        <div><span class="rc-lbl">Notes</span>Used in Blast Furnace, Forge Basics, Cement Kiln, and Barrier/Burn Wall. Also craftable into Clay Vessels. Widely available — rarely a bottleneck unless multiple kiln-type buildings are running simultaneously.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Charcoal</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-waste">Wasteland</span><span class="area-tag at-rural">Rural</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>6–30 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Wasteland ash fields (easiest — vast free quantities from burned woodland, no search roll needed in ash zones), rural logging operations (byproduct), urban industrial estates (remnant stockpiles).</div>
+        <div><span class="rc-lbl">Notes</span><b>Ongoing upkeep: Forge Basics (×10/season) · Blast Furnace (×15/season).</b> Without it both buildings halt and all their effects cease. Wasteland ash fields are the primary source — a single expedition returns enough for several seasons. Workers can also produce it from excess Timber as a crafting assignment. <span class="bonus-v">Ash field collection requires no search roll</span> — automatic yield on arrival.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Scrap Metal</span><span class="diff d-easy">5+ Easy</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-waste">Wasteland</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>5–30 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Vehicle graveyards (+12 yield — best urban source), industrial estates, rural farm machinery, collapsed wasteland settlements. Military motor pool: largest single deposit on the map.</div>
+        <div><span class="rc-lbl">Notes</span>Used in more buildings than any other resource. <span class="bonus-v">+2 search</span> at vehicle graveyards. Ongoing upkeep for Bullet Press. Smelts into Steel via Blast Furnace — every unit of scrap has downstream value even after early buildings are complete.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Hides / Pelts</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–12 hides</div>
+        <div><span class="rc-lbl">Best Locations</span>Rural woodland (wildlife hunting), farmsteads (livestock), wasteland prion dens (high risk).</div>
+        <div><span class="rc-lbl">Notes</span>Ongoing upkeep for Tannery. Rural wildlife populations recover season by season — the most reliably renewable hide source. <span class="yf">Wasteland hides: mandatory prion test before bringing into settlement.</span></div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Seeds (Crop)</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Farmsteads, garden centres and allotments, village stores. If plants are left to seed, sites partially renew each season.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Open Crop Plots. Once your plots are established, each harvest yields seeds for next season — you rarely need to scavenge for seeds after the first year unless plots are destroyed.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Medicinal Seeds</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–12 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Garden centres, allotments, village herb gardens, old-growth woodland clearings. Agriculture Scholar: +2 search.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Medicinal Garden. <span class="bonus-v">+2 search</span> Agriculture Scholar. Once the Medicinal Garden is established it self-seeds — initial supply is the only scavenging requirement.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Live Animals</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–6 animals</div>
+        <div><span class="rc-lbl">Best Locations</span>Farmsteads and smallholdings (primary source — mark every one), old-growth woodland (feral livestock), village outskirts.</div>
+        <div><span class="rc-lbl">Notes</span>Required to establish Animal Husbandry Pen. <span class="yf">All live animals must pass a Detection Lab check before entering the settlement.</span> Without the lab: 15% outbreak risk per animal. Once the Pen is running it self-sustains — animals breed without further scavenging.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Salt</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-coast">Coastal</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Coastal tidal flats (evaporation — +15 free units per season without a search roll), food warehouses, industrial stockpiles.</div>
+        <div><span class="rc-lbl">Notes</span>Ongoing upkeep for Tannery (×10/season). Coastal settlements get it effectively free. Inland settlements need to trade for it or run expedition to coast. The Drowned trade salt freely at good rates.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Pitch / Resin / Tar</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-coast">Coastal</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–12 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Pine forests (+4 yield — tap directly from trees), harbour docklands (tar stockpiles for ship maintenance), coastal industrial plants.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Dugout Canoe and all maritime hull builds. <span class="yf">No maritime build is watertight without it.</span> Pine forests are the most reliable source — mark any conifer woodland near your bunker immediately.</div>
+      </div>
+    </div>
+
+
+    <!-- ── FABRIC & ROPE ── -->
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Cloth</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>6–25 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Residential blocks, retail warehouses, fabric suppliers, clothing stores, rural workshops and barns.</div>
+        <div><span class="rc-lbl">Notes</span>Used in Field Surgery Station and general upkeep. Urban retail gives the highest single-visit yield. Slowly renewable through textile production once a Tannery and workers are allocated.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Rope</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span><span class="area-tag at-coast">Coastal</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>5–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Hardware stores, DIY warehouses, rural barns, harbour docklands. One of the most commonly stocked trade goods — almost every faction holds some.</div>
+        <div><span class="rc-lbl">Notes</span>Used in Palisade Wall, Trap Lines, and maritime builds. Workers/Crafters can produce it from raw materials once processing infrastructure is running. Never truly scarce if workers are assigned.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Canvas</span><span class="diff d-easy">5+ Easy</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-coast">Coastal</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–18 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Hardware stores, marquee/tent suppliers, harbour docklands (sail canvas), rural barns (tarpaulins).</div>
+        <div><span class="rc-lbl">Notes</span>Critical for all maritime builds (sails). Also used in Rainwater Collection and Basic Shelter. Coastal docklands give the highest-quality maritime-grade canvas. Runs out quickly if multiple sea builds are active simultaneously.</div>
+      </div>
+    </div>
+
+    <!-- ── GLASS & CERAMIC ── -->
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Glass / Glazing</span><span class="diff d-mod">7+ Moderate</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Office towers (+10 yield at large office blocks), glazing depots, hardware stores. Glass panels from shopfronts require Engineering Scholar to extract intact.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Enclosed Greenhouse and Vertical Farm Complex. <span class="bonus-v">+10 yield</span> at large office building. Fragile — 20% breakage chance on transport without crates (Carpentry School reduces this).</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Glass Panels</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–8 panels</div>
+        <div><span class="rc-lbl">Best Locations</span>Office towers, specialist glaziers, military observation posts, laboratory facilities.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Prion Quarantine Protocol Suite. Larger and more fragile than regular glazing. <span class="bonus-v">+2 search</span> Engineering Scholar. <span class="yf">Non-renewable at most sites.</span></div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Clay Vessels</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–15 vessels</div>
+        <div><span class="rc-lbl">Best Locations</span>Village potters, garden centres, household kitchens, rural workshops. Also craftable from raw Clay by Workers.</div>
+        <div><span class="rc-lbl">Notes</span>Used in Rainwater Collection and Fermentation &amp; Brewing. Workers can produce these once Forge Basics is running. Effectively renewable via craft production — scavenging is only needed early game.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Glass Vessels</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–12 vessels</div>
+        <div><span class="rc-lbl">Best Locations</span>Hospital labs, university chemistry departments, military NBC stores, pharmacies. Surgical-grade vessels require Medicine Scholar to identify and extract safely.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Prion Detection Lab, Advanced Field Surgery Theatre, and Prion Research Lab. <span class="bonus-v">+8 yield</span> at surgical wing. <span class="yf">Non-renewable — mark and track each hospital and lab.</span></div>
+      </div>
+    </div>
+
+    <!-- ── PROCESSED & SPECIALIST ── -->
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Metal Instruments</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–8 sets</div>
+        <div><span class="rc-lbl">Best Locations</span>Hospital surgical wings (+8 yield), dental practices, university labs, military field hospitals.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Advanced Field Surgery Theatre. <span class="bonus-v">+3 search</span> Medicine Scholar. <span class="yf">Non-renewable once a hospital is cleared.</span> Highest single-site yield at surgical wings — worth defending as a recurring expedition target.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Metal Pipe</span><span class="diff d-mod">8+ Moderate</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–15 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Industrial estates, plumbing suppliers, urban infrastructure (subways, basements), coastal industrial plants.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Closed Irrigation System and Enclosed Greenhouse. Urban submerged zones contain pipe in high concentration. Partially depletion-tracked — industrial sites run dry after 3+ visits.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Copper Pipe</span><span class="diff d-hard">13+ Hard</span><div class="rc-zones"><span class="area-tag at-coast">Coastal</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–10 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Submerged city grid (coastal — <b>Pressurised Dive Gear required for deep grid</b>, +10 yield), shallow coastal flooding (standard dive gear sufficient for surface-level pipe), old plumbing infrastructure in urban buildings.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Desalination Plant. Deep submerged grid: <b>Pressurised Dive Gear required</b>, −3 difficulty, +10 yield. Shallow flooded zones (standard dive gear): −1 difficulty, +3 yield only.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Copper Wire</span><span class="diff d-rare">15+ Rare</span><div class="rc-zones"><span class="area-tag at-coast">Coastal</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–8 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Submerged city grid (+12 yield, −3 difficulty — <b>Pressurised Dive Gear required</b>), military communications facility, coastal industrial plant. Cannot be crafted.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Hydroelectric Turbine, Broadcast Tower, and Ocean Ark Fleet. The submerged grid is the <span class="pen-v">only reliable large-scale source</span>. <b>Pressurised Dive Gear Workshop (T4) required</b> — standard dive gear cannot reach the submerged grid depth. A major strategic priority.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Salvaged Components</span><span class="diff d-hard">13+ Hard</span><div class="rc-zones"><span class="area-tag at-mil">Military</span><span class="area-tag at-urban">Urban</span><span class="area-tag at-coast">Coastal</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–8 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Military communications facility (+6 yield), coastal naval base, university electronics labs. Highly contested — expect faction presence.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Radio Receiver, Broadcast Tower, and Hydroelectric Turbine. <span class="bonus-v">+4 search</span> Electronics Scholar. <span class="yf">Non-renewable at most sites.</span> Military comms facility is the highest-yield land-based source.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Precision Metal Parts</span><span class="diff d-hard">13+ Hard</span><div class="rc-zones"><span class="area-tag at-mil">Military</span><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–6 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Military armouries and logistics yards, industrial machine shops, university engineering departments, high-end manufacturing plants.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Gun Bench (build) and Surgical Implant Tools. <span class="bonus-v">+3 search</span> Engineering Scholar. These are machined parts — cannot be improvised or substituted. <span class="yf">Non-renewable.</span></div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Chemical Reagents</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–10 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Hospital labs, university chemistry departments, military NBC stores (+3 yield), coastal industrial plants, pharmacies.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Prion Detection Lab, Neutralisation Compound, Prion Research Lab, and Prion Vaccine. <span class="bonus-v">+3 search</span> Chemistry Scholar. <span class="yf">Non-renewable — prioritise NBC stores and university labs.</span></div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Sealing Material</span><span class="diff d-hard">13+ Hard</span><div class="rc-zones"><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–10 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Military NBC stores (+4 yield — best source), armoury stores, specialised industrial facilities. Rarely found outside military contexts.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Prion Quarantine Protocol Suite and Reinforced Bunker Extension. Military sites are heavily contested. Worth sending a dedicated extraction force if NBC stores have been scouted.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Salvaged Medicine</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–12 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Hospital complexes (best yield), pharmacies, village GP clinics, military field hospitals. <span class="yf">All sites non-renewable once cleared — mark every one.</span></div>
+        <div><span class="rc-lbl">Notes</span>Required for Field Surgery Station. Used as ongoing upkeep for Surgical Implant Tools. <span class="bonus-v">+3 search</span> Medicine Scholar. Runs out faster than expected — Medicinal Garden is the long-term substitute for basic medical supplies.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Salvaged Books</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–20 books</div>
+        <div><span class="rc-lbl">Best Locations</span>University / library (+15 yield at university), village halls, residential blocks, schools. All Scholar training requires books.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Scout Training Grounds, Apprenticeship Programme, and Gun Bench. <span class="bonus-v">+15 yield</span> at university. Ongoing upkeep for The Archive (+20/season). One of the most strategically important resources — secure a university early.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Ink / Dye · Paper</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–15 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Office towers, printing facilities, stationery warehouses, art supply stores. Paper from office buildings — almost every urban zone has some.</div>
+        <div><span class="rc-lbl">Notes</span>Required for Map Printing Press and Document Printing Press (ongoing). Ongoing upkeep for The Archive. Not a bottleneck unless you run a Printing Press — then it becomes an urgent supply concern.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Nutrient Solution</span><span class="diff d-rare">15+ Rare</span><div class="rc-zones"><span class="area-tag at-mil">Military</span><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–6 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Military research labs, scorched research sites (wasteland — rare), specialist agricultural facilities.</div>
+        <div><span class="rc-lbl">Notes</span>Required as ongoing upkeep for Vertical Farm Complex. <span class="bonus-v">+4 search</span> Agriculture + Chemistry Scholar together. <span class="yf">Extremely rare — non-renewable.</span> Vertical Farm sustainability depends on securing a reliable supply.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Prion Samples</span><span class="diff d-rare">15+ Rare</span><div class="rc-zones"><span class="area-tag at-waste">Wasteland</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–4 samples</div>
+        <div><span class="rc-lbl">Best Locations">Prion dens and animal lairs (wasteland only). The only field collection site. Extremely dangerous — Medicine Scholar essential.</span></div>
+        <div><span class="rc-lbl">Notes</span>Required for Prion Vaccine Prototype. <span class="bonus-v">+4 search</span> Medicine Scholar. <span class="pen-v">All expedition members must pass Detection Lab check on return.</span> Cannot be traded for safely. The Prion Research Lab also produces samples from research — slower but safer.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Star Charts / Sextant</span><span class="diff d-vr">17+ Very Rare</span><div class="rc-zones"><span class="area-tag at-coast">Coastal</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–2 (unique items)</div>
+        <div><span class="rc-lbl">Best Locations</span>Naval / coastguard base (most reliable), military naval installation. Never found inland.</div>
+        <div><span class="rc-lbl">Notes</span>Required to complete the Ocean Ark Fleet win condition — without navigation charts, storm loss risk is 35% rather than 5%. <span class="yf">Non-renewable — only 1–2 complete sets exist on the map.</span> The faction that holds a naval base may already possess this.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Fertiliser</span><span class="diff d-easy">4+ Easy</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>4–20 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Fertiliser plants (<b>+8 yield — primary source</b>), garden centres, farmsteads. Fertiliser plants are the strategic target — stock up before others do.</div>
+        <div><span class="rc-lbl">Notes</span>Not a building input — used as a yield modifier for Saltpetre scavenging. When present at a Saltpetre site, increases Saltpetre yield by +8 for that expedition. The Covenant values fertiliser and may trade food for it at good rates. Non-renewable at industrial sites.</div>
+      </div>
+    </div>
+
+    <!-- ── AMMUNITION & FIREARMS ── -->
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Saltpetre</span><span class="diff d-tricky">10+ Tricky</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–15 units</div>
+        <div><span class="rc-lbl">Best Locations</span>Chemical factories, industrial sites (+2 yield Chemistry Scholar), fertiliser plants (+8 yield), military NBC chemical stores.</div>
+        <div><span class="rc-lbl">Notes</span>The key gunpowder ingredient. <span class="yf">Ongoing upkeep for Bullet Press: 5/season (small) or 8/season (large bullets).</span> Cannot be substituted. Without it the Bullet Press halts. Secure a fertiliser plant early if building toward Bullet Press.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Basic Gun Parts</span><span class="diff d-mod">8+ Moderate</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>2–10 sets</div>
+        <div><span class="rc-lbl">Best Locations</span>Homes (lockboxes, cabinets), police stations, pawn shops, sporting goods stores, rural hunting lodges. Mostly disassembled or damaged civilian firearms.</div>
+        <div><span class="rc-lbl">Notes</span>Used at Gun Bench to craft Crude and Standard weapons. <span class="bonus-v">+2 search</span> trained Scouts. <span class="bonus-v">+4 yield</span> at gun shops. <span class="yf">Non-renewable once a site is cleared.</span> More parts per craft = higher quality gun.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Advanced Gun Parts</span><span class="diff d-hard">15+ Hard</span><div class="rc-zones"><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>1–6 sets</div>
+        <div><span class="rc-lbl">Best Locations</span>Military armouries, police tactical units, government security vaults. Heavily contested — expect faction presence at every site.</div>
+        <div><span class="rc-lbl">Notes</span>Used at Gun Bench to craft Reliable and Masterwork firearms (SMGs, semi-autos, LR bolt-actions). <span class="yf">Non-renewable.</span> Cannot be produced — must be scavenged. The Drowned and Remnant Authority are known to hold stocks.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Small Bullets <span class="gp-tag gp-ammo-s" style="font-size:.5rem;border:1px solid rgba(122,188,204,.4);color:#7abccc;padding:1px 4px;">Pistol / SMG</span></span><span class="diff d-easy">5+ Easy</span><div class="rc-zones"><span class="area-tag at-urban">Urban</span><span class="area-tag at-rural">Rural</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>5–30 rounds</div>
+        <div><span class="rc-lbl">Best Locations</span>Police stations, homes, gun shops, sporting goods stores, rural hunting lodges. Also produced by Bullet Press (+30/season).</div>
+        <div><span class="rc-lbl">Notes</span>Used by pistols (2/round) and SMGs (6/round). <span class="pen-v">Scavenged rounds: 20% chance of jam-risk batch</span> — mark when yield roll is 1–3. Bullet Press produces clean, jam-free rounds. Running out mid-combat: weapon becomes a melee club.</div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-top"><span class="rc-name">Large Bullets <span class="gp-tag gp-ammo-l" style="font-size:.5rem;border:1px solid rgba(204,136,68,.4);color:#cc8844;padding:1px 4px;">Rifle / Bolt-Action</span></span><span class="diff d-mod">8+ Moderate</span><div class="rc-zones"><span class="area-tag at-rural">Rural</span><span class="area-tag at-mil">Military</span></div></div>
+      <div class="res-card-bot">
+        <div><span class="rc-lbl">Yield (D20)</span>3–18 rounds</div>
+        <div><span class="rc-lbl">Best Locations</span>Military armouries, rural hunting lodges, police firearms stores, sporting ranges. Also produced by Bullet Press (+20/season). Rarer than small bullets in civilian areas.</div>
+        <div><span class="rc-lbl">Notes</span>Used by bolt-actions (1/shot), semi-autos (3/round), and LR bolt-actions (1/shot). <span class="pen-v">Same 20% jam-risk rule</span> on scavenged batches. High trade value — factions will pay well. Running out mid-fight causes groups with rifles to drop to melee.</div>
+      </div>
+    </div>
+
+  </div><!-- /res-list-wrap -->
+</div><!-- /panel-scav -->
+
+<div id="panel-build" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Blueprint Requirements</div>
+      <div class="info-line">Buildings require a specific number of <b>generalised blueprints</b> at the correct tier. You do not need the precise building's blueprint — just the right count at the right tier. Higher-tier buildings require blueprints across multiple tiers.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Construction Failure</div>
+      <div class="info-line"><b>First build of a new tech:</b> Base failure chance applies. Failed builds consume 50% of materials; blueprints are retained.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Carpentry School:</b> −10% failure chance. <b>Scholar Supervisor role:</b> Dramatically reduces failure on that build.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Ongoing Upkeep</div>
+      <div class="info-line">Resources marked <b>(ongoing)</b> are consumed each season. If supply falls to zero the building halts and all its effects cease until supply resumes.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Build Time Scale</div>
+      <div class="info-line"><b>T1:</b> 0.2–0.5 seasons · <b>T2:</b> 0.75–1 season</div>
+      <div class="info-line"><b>T3:</b> 1–2 seasons · <b>T4:</b> 2–3 seasons · <b>T5:</b> 3–5 seasons</div>
+      <div class="info-line" style="margin-top:.2rem;">All times assume full workforce. Reduced workforce extends build time proportionally.</div>
+    </div>
+  </div>
+
+  <p style="font-size:.6rem;color:var(--faded);font-style:italic;margin-bottom:.6rem;">All buildings shown — use Ctrl+F to search by name or material.</p>
+
+<div class="sec-head">Tier I — Scavenged · &lt;1 Season · No Scholar Required</div>
+  <details class="bcard bc-t1" data-tier="t1" data-name="hand tools workshop">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Hand Tools Workshop</span><span class="bc-meta">0.5 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−20% build time (all)</span><span class="bc-stat s-pos">−15% tool degradation</span>
+        <div class="bc-desc">Unlocks all wooden construction. Required for every subsequent Tier I build.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×20</b></div><div class="ri"><b>Scrap Metal ×8</b></div><div class="ri"><b>Rope ×5</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="animal trap line hunting food">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Animal Trap Line</span><span class="bc-meta">0.3 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+8 food/season</span><span class="bc-stat s-pos">+3 hides/season</span><span class="bc-stat s-warn">10% prion test required</span>
+        <div class="bc-desc">Passive food and hide source. Must check yields for prion contamination.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×10</b></div><div class="ri"><b>Rope ×8</b></div><div class="ri"><b>Scrap Metal ×4</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="open crop plot farming food">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Open Crop Plot</span><span class="bc-meta">0.2 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+12 food/season</span><span class="bc-stat s-warn">Weather risk each season</span>
+        <div class="bc-desc">Basic plot. −40% yield in drought/flood. Stackable up to 8 plots.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Soil Plot ×4</b></div><div class="ri"><b>Seeds ×6</b></div><div class="ri"><b>Water ×4/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="rainwater collection water supply">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Rainwater Collection</span><span class="bc-meta">0.2 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+10 water/season</span><span class="bc-stat s-warn">30% contamination risk (unfiltered)</span>
+        <div class="bc-desc">Free water source. Must boil before use without Sand Filtration Tower.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×8</b></div><div class="ri"><b>Clay Vessels ×4</b></div><div class="ri"><b>Canvas ×6</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="basic shelter housing population">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Basic Shelter Block</span><span class="bc-meta">0.4 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Houses 20 population</span><span class="bc-stat s-pos">−15% illness rate</span>
+        <div class="bc-desc">Minimum standard housing. Overcrowding removes morale gains from feeding.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×25</b></div><div class="ri"><b>Stone ×15</b></div><div class="ri"><b>Canvas ×8</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>5 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="palisade wall defence perimeter">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Palisade Wall</span><span class="bc-meta">0.5 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+4 DEF outer perimeter</span><span class="bc-stat s-pos">−20% raid damage</span>
+        <div class="bc-desc">First line of defence. Perimeter covers 1 settlement area.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×35</b></div><div class="ri"><b>Rope ×12</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>5 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1" data-name="field surgery aid medical healing">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Field Surgery Station</span><span class="bc-meta">0.3 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−25% injury-to-death conversion</span><span class="bc-stat s-neu">Wounded recover in 0.5 seasons</span>
+        <div class="bc-desc">Treats up to 5 wounded/season. Stackable.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Cloth ×12</b></div><div class="ri"><b>Timber ×6</b></div><div class="ri"><b>Salvaged Medicine ×4</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t1" data-tier="t1 sea" data-name="dugout canoe boat water sea maritime">
+    <summary class="bc-header"><span class="bc-badge">T·I</span><span class="bc-name">Dugout Canoe <span class="sea-mark">SEA</span></span><span class="bc-meta">0.4 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-sea">River/coastal scouting</span><span class="bc-stat s-sea">+1 water tile/expedition</span>
+        <div class="bc-desc">Carries 2 crew. Cannot operate in rough coastal waters.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t1">1× Tier I BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Large Timber Log ×3</b></div><div class="ri"><b>Rope ×6</b></div><div class="ri"><b>Pitch/Resin ×4</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details><div class="sec-head">Tier II — Restored · ~1 Season · No Scholar Required</div>
+  <details class="bcard bc-t2" data-tier="t2" data-name="grain mill food farming processing">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Grain Mill</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+25% caloric efficiency</span><span class="bc-stat s-pos">+15 food/season</span>
+        <div class="bc-desc">Flour stores 3 seasons vs 1 raw. −20% meal prep labour.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×30</b></div><div class="ri"><b>Timber ×20</b></div><div class="ri"><b>Scrap Metal ×12</b></div><div class="ri"><b>Rope ×8</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>5 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="animal husbandry pen livestock farming">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Animal Husbandry Pen</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+18 food/season</span><span class="bc-stat s-pos">+6 hides/season</span>
+        <div class="bc-desc">Untested animals: 15% prion outbreak risk/season.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×30</b></div><div class="ri"><b>Stone ×15</b></div><div class="ri"><b>Rope ×10</b></div><div class="ri"><b>Live Animals ×4</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="fermentation brewing trade morale">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Fermentation &amp; Brewing</span><span class="bc-meta">0.75 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+4 morale/season</span><span class="bc-stat s-pos">+12 trade goods/season</span>
+        <div class="bc-desc">Substitutes 40% water upkeep during contamination events.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×15</b></div><div class="ri"><b>Clay Vessels ×8</b></div><div class="ri"><b>Grain ×10/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="sand filtration tower water purification">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Sand Filtration Tower</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+20 clean water capacity</span>
+        <div class="bc-desc">Cannot remove prion contamination.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×25</b></div><div class="ri"><b>Sand ×20</b></div><div class="ri"><b>Charcoal ×10</b></div><div class="ri"><b>Timber ×15</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="dug well water supply ground">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Dug Well System</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+22 water/season</span><span class="bc-stat s-warn">10% contamination risk (unsealed)</span>
+        <div class="bc-desc">Seal with clay lining to eliminate contamination risk.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×35</b></div><div class="ri"><b>Timber ×12</b></div><div class="ri"><b>Rope ×8</b></div><div class="ri"><b>Clay ×10</b> <small>optional seal</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="carpentry school construction training">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Carpentry School</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−15% build time (all)</span><span class="bc-stat s-pos">−10% construction failure</span><span class="bc-stat s-pos">Produces Shortbows &amp; Longbows</span><span class="bc-stat s-pos">Produces Arrows (Timber ×2 per 10)</span>
+        <div class="bc-desc">−8% material waste on all future builds. Also produces bows and arrows — the only craftable ranged weapon that requires no bullets and no Gun Bench. <b>Shortbow:</b> 1 per 2 workers per season (Timber ×4 · Rope ×2 each). <b>Longbow:</b> 1 per season per 2 workers, takes 2 seasons to complete (Timber ×8 · Rope ×4 each). Arrows crafted on demand — no season time required, just workers and materials. See Combat file for bow stats. Also reduces glass transport breakage risk by 50%.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×25</b></div><div class="ri"><b>Stone ×20</b></div><div class="ri"><b>Salvaged Books ×5</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b> (split between construction duties and bow production each season)</div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="watchtower network scouting detection patrol">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Watchtower Network</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+2 warning seasons before raid</span><span class="bc-stat s-pos">+3 map tiles visible</span>
+        <div class="bc-desc">Required for Zone 3 (91–140 block) expeditions without −3 penalty. Required for Zone 5 or −4 all rolls.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×35</b></div><div class="ri"><b>Stone ×20</b></div><div class="ri"><b>Rope ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>5 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="map printing press cartography trade">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Map Printing Press</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+8 trade goods/season</span><span class="bc-stat s-pos">+2 search at mapped locations</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Scrap Metal ×20</b></div><div class="ri"><b>Timber ×15</b></div><div class="ri"><b>Ink/Dye ×8</b></div><div class="ri"><b>Paper/Cloth ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="medicinal garden herbs medicine healing">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Medicinal Garden</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−20% illness rate</span><span class="bc-stat s-pos">+5 medicine units/season</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Soil Plot ×4</b></div><div class="ri"><b>Medicinal Seeds ×10</b></div><div class="ri"><b>Water ×6/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="tannery leather hides clothing">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Tannery</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−25% cold/exposure attrition</span><span class="bc-stat s-pos">+8 leather/season</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×20</b></div><div class="ri"><b>Stone ×15</b></div><div class="ri"><b>Salt ×10/season</b> <small>ongoing</small></div><div class="ri"><b>Hides ×4/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="forge basics metalwork smithing tools charcoal">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Forge Basics</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−30% tool degradation</span><span class="bc-stat s-pos">+6 metal tools/season</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">3× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×30</b></div><div class="ri"><b>Clay ×20</b></div><div class="ri"><b>Scrap Metal ×25</b></div><div class="ri"><b>Charcoal ×10/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="cement kiln concrete mix construction material">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Cement Kiln</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+15 Concrete Mix/season</span><span class="bc-stat s-pos">Enables T4–T5 construction</span>
+        <div class="bc-desc">Converts stone and sand into usable concrete each season. Without this, T4+ builds requiring Concrete Mix can only use scavenged bags.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">3× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×30</b></div><div class="ri"><b>Clay ×15</b></div><div class="ri"><b>Scrap Metal ×10</b></div><div class="ri"><b>Stone ×20/season</b> <small>ongoing input</small></div><div class="ri"><b>Sand ×10/season</b> <small>ongoing input</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2 sea" data-name="river barge boat transport cargo">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Flat-Bottom River Barge <span class="sea-mark">SEA</span></span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-sea">20 cargo/trip</span><span class="bc-stat s-sea">−30% river transport cost</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×40</b></div><div class="ri"><b>Rope ×15</b></div><div class="ri"><b>Pitch/Resin ×10</b></div><div class="ri"><b>Scrap Metal ×8</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2 sea" data-name="fishing net rig food ocean sea">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Fishing Net Rig <span class="sea-mark">SEA</span></span><span class="bc-meta">0.75 seasons · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+20 food/season</span><span class="bc-stat s-sea">Coastal: +35 food/season</span>
+        <div class="bc-desc">Fish are prion-safe. Yield −50% in winter.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Rope ×20</b></div><div class="ri"><b>Canvas ×10</b></div><div class="ri"><b>Scrap Metal ×6</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers</b></div></div>
+    </div>
+    </details>  <details class="bcard bc-t2" data-tier="t2" data-name="dive gear workshop wetsuit oxygen tank submerged coastal underwater">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">Dive Gear Workshop</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Produces standard dive suits + oxygen tanks</span><span class="bc-stat s-pos">Unlocks submerged access — 1 block depth only</span><span class="bc-stat s-warn">Cannot reach deep submerged sites</span>
+        <div class="bc-desc">Enables access to shallow submerged locations — flooded ground-floor structures, tidal flats, and coastal shallows up to <b>1 block depth</b>. Sufficient for basic copper pipe, metal pipe, and some coastal resources. <b>Cannot reach the submerged city grid, Ground Zero lower city, or any deep submerged structure</b> — those require the Pressurised Dive Gear Workshop (T4). Gear degrades: 1 set per 2 expedition seasons.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Scrap Metal ×20</b></div><div class="ri"><b>Canvas ×15</b></div><div class="ri"><b>Rope ×10</b></div><div class="ri"><b>Metal Pipe ×8</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t2" data-tier="t2" data-name="nbc protection workshop hazmat suit respirator contamination wasteland military">
+    <summary class="bc-header"><span class="bc-badge">T·II</span><span class="bc-name">NBC Protection Workshop</span><span class="bc-meta">1 season · No Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Produces NBC suits + respirators</span><span class="bc-stat s-pos">−4 to all wasteland/contamination prion thresholds</span>
+        <div class="bc-desc">Required for safe operations in chemical contamination zones at Military sites and in the Wasteland. Without NBC gear, any member spending 0.5+ seasons in wasteland triggers an automatic prion exposure check. With it, exposure thresholds drop by 4 — effectively halving contamination risk in most scenarios. Gear degrades: 1 set per 3 expedition seasons.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t2">2× Tier II BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Sealing Material ×12</b></div><div class="ri"><b>Canvas ×10</b></div><div class="ri"><b>Rope ×8</b></div><div class="ri"><b>Clay ×6</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details><div class="sec-head">Tier III — Engineered · 1–2 Seasons · Scholar Required</div>
+  <details class="bcard bc-t3" data-tier="t3" data-name="closed irrigation system crops water farming">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Closed Irrigation System</span><span class="bc-meta">1.5 seasons · Agriculture + Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+40% crop yield per plot</span><span class="bc-stat s-pos">−30% water used by crops</span>
+        <div class="bc-desc">Unlocks Scorched Belt farming.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×50</b></div><div class="ri"><b>Clay ×30</b></div><div class="ri"><b>Metal Pipe ×20</b></div><div class="ri"><b>Timber ×20</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="enclosed greenhouse farming food weather">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Enclosed Greenhouse</span><span class="bc-meta">1.5 seasons · Agriculture + Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+30 food/season (weather-immune)</span><span class="bc-stat s-pos">+2 crop plots</span>
+        <div class="bc-desc">100% prion-safe growing environment. Requires glass.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×40</b></div><div class="ri"><b>Glass/Glazing ×30</b></div><div class="ri"><b>Stone ×25</b></div><div class="ri"><b>Metal Pipe ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="prion detection lab disease testing">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Prion Detection Lab</span><span class="bc-meta">1.5 seasons · Medicine + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Test animals/returnees before entry</span><span class="bc-stat s-pos">−50% minor outbreak chance</span>
+        <div class="bc-desc">Without this, all untested sources carry prion risk.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×30</b></div><div class="ri"><b>Glass Vessels ×20</b></div><div class="ri"><b>Chemical Reagents ×10</b></div><div class="ri"><b>Scrap Metal ×15</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="prion barrier burn wall containment">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Barrier / Burn Wall</span><span class="bc-meta">1.5 seasons · Engineering + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−60% external prion infiltration</span><span class="bc-stat s-pos">Containment perimeter</span>
+        <div class="bc-desc">Required before Prion Neutralisation Compound can be constructed.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×50</b></div><div class="ri"><b>Clay ×20</b></div><div class="ri"><b>Timber ×25</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="blast furnace steel smelting metallurgy">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Blast Furnace</span><span class="bc-meta">2 seasons · Metallurgy Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+10 steel/season</span><span class="bc-stat s-pos">Unlocks steel tier construction</span>
+        <div class="bc-desc">Steel is the primary bottleneck for T4/T5 builds. 14 buildings require it. Charcoal is the ongoing fuel — secure ash field access before building.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">4× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×60</b></div><div class="ri"><b>Clay ×30</b></div><div class="ri"><b>Iron Ore ×20</b></div><div class="ri"><b>Charcoal ×15/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="advanced field surgery hospital medical">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Advanced Field Surgery Theatre</span><span class="bc-meta">1.5 seasons · Medicine Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−50% injury-to-death conversion</span><span class="bc-stat s-pos">Treats up to 15 wounded/season</span>
+        <div class="bc-desc">Allows Scholar Condition recovery. Upgrades existing Field Surgery Station.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×35</b></div><div class="ri"><b>Timber ×20</b></div><div class="ri"><b>Glass Vessels ×15</b></div><div class="ri"><b>Metal Instruments ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>5 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="scout training grounds expedition range">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Scout Training Grounds</span><span class="bc-meta">1 season · Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Unlocks Zone 4 (141–200 block) expeditions</span><span class="bc-stat s-pos">+2 all scouting rolls</span><span class="bc-stat s-pos">Scout carry capacity 5 → 8 items per person</span>
+        <div class="bc-desc">Without this, Zone 4+ expeditions have a 25% chance of becoming lost. Required for all Zone 5 expeditions. Trained Scouts learn efficient load management — carry capacity increases from 5 to <b>8 items per Scout</b>, meaningfully improving returns from long-range expeditions.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×30</b></div><div class="ri"><b>Stone ×20</b></div><div class="ri"><b>Rope ×15</b></div><div class="ri"><b>Salvaged Books ×8</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="apprenticeship programme scholar training knowledge">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Apprenticeship Programme</span><span class="bc-meta">1 season to build · 3–4 seasons to train</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Train K1 Scholar in 3–4 seasons</span><span class="bc-stat s-pos">Partial Scholar in 2 seasons</span>
+        <div class="bc-desc">Requires existing Scholar to teach. Trained Scholar starts at K1, Sat +5.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">2× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×20</b></div><div class="ri"><b>Stone ×15</b></div><div class="ri"><b>Salvaged Books ×15</b></div><div class="ri"><b>Paper ×8/season</b> <small>ongoing training</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers + existing Scholar</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3 sea" data-name="coastal trading post dock harbour trade">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Coastal Trading Post <span class="sea-mark">SEA</span></span><span class="bc-meta">1.5 seasons · Engineering + Agriculture Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-sea">Enables faction trade by sea</span><span class="bc-stat s-pos">+20 trade goods/season</span>
+        <div class="bc-desc">Required for sea-based diplomacy routes. Access to maritime factions.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×50</b></div><div class="ri"><b>Stone ×30</b></div><div class="ri"><b>Rope ×15</b></div><div class="ri"><b>Scrap Metal ×20</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>7 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t3" data-tier="t3" data-name="bullet press ammunition small large bullets gunpowder saltpetre">
+    <summary class="bc-header"><span class="bc-badge">T·III</span><span class="bc-name">Bullet Press</span><span class="bc-meta">1.5 seasons · Engineering + Metallurgy Scholar</span></summary>
+    <div class="bc-body">
+      <div>
+        <div class="bc-col-label">// Effects</div>
+        <span class="bc-stat s-pos">+30 Small Bullets/season</span><span class="bc-stat s-pos">+20 Large Bullets/season</span>
+        <div class="bc-desc">Produces one ammo type per season — switch freely at season start. Clean pressed rounds have <b>no jam-risk</b>, unlike scavenged bullets. Militias using pressed ammo gain +1 to all combat rolls.</div>
+      </div>
+      <div>
+        <div class="bc-col-label">// Blueprint Req.</div>
+        <div class="bp-req"><span class="bpr bpr-t3">3× Tier III BP</span></div>
+        <div style="font-size:.58rem;color:var(--faded);margin-top:.3rem;line-height:1.5;">
+          <b style="color:var(--ink-dim);">Small Bullets upkeep:</b> Saltpetre ×5 + Scrap Metal ×3/season<br>
+          <b style="color:var(--ink-dim);">Large Bullets upkeep:</b> Saltpetre ×8 + Scrap Metal ×5/season
+        </div>
+      </div>
+      <div>
+        <div class="bc-col-label">// Resources (Build)</div>
+        <div class="res-list">
+          <div class="ri"><b>Steel ×20</b></div>
+          <div class="ri"><b>Precision Metal Parts ×10</b></div>
+          <div class="ri"><b>Scrap Metal ×15</b></div>
+          <div class="ri"><b>Timber ×10</b></div>
+        </div>
+      </div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+</details>
+
+<div class="sec-head">Tier IV — Advanced · 2–3 Seasons · Multi-Scholar · Steel Required</div>
+
+  <details class="bcard bc-t4" data-tier="t4" data-name="pressurised dive gear workshop deep submerged all depths copper wire city grid">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Pressurised Dive Gear Workshop</span><span class="bc-meta">2 seasons · Engineering + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Produces pressurised dive suits + rebreathers</span><span class="bc-stat s-pos">Unlocks all submerged sites at any depth</span><span class="bc-stat s-pos">Upgrades existing dive team equipment</span>
+        <div class="bc-desc">The full dive solution. Pressurised suits and rebreather systems allow access to <b>all submerged locations</b> regardless of depth — including the coastal submerged city grid, the Ground Zero submerged lower city, flooded military bunkers, and any other deep site. Supersedes the standard Dive Gear Workshop entirely — once this is built the T2 workshop can be repurposed. Gear degrades more slowly: 1 set per 4 expedition seasons. <b>Required for copper wire at scale</b> — the submerged grid is the only reliable large-volume source on the map and is inaccessible without this.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list">
+        <div class="ri"><b>Steel ×20</b></div>
+        <div class="ri"><b>Scrap Metal ×15</b></div>
+        <div class="ri"><b>Metal Pipe ×12</b></div>
+        <div class="ri"><b>Canvas ×10</b></div>
+        <div class="ri"><b>Chemical Reagents ×8</b> <small>rebreather compound</small></div>
+        <div class="ri"><b>Sealing Material ×10</b> <small>pressure seals</small></div>
+        <div class="ri"><b>Glass Vessels ×6</b> <small>pressure gauges</small></div>
+      </div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers (specialist fabricators)</b></div></div>
+    </div>
+  </details>
+  <details class="bcard bc-t4" data-tier="t4" data-name="advanced water purification clean safe">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Advanced Water Purification</span><span class="bc-meta">2 seasons · Engineering + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+45 clean water/season</span><span class="bc-stat s-pos">−90% contamination risk</span>
+        <div class="bc-desc">Eliminates prion water risk when combined with Neutralisation Compound.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×40</b></div><div class="ri"><b>Stone ×80</b></div><div class="ri"><b>Concrete Mix ×30</b></div><div class="ri"><b>Timber ×40</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>10 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="prion neutralisation compound sterilise zone">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Prion Neutralisation Compound</span><span class="bc-meta">2 seasons · Chemistry + Medicine Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Creates sterilised zones</span><span class="bc-stat s-pos">−70% prion in treated areas</span>
+        <div class="bc-desc">4 compound units/season. Each treats 3 tiles or 1 water source.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Chemical Reagents ×20</b></div><div class="ri"><b>Glass Vessels ×15</b></div><div class="ri"><b>Steel ×15</b></div><div class="ri"><b>Water ×8/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="prion quarantine protocol suite isolation">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Prion Quarantine Protocol Suite</span><span class="bc-meta">2 seasons · Medicine + Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−90% internal outbreak from returnees</span><span class="bc-stat s-pos">Infected personnel safely isolated</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×20</b></div><div class="ri"><b>Stone ×40</b></div><div class="ri"><b>Sealing Material ×15</b></div><div class="ri"><b>Glass Panels ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="radio receiver passive signal electronics">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Radio Receiver (Passive)</span><span class="bc-meta">2 seasons · Electronics Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Detects all active broadcasts</span><span class="bc-stat s-pos">+intelligence on broadcasting factions</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">3× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Copper Wire ×20</b></div><div class="ri"><b>Salvaged Components ×15</b></div><div class="ri"><b>Steel ×10</b></div><div class="ri"><b>Power ×2/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="document printing press blueprints copy trade">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Document Printing Press</span><span class="bc-meta">2 seasons · Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Copy blueprints (1 season/copy)</span><span class="bc-stat s-pos">+15 trade goods/season</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">3× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×20</b></div><div class="ri"><b>Scrap Metal ×15</b></div><div class="ri"><b>Ink ×10/season</b> <small>ongoing</small></div><div class="ri"><b>Paper ×15/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="gun bench firearm craft pistol rifle smg weapon">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Gun Bench</span><span class="bc-meta">2 seasons · Engineering + Metallurgy Scholar</span></summary>
+    <div class="bc-body">
+      <div>
+        <div class="bc-col-label">// Effects</div>
+        <span class="bc-stat s-pos">Craft firearms each season</span><span class="bc-stat s-pos">Quality scales with parts used</span>
+        <div class="bc-desc" style="margin-top:.3rem;">Produces 1 firearm per 0.5 seasons (2 per season max). Quality determined by parts invested. Basic Parts → basic weapons only. Advanced Parts → advanced weapons only.</div>
+      </div>
+      <div>
+        <div class="bc-col-label">// Blueprint Req.</div>
+        <div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div>
+        <div style="font-size:.58rem;color:var(--faded);margin-top:.4rem;line-height:1.5;">
+          <span class="gp-tag gp-basic">Basic Parts</span> craft: Pistols, basic bolt-actions<br>
+          <span class="gp-tag gp-adv">Advanced Parts</span> craft: SMGs, semi-auto rifles, long-range bolt-actions
+        </div>
+      </div>
+      <div>
+        <div class="bc-col-label">// Resources (Build)</div>
+        <div class="res-list">
+          <div class="ri"><b>Steel ×25</b></div><div class="ri"><b>Precision Metal Parts ×15</b></div>
+          <div class="ri"><b>Scrap Metal ×20</b></div><div class="ri"><b>Timber ×15</b></div>
+          <div class="ri"><b>Salvaged Books ×5</b> <small>technical manuals</small></div>
+        </div>
+      </div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>2 workers (dedicated gunsmiths)</b></div></div>
+    </div>
+    <div style="border-top:1px solid var(--border-mid);padding:.5rem .8rem .7rem 1.2rem;">
+      <div class="bc-col-label" style="margin-bottom:.3rem;">// Gun Quality — Parts Invested per Craft</div>
+      <table class="gun-craft-table">
+        <thead><tr><th>Quality</th><th>Parts Required</th><th>Weapon Types</th><th>Stats &amp; Combat Effect</th><th>Ammo</th></tr></thead>
+        <tbody>
+          <tr><td><span class="gq gq-crude">Crude</span></td><td><span class="gp-tag gp-basic">Basic ×2</span></td><td>Pistol</td><td>Close only. −1 attack. 15% jam. Single-shot before clearing.</td><td><span class="gp-tag gp-ammo-s">Small</span></td></tr>
+          <tr><td><span class="gq gq-standard">Standard</span></td><td><span class="gp-tag gp-basic">Basic ×4</span></td><td>Pistol · Bolt-Action</td><td>Medium (bolt), Close (pistol). No penalty. 5% jam. Bolt fires once/round.</td><td><span class="gp-tag gp-ammo-s">Small</span> or <span class="gp-tag gp-ammo-l">Large</span></td></tr>
+          <tr><td><span class="gq gq-reliable">Reliable</span></td><td><span class="gp-tag gp-basic">Basic ×6</span> or <span class="gp-tag gp-adv">Adv ×3</span></td><td>Pistol · Bolt-Action · SMG · Semi-Auto</td><td>Full (rifle), Close–Med (SMG/pistol). +1 attack. 2% jam. SMG fires 2× close.</td><td><span class="gp-tag gp-ammo-s">Small</span> or <span class="gp-tag gp-ammo-l">Large</span></td></tr>
+          <tr><td><span class="gq gq-masterwork">Masterwork</span></td><td><span class="gp-tag gp-adv">Adv ×6</span></td><td>LR Bolt-Action · Semi-Auto · SMG</td><td>Extreme (sniper), Full (semi), Close–Med (SMG). +2 attack. No jam. Sniper: pre-combat shot.</td><td><span class="gp-tag gp-ammo-l">Large</span> (bolt/semi) · <span class="gp-tag gp-ammo-s">Small</span> (SMG)</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.58rem;color:var(--faded);margin-top:.3rem;font-style:italic;line-height:1.5;"><b style="color:var(--amber);">⚠ Ammo consumption:</b> Pistols 2 small/round · SMGs 6 small/round · Bolt-actions 1 large/shot · Semi-auto 3 large/round · LR bolt-action 1 large/shot. Running out mid-combat: weapon becomes a melee club.</div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="surgical implant tools scholar medicine lifespan">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Surgical Implant Tools</span><span class="bc-meta">2 seasons · Medicine + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Reverses Weakened → Healthy (1 season)</span><span class="bc-stat s-pos">+30% Scholar lifespan</span>
+        <div class="bc-desc">Extends Scholar operational life. Requires Medicine Scholar to operate.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×15</b></div><div class="ri"><b>Precision Parts ×20</b></div><div class="ri"><b>Glass Vessels ×10</b></div><div class="ri"><b>Medicine ×5/procedure</b> <small>ongoing per use</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>3 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4" data-name="reinforced vault storage blueprints food preservation">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Reinforced Vault Storage</span><span class="bc-meta">2 seasons · Engineering + Metallurgy Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−100% blueprint loss from fire/flood</span><span class="bc-stat s-pos">−80% food/medicine spoilage</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">4× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×35</b></div><div class="ri"><b>Stone ×60</b></div><div class="ri"><b>Concrete Mix ×20</b></div><div class="ri"><b>Precision Parts ×10</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>7 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4 sea" data-name="deep keel sailing ship ocean maritime">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Deep-Keel Sailing Ship <span class="sea-mark">SEA</span></span><span class="bc-meta">3 seasons · Engineering + Metallurgy Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-sea">Ocean-capable · 12 crew + 30 cargo</span><span class="bc-stat s-warn">20% storm loss risk (open ocean)</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">5× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×100</b></div><div class="ri"><b>Steel ×30</b></div><div class="ri"><b>Canvas ×40</b></div><div class="ri"><b>Rope ×35</b></div><div class="ri"><b>Pitch ×25</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>10 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t4" data-tier="t4 sea" data-name="deep sea fishing rig food ocean maritime">
+    <summary class="bc-header"><span class="bc-badge">T·IV</span><span class="bc-name">Deep Sea Fishing Rig <span class="sea-mark">SEA</span></span><span class="bc-meta">1.5 seasons · Engineering + Agriculture Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+35 food/season</span><span class="bc-stat s-sea">Sustains crew during ocean voyages</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t4">3× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×15</b></div><div class="ri"><b>Rope ×30</b></div><div class="ri"><b>Canvas ×15</b></div><div class="ri"><b>Metal Hooks ×20</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details><div class="sec-head">Tier V — Apex · 3–5 Seasons · Multi-Scholar · Rarest Resources</div>
+  <details class="bcard bc-t5" data-tier="t5" data-name="hydroelectric turbine power electricity river">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Hydroelectric Turbine</span><span class="bc-meta">3 seasons · Engineering + Electronics Scholar · River required</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+25 power units/season (permanent)</span><span class="bc-stat s-warn">Solar flare: −60% output 1 season</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">4× Tier V BP</span><span class="bpr bpr-t4">2× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×80</b></div><div class="ri"><b>Copper Wire ×40</b></div><div class="ri"><b>Concrete Mix ×50</b></div><div class="ri"><b>Salvaged Components ×30</b></div><div class="ri"><b>Precision Parts ×20</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>12 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5" data-name="vertical farm complex food power electricity">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Vertical Farm Complex</span><span class="bc-meta">3 seasons · Agriculture + Engineering Scholar · Requires electricity</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+80 food/season (no weather risk)</span><span class="bc-stat s-pos">100% prion-safe production</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">4× Tier V BP</span><span class="bpr bpr-t3">2× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×60</b></div><div class="ri"><b>Glass ×50</b></div><div class="ri"><b>Concrete Mix ×40</b></div><div class="ri"><b>Power ×6/season</b> <small>ongoing</small></div><div class="ri"><b>Nutrient Solution ×10/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>8 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5 sea" data-name="desalination plant water coastal sea ocean">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Desalination Plant <span class="sea-mark">SEA</span></span><span class="bc-meta">3 seasons · Chemistry + Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+60 clean water/season</span><span class="bc-stat s-sea">Removes ocean voyage water constraint</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">4× Tier V BP</span><span class="bpr bpr-t4">2× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×50</b></div><div class="ri"><b>Copper Pipe ×30</b></div><div class="ri"><b>Chemical Reagents ×20</b></div><div class="ri"><b>Power ×8/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>7 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5" data-name="prion research laboratory vaccine cure disease">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Prion Research Laboratory</span><span class="bc-meta">3 seasons · Medicine + Chemistry Scholar · Requires electricity</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+1 Research Point/season toward Vaccine</span><span class="bc-stat s-pos">−15% all prion risks (passive)</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">4× Tier V BP</span><span class="bpr bpr-t4">3× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×30</b></div><div class="ri"><b>Glass Vessels ×30</b></div><div class="ri"><b>Chemical Reagents ×25</b></div><div class="ri"><b>Salvaged Components ×20</b></div><div class="ri"><b>Power ×4/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5" data-name="prion vaccine prototype cure treatment">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Prion Vaccine Prototype</span><span class="bc-meta">2 seasons (after 10 Research Points) · Medicine + Chemistry Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">−75% prion infection (vaccinated pop)</span><span class="bc-stat s-pos">+6 morale/season</span>
+        <div class="bc-desc">Each cycle covers 50 population. Costs 5 Chemical Reagents per cycle.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">5× Tier V BP</span><span class="bpr bpr-t4">3× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Chemical Reagents ×30</b></div><div class="ri"><b>Glass Vessels ×20</b></div><div class="ri"><b>Prion Samples ×5</b></div><div class="ri"><b>Power ×3/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>4 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5" data-name="broadcast tower radio communication faction signal">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Broadcast Tower</span><span class="bc-meta">3 seasons · Electronics + Engineering Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">Full-map communication</span><span class="bc-stat s-pos">+20% trade efficiency all factions</span>
+        <div class="bc-desc">Solar flare destroys unless shielded (+10 Steel shielding).</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">4× Tier V BP</span><span class="bpr bpr-t4">2× Tier IV BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Steel ×50</b></div><div class="ri"><b>Copper Wire ×35</b></div><div class="ri"><b>Salvaged Components ×25</b></div><div class="ri"><b>Power ×5/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>6 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5" data-name="the archive knowledge blueprints scholar preserve">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">The Archive</span><span class="bc-meta">4 seasons · All Domains Required</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-pos">+1 new blueprint/3 seasons</span><span class="bc-stat s-pos">Dead Scholar knowledge preserved</span></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">6× Tier V BP</span><span class="bpr bpr-t4">4× Tier IV BP</span><span class="bpr bpr-t3">2× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Stone ×80</b></div><div class="ri"><b>Timber ×60</b></div><div class="ri"><b>Steel ×40</b></div><div class="ri"><b>Salvaged Books ×40</b></div><div class="ri"><b>Paper/Ink ×20/season</b> <small>ongoing</small></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>10 workers</b></div></div>
+    </div>
+  </details>  <details class="bcard bc-t5" data-tier="t5 sea" data-name="ocean ark fleet win victory ship maritime sea">
+    <summary class="bc-header"><span class="bc-badge">T·V</span><span class="bc-name">Ocean Ark Fleet ★ WIN CONDITION <span class="sea-mark">SEA</span></span><span class="bc-meta">5 seasons · Engineering + Metallurgy + Electronics Scholar</span></summary>
+    <div class="bc-body">
+      <div><div class="bc-col-label">// Effects</div><span class="bc-stat s-sea">Carries full faction population</span><span class="bc-stat s-sea">5% storm loss (with nav charts)</span>
+        <div class="bc-desc">Win condition. Requires Nav Charts + Deep Sea Rig + Desalination Plant already built.</div></div>
+      <div><div class="bc-col-label">// Blueprint Req.</div><div class="bp-req"><span class="bpr bpr-t5">8× Tier V BP</span><span class="bpr bpr-t4">5× Tier IV BP</span><span class="bpr bpr-t3">3× Tier III BP</span></div></div>
+      <div><div class="bc-col-label">// Resources</div><div class="res-list"><div class="ri"><b>Timber ×300</b></div><div class="ri"><b>Steel ×120</b></div><div class="ri"><b>Canvas ×80</b></div><div class="ri"><b>Rope ×60</b></div><div class="ri"><b>Pitch ×40</b></div><div class="ri"><b>Copper Wire ×30</b></div><div class="ri"><b>Salvaged Components ×25</b></div></div></div>
+      <div><div class="bc-col-label">// Workers</div><div class="info-line"><b>15 workers</b></div></div>
+    </div>
+  </details>
+</div><!-- /panel-build -->
+
+<div id="panel-areas" class="tab-panel">
+<div class="info-grid" style="margin-bottom:.9rem;">
+    <div class="info-card">
+      <div class="info-title">// How Areas Work</div>
+      <div class="info-line">Areas are the terrain and settlement types scattered across the 280×200 map. They exist <b>independently of distance</b> — a military base could be 20 blocks from your bunker or 140. Your GM/host places area types when mapping the world.</div>
+      <div class="info-line" style="margin-top:.25rem;">Each area contains specific <b>structures</b> you can explore, carries its own <b>threat profile</b>, and yields specific resources. The resources listed are what you can realistically find in that area — cross-reference with the Scavenging tab for exact D20 rolls.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Threat Types</div>
+      <div class="info-line">⚔ <b>Raiders</b> — organised or feral human groups defending or exploiting the site</div>
+      <div class="info-line">☣ <b>Prion</b> — active contamination risk from infected wildlife, water, or bodies</div>
+      <div class="info-line">🐾 <b>Wildlife</b> — feral animals, prion-infected or otherwise; pack predators</div>
+      <div class="info-line">🧱 <b>Collapse</b> — structural instability; floors, ceilings, tunnels at risk of caving</div>
+      <div class="info-line">🌊 <b>Flood</b> — submerged sections; dive gear required for lower levels</div>
+      <div class="info-line">☢ <b>Contamination</b> — chemical or prion saturation; requires NBC protection</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Encounter Rolls</div>
+      <div class="info-line">At the start of each expedition to a new area, roll D20 for a random encounter before scavenging begins.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>1–3:</b> Major threat (combat or forced retreat) · <b>4–7:</b> Minor threat or complication · <b>8–14:</b> Clear · <b>15–18:</b> Useful discovery (bonus loot roll) · <b>19–20:</b> Exceptional find (roll on rare table)</div>
+      <div class="info-line" style="margin-top:.2rem;">Threats vary by area. Each area below lists which threats are relevant and how serious.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Repeated Visits</div>
+      <div class="info-line">Structures within an area are finite. Track separately from the area itself.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>1st visit:</b> Full yield, encounter roll as normal. <b>2nd visit:</b> −2 yield rolls. <b>3rd+ visit:</b> −3 yield, non-renewable structures cleared. Some areas regenerate threats (raider groups respawn, wildlife returns) even when resources are depleted.</div>
+    </div>
+  </div>
+
+  <!-- ── URBAN ── -->
+  <div class="area-card ac-urban">
+    <div class="area-card-head">
+      <span class="area-icon">🏙</span>
+      <div><div class="area-name">Urban — Cities, Suburbs &amp; Industrial Districts</div><div class="area-sub">Highest resource density · Highest human threat · Structural instability</div></div>
+    </div>
+    <div class="area-body">
+      <div class="area-col">
+        <div class="area-col-head">// Threats</div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — High.</b> Urban zones are the most contested territory. Expect organised scavenger gangs, territorial factions, or desperate survivor groups.<small>Roll 1–5 on encounter: armed confrontation. Militia escort strongly recommended.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🧱</span><div class="threat-text"><b>Collapse — Moderate.</b> Post-flare fires and flood damage have weakened multi-storey structures. Upper floors and basements carry a 15% per-visit collapse risk without Engineering Scholar.<small>Collapse: 1D6 members injured, expedition cut short.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion — Low–Moderate.</b> Body concentration in urban areas creates pockets of prion contamination, particularly in hospitals, care homes, and dense residential blocks.<small>Roll D6 on entering hospital or care site: 1–2 triggers prion exposure check.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🌊</span><div class="threat-text"><b>Flood — Situational.</b> Low-lying districts and underground infrastructure (tube stations, car parks, basements) may be partially or fully submerged.<small>Standard Dive Gear (T2): shallow flooded zones only. Pressurised Dive Gear (T4): full deep access — highest yield copper wire and pipe nodes are here.</small></div></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">Residential Blocks</span><span class="struct-desc">Homes, flats, terraced streets. Dense cloth, salvaged medicine, clay vessels, seeds, tools. Depletes quickly.</span></div>
+        <div class="struct-item"><span class="struct-name">Retail &amp; Warehouse District</span><span class="struct-desc">Supermarkets, hardware stores, fabric suppliers, DIY warehouses. Best source of cloth, rope, canvas, tools, trade goods. Often raider-occupied.</span></div>
+        <div class="struct-item"><span class="struct-name">Office Towers</span><span class="struct-desc">Best source of glass/glazing, glass panels, ink and paper. Upper floors at collapse risk. Sometimes faction headquarters.</span></div>
+        <div class="struct-item"><span class="struct-name">Hospital Complex</span><span class="struct-desc">Metal instruments, glass vessels, salvaged medicine, chemical reagents. Prion risk. Non-renewable once swept.</span></div>
+        <div class="struct-item"><span class="struct-name">Industrial Estate</span><span class="struct-desc">Scrap metal, metal pipe, salvaged components, concrete mix bags. Vehicle graveyards nearby.</span></div>
+        <div class="struct-item"><span class="struct-name">University / Library</span><span class="struct-desc">Salvaged books (highest yield), glass vessels, chemical reagents, blueprints T2–T3. Scholar-essential location.</span></div>
+        <div class="struct-item"><span class="struct-name">Submerged Lower City</span><span class="struct-desc">Copper wire, copper pipe (highest yield). Dive gear required. No raider presence. Prion risk from bodies.</span></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Scrap Metal</b> <span class="tag-bonus">+12 yield at vehicle graveyards</span></div>
+          <div class="ry"><b>Glass / Glazing</b> <span class="tag-bonus">+10 yield large office</span></div>
+          <div class="ry"><b>Cloth · Rope · Canvas</b></div>
+          <div class="ry"><b>Salvaged Medicine</b> <span class="tag-warn">Non-renewable</span></div>
+          <div class="ry"><b>Metal Instruments</b> <span class="tag-bonus">+8 yield surgical wing</span></div>
+          <div class="ry"><b>Chemical Reagents</b></div>
+          <div class="ry"><b>Glass Vessels</b></div>
+          <div class="ry"><b>Glass Panels</b></div>
+          <div class="ry"><b>Ink · Dye · Paper</b></div>
+          <div class="ry"><b>Salt</b> (food warehouses)</div>
+          <div class="ry"><b>Concrete Mix</b> (construction sites)</div>
+          <div class="ry"><b>Metal Pipe</b></div>
+          <div class="ry"><b>Salvaged Books</b> <span class="tag-bonus">+15 at university</span></div>
+          <div class="ry"><b>Copper Wire</b> <span class="tag-rare">Submerged only</span></div>
+          <div class="ry"><b>Copper Pipe</b> <span class="tag-rare">Submerged only</span></div>
+          <div class="ry"><b>Blueprints T1–T3</b></div>
+          <div class="ry"><b>Saltpetre</b> (chemical factories, industrial sites)</div>
+          <div class="ry"><b>Basic Gun Parts</b> (police stations, gun shops)</div>
+          <div class="ry"><b>Small Bullets</b> (police stations, homes)</div>
+        </div>
+      </div>
+      <div class="area-note"><b>⚠ Special:</b> Urban hospitals and government buildings are <b>non-renewable</b> once fully cleared — mark them on your map. Raider groups in cities can respawn every 2–3 seasons if not driven out. Faction control of an urban area blocks access entirely until diplomatically resolved or taken by force.</div>
+    </div>
+  </div>
+
+  <!-- ── RURAL ── -->
+  <div class="area-card ac-rural">
+    <div class="area-card-head">
+      <span class="area-icon">🌾</span>
+      <div><div class="area-name">Rural — Farms, Villages, Woodland &amp; Open Country</div><div class="area-sub">Renewable resources · Prion-risk livestock · Lower human threat</div></div>
+    </div>
+    <div class="area-body">
+      <div class="area-col">
+        <div class="area-col-head">// Threats</div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion — Moderate.</b> Infected livestock and wild animals are the primary prion vector in rural areas. Any live animal encountered must be tested before bringing back.<small>Without Detection Lab: 15% chance any captured animal triggers an outbreak.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🐾</span><div class="threat-text"><b>Wildlife — Moderate.</b> Feral dogs, wild boar, and prion-maddened deer are common. Pack animals are aggressive and may chase expeditions.<small>Roll 1–4 on encounter in dense woodland: wildlife confrontation. 1 member injury risk.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — Low.</b> Rural areas may have small isolated survivor groups or farming communities that are hostile to outsiders. Less organised than urban gangs.<small>Roll 1–2 on encounter: territorial farmers or desperate travellers.</small></div></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">Farmsteads &amp; Smallholdings</span><span class="struct-desc">Live animals, seeds, hides, rope, cloth, medicinal herbs, farming tools. Sometimes occupied by survivor groups.</span></div>
+        <div class="struct-item"><span class="struct-name">Old-Growth Woodland</span><span class="struct-desc">Large timber logs, resin/pitch, wild medicinal plants, hides from wildlife. Best sustained timber source on the map.</span></div>
+        <div class="struct-item"><span class="struct-name">Village Centre</span><span class="struct-desc">Salvaged medicine (GP clinics), books, seeds, cloth, clay. Smaller yields than urban but much lower raider risk.</span></div>
+        <div class="struct-item"><span class="struct-name">Open-Cast Mine / Rock Seam</span><span class="struct-desc">Iron ore, stone, sand. Depletes after 3–4 visits. Essential mid-game resource.</span></div>
+        <div class="struct-item"><span class="struct-name">Garden Centres &amp; Allotments</span><span class="struct-desc">Medicinal seeds, crop seeds, clay pots, fertiliser. Low danger. Renewable if plants are left to seed.</span></div>
+        <div class="struct-item"><span class="struct-name">Fertiliser Plant</span><span class="struct-desc">Saltpetre in the highest rural yield anywhere on the map (<span class="tag-bonus" style="font-size:.55rem;border:1px solid rgba(154,204,68,.4);color:#9acc44;padding:1px 5px;display:inline-block;">+8 Saltpetre yield</span>). Also yields Chemical Reagents and Clay. Low-moderate danger — usually abandoned, occasionally claimed by The Covenant. Non-renewable once fully stripped.</span></div>
+        <div class="struct-item"><span class="struct-name">Rural Workshops &amp; Barns</span><span class="struct-desc">Rope, canvas, timber, tools, salt. Occasional scrap metal from farm machinery.</span></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Large Timber Log</b> <span class="tag-bonus">+2 search, logging party 4+</span></div>
+          <div class="ry"><b>Iron Ore</b> <span class="tag-warn">Depletes after 3+ visits</span></div>
+          <div class="ry"><b>Pitch / Resin / Tar</b> <span class="tag-bonus">+4 yield pine forest</span></div>
+          <div class="ry"><b>Live Animals</b> <span class="tag-warn">Prion test mandatory</span></div>
+          <div class="ry"><b>Hides / Pelts</b></div>
+          <div class="ry"><b>Seeds (Crop)</b></div>
+          <div class="ry"><b>Medicinal Seeds</b></div>
+          <div class="ry"><b>Soil Plot</b> (any cleared field)</div>
+          <div class="ry"><b>Clay / Clay Vessels</b></div>
+          <div class="ry"><b>Stone</b></div>
+          <div class="ry"><b>Cloth · Rope · Canvas</b></div>
+          <div class="ry"><b>Timber / Scrap Wood</b></div>
+          <div class="ry"><b>Salvaged Medicine</b> (village clinics)</div>
+          <div class="ry"><b>Blueprints T1–T2</b> (farmhouses, village halls)</div>
+          <div class="ry"><b>Basic Gun Parts</b> (hunting lodges, rural homes)</div>
+          <div class="ry"><b>Small Bullets</b> (gun cabinets, sporting stores)</div>
+          <div class="ry"><b>Large Bullets</b> (hunting lodges)</div>
+        </div>
+      </div>
+      <div class="area-note"><b>⚠ Special:</b> Farmsteads with <b>live animals</b> are the most strategically valuable rural sites — mark them. Wildlife populations <b>recover</b> season by season, making rural areas the most reliably renewable source of hides and trap prey. Iron ore seams are the only surface source of ore on the map and will eventually deplete.</div>
+    </div>
+  </div>
+
+  <!-- ── COASTAL ── -->
+  <div class="area-card ac-coast">
+    <div class="area-card-head">
+      <span class="area-icon">🌊</span>
+      <div><div class="area-name">Coastal &amp; Flooded Zones — Shoreline, Harbours &amp; Submerged Cities</div><div class="area-sub">Unique maritime resources · Dive gear required for deep access · Flood risk</div></div>
+    </div>
+    <div class="area-body">
+      <div class="area-col">
+        <div class="area-col-head">// Threats</div>
+        <div class="threat-row"><span class="threat-icon">🌊</span><div class="threat-text"><b>Flood — High.</b> The primary hazard. Submerged structures require dive gear. Tides shift access windows. Flooded corridors trap expeditions without proper egress planning.<small>Standard Dive Gear (T2): shallow access only (+1 block depth) — tidal flats and flooded ground floors. Pressurised Dive Gear (T4): full depth access — submerged city grid, +10–12 yield on copper resources.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — Moderate.</b> Coastal factions controlling harbour access are common. Maritime raiders patrol shorelines in small vessels. Any bunker attempting to build sea access will draw attention.<small>Roll 1–4 on encounter near harbour: maritime faction confrontation or toll demand.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion — Low.</b> Fish are prion-safe. Coastal wildlife and submerged human remains carry low but non-zero risk.<small>Roll D6 on diving through heavily submerged residential area: 1 triggers exposure check.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🧱</span><div class="threat-text"><b>Collapse — Situational.</b> Submerged structures are often partially destabilised. Sea caves and flooded tunnels carry cave-in risk.<small>Engineering Scholar on site: −50% collapse risk in submerged structures.</small></div></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">Harbour &amp; Docklands</span><span class="struct-desc">Canvas, rope, pitch, scrap metal, metal hooks, fishing equipment. Maritime blueprint locations. Often faction-contested.</span></div>
+        <div class="struct-item"><span class="struct-name">Submerged City Grid</span><span class="struct-desc">Copper wire and copper pipe in highest concentration anywhere. <b>Pressurised Dive Gear Workshop (T4) mandatory</b> — standard dive gear cannot reach this depth. Bodies present — low prion risk but tracked.</span></div>
+        <div class="struct-item"><span class="struct-name">Naval / Coastguard Base</span><span class="struct-desc">Star charts, sextants, sealing material, salvaged components, chemical reagents. Highest blueprint concentration for maritime T3–T4.</span></div>
+        <div class="struct-item"><span class="struct-name">Fishing Village</span><span class="struct-desc">Canvas, rope, salt, metal hooks, salvaged tools. Lower danger than harbour. Possible NPC fishing community.</span></div>
+        <div class="struct-item"><span class="struct-name">Coastal Industrial Plant</span><span class="struct-desc">Chemical reagents, copper pipe, salvaged components, concrete mix. Flood risk on lower floors.</span></div>
+        <div class="struct-item"><span class="struct-name">Beachfront / Tidal Flats</span><span class="struct-desc">Sand (inexhaustible), salt (evaporation), scavenged debris. Low danger. Good for quick low-risk collection runs.</span></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Copper Wire</b> <span class="tag-bonus">+12 yield, −3 diff (submerged)</span></div>
+          <div class="ry"><b>Copper Pipe</b> <span class="tag-bonus">+10 yield, −3 diff (submerged)</span></div>
+          <div class="ry"><b>Metal Hooks</b></div>
+          <div class="ry"><b>Canvas · Rope</b></div>
+          <div class="ry"><b>Salt</b> <span class="tag-bonus">Evaporation: +15/season free</span></div>
+          <div class="ry"><b>Sand</b> (inexhaustible on tidal flats)</div>
+          <div class="ry"><b>Pitch / Resin</b></div>
+          <div class="ry"><b>Star Charts / Sextant</b> <span class="tag-rare">Naval base only</span></div>
+          <div class="ry"><b>Salvaged Components</b> (naval base)</div>
+          <div class="ry"><b>Chemical Reagents</b> (industrial plant)</div>
+          <div class="ry"><b>Blueprints T3–T4 Maritime</b> <span class="tag-rare">Harbour &amp; naval</span></div>
+        </div>
+      </div>
+      <div class="area-note"><b>⚠ Special:</b> The submerged city grid is the <b>only reliable source of copper wire</b> at scale — it cannot be crafted. Securing <b>Pressurised</b> dive equipment (T4) and mapping the submerged grid is a major strategic objective. Standard dive gear (T2) grants shallow access only. Coastal areas that contain a <b>naval base</b> may hold unique T5 blueprints such as the Desalination Plant or Ocean Ark components.</div>
+    </div>
+  </div>
+
+  <!-- ── MILITARY ── -->
+  <div class="area-card ac-mil">
+    <div class="area-card-head">
+      <span class="area-icon">🪖</span>
+      <div><div class="area-name">Military &amp; Government Sites — Bases, Bunkers &amp; Installations</div><div class="area-sub">Highest-tier blueprints · Heavy raider presence · NBC contamination risk</div></div>
+    </div>
+    <div class="area-body">
+      <div class="area-col">
+        <div class="area-col-head">// Threats</div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — Very High.</b> Military sites are the most fiercely contested locations on the map. Organised factions often treat them as headquarters or strongholds. Expect fortified positions, patrols, and ambushes.<small>Roll 1–7 on encounter: armed faction confrontation. Militia escort of 6+ strongly advised.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☢</span><div class="threat-text"><b>Contamination — Moderate.</b> NBC stores, chemical weapons dumps, and research lab remnants create contamination zones. Entering without protection risks illness and prion exposure.<small>Chemical contamination zone: all members require NBC check. Failure: Weakened condition next season.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🧱</span><div class="threat-text"><b>Collapse — Low–Moderate.</b> Underground bunkers and reinforced structures are mostly stable, but post-flare fire damage affects surface buildings and barracks.<small>Surface buildings: 10% collapse risk. Underground bunkers: 5%.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion — Moderate.</b> Bodies in sealed rooms and field hospitals are a contamination risk. Any returning expedition member must be tested before re-entry.<small>Mandatory Prion Detection Lab check on all members returning from military sites.</small></div></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">Armoury &amp; Equipment Store</span><span class="struct-desc">Scrap metal, sealing material, metal pipe, tools, canvas. Weapons and armour components if your game uses them.</span></div>
+        <div class="struct-item"><span class="struct-name">Communications Facility</span><span class="struct-desc">Salvaged components and copper wire in highest land-based concentration. Electronics Scholar dramatically improves yield. Blueprint: Radio Receiver likely here.</span></div>
+        <div class="struct-item"><span class="struct-name">NBC Store &amp; Decontam Unit</span><span class="struct-desc">Sealing material (best source), chemical reagents, glass vessels. High contamination risk without protection gear.</span></div>
+        <div class="struct-item"><span class="struct-name">Field Hospital / Medical Block</span><span class="struct-desc">Metal instruments, glass vessels, salvaged medicine, chemical reagents. Prion risk from bodies. Non-renewable.</span></div>
+        <div class="struct-item"><span class="struct-name">Government Bunker / Archive</span><span class="struct-desc">Blueprints T4–T5 (rarest on map). Salvaged books, precision parts. Heavily contested or sealed. Scholar essential.</span></div>
+        <div class="struct-item"><span class="struct-name">Motor Pool &amp; Logistics Yard</span><span class="struct-desc">Scrap metal, concrete mix, canvas, rope. Largest single scrap metal deposit on the map.</span></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Salvaged Components</b> <span class="tag-bonus">+6 yield comms facility</span></div>
+          <div class="ry"><b>Sealing Material</b> <span class="tag-bonus">+4 yield NBC store</span></div>
+          <div class="ry"><b>Chemical Reagents</b></div>
+          <div class="ry"><b>Precision Metal Parts</b></div>
+          <div class="ry"><b>Scrap Metal</b> (motor pool — largest deposit)</div>
+          <div class="ry"><b>Glass Vessels</b></div>
+          <div class="ry"><b>Metal Instruments</b> (field hospital)</div>
+          <div class="ry"><b>Concrete Mix</b></div>
+          <div class="ry"><b>Nutrient Solution</b> (research labs)</div>
+          <div class="ry"><b>Blueprints T3–T5</b> <span class="tag-rare">Government bunker only</span></div>
+          <div class="ry"><b>Star Charts / Sextant</b> (naval installations)</div>
+          <div class="ry"><b>Advanced Gun Parts</b> <span class="tag-rare">Armoury &amp; tactical units</span></div>
+          <div class="ry"><b>Saltpetre</b> (NBC stores, chemical depots)</div>
+          <div class="ry"><b>Large Bullets</b> (armoury stores)</div>
+          <div class="ry"><b>Small Bullets</b> (security vaults, barracks)</div>
+        </div>
+      </div>
+      <div class="area-note"><b>⚠ Special:</b> Government bunkers and sealed archives are <b>one-time locations</b> — once cleared they yield nothing further. They are also the <b>primary source of T4–T5 blueprints</b>. Clearing a heavily defended military site is a multi-faction event — consider coordinating with allies. All members returning from military sites <b>must pass a prion check</b> at your Detection Lab before re-entering the settlement.</div>
+    </div>
+  </div>
+
+  <!-- ── WASTELAND ── -->
+  <div class="area-card ac-waste">
+    <div class="area-card-head">
+      <span class="area-icon">💀</span>
+      <div><div class="area-name">Wasteland &amp; Scorched Zones — Dead Land, Ash Fields &amp; Collapse Sites</div><div class="area-sub">Lowest human threat · Prion hotspot · Unique raw materials · Extreme environment</div></div>
+    </div>
+    <div class="area-body">
+      <div class="area-col">
+        <div class="area-col-head">// Threats</div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion — High.</b> The wasteland's concentrated animal die-off and stagnant water make it the highest-density prion environment. Airborne particles in ash zones may carry contamination without direct contact.<small>Any member spending more than 0.5 seasons in wasteland without NBC gear: automatic prion exposure check.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🐾</span><div class="threat-text"><b>Wildlife — High.</b> Prion-infected and feral animals have retreated here in large numbers. Behaviour is erratic and aggressive. Pack ambushes are common at watering holes.<small>Roll 1–5 on encounter: wildlife confrontation. Infected animals: on wound, roll prion check.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — Very Low.</b> Almost nobody willingly operates in wasteland. Rare exception: desperate lone scavengers or exiled individuals.<small>Roll 1 on encounter only: desperate lone survivor (negotiation possible).</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☢</span><div class="threat-text"><b>Contamination — High.</b> Scorched zones from post-flare firestorms contain chemical residue and ash particulate. Long exposure causes respiratory illness.<small>Spending 2+ seasons near scorched zones without protection: −1 Condition to all members.</small></div></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">Ash Fields &amp; Burn Zones</span><span class="struct-desc">Charcoal (large quantities from burned woodland), clay exposed by topsoil loss, occasional scrap metal from burned structures. Empty and largely safe from human threat.</span></div>
+        <div class="struct-item"><span class="struct-name">Dead Waterways</span><span class="struct-desc">Stagnant prion-heavy water. Do NOT collect without Purification. Occasional freshwater springs form. Iron ore seams sometimes surface near old riverbeds.</span></div>
+        <div class="struct-item"><span class="struct-name">Collapsed Settlements</span><span class="struct-desc">Scrap metal, stone, timber (charred but usable), concrete rubble. Low structured yield but vast raw quantities. Best quick stone/rubble gathering point.</span></div>
+        <div class="struct-item"><span class="struct-name">Prion Den / Animal Lair</span><span class="struct-desc">Hides and prion samples — the only reliably accessible field prion sample site. Extremely dangerous. Medicine Scholar essential.</span></div>
+        <div class="struct-item"><span class="struct-name">Scorched Research Site</span><span class="struct-desc">Rare: partially intact lab equipment, glass vessels, chemical reagents, nutrient solution. High prion/contamination risk. Unique blueprint possible.</span></div>
+      </div>
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Stone / Rubble</b> (vast quantities)</div>
+          <div class="ry"><b>Charcoal</b> <span class="tag-bonus">Ash fields: no search roll needed · free large yield</span></div>
+          <div class="ry"><b>Clay</b> (topsoil-stripped areas)</div>
+          <div class="ry"><b>Scrap Metal</b> (collapsed settlements)</div>
+          <div class="ry"><b>Iron Ore</b> (exposed seams near old riverbeds)</div>
+          <div class="ry"><b>Hides / Pelts</b> <span class="tag-warn">Prion test mandatory</span></div>
+          <div class="ry"><b>Live Animals</b> <span class="tag-warn">Infected — test before entry</span></div>
+          <div class="ry"><b>Prion Samples</b> <span class="tag-rare">Field collection — high risk</span></div>
+          <div class="ry"><b>Glass Vessels</b> (scorched research site only)</div>
+          <div class="ry"><b>Soil Plot</b> (edge zones only — not ash centre)</div>
+        </div>
+      </div>
+      <div class="area-note"><b>⚠ Special:</b> Wasteland is the <b>only field source of Prion Samples</b> outside your Research Lab. Any expedition here is a prion risk — <b>always run Detection Lab checks on return</b>. The upside: wasteland is almost completely uncontested by other factions, making it the safest area in terms of human threat. Scorched Research Sites are rare, non-renewable, and may contain otherwise unobtainable T5 blueprints.</div>
+    </div>
+  </div>
+  <!-- ── CITY RUINS (GROUND ZERO) ── -->
+  <div class="area-card" style="border-color:rgba(160,58,42,.6);background:rgba(160,58,42,.03);">
+    <div class="area-card-head">
+      <span class="area-icon">☣</span>
+      <div>
+        <div class="area-name" style="color:var(--red);">City Ruins — Ground Zero</div>
+        <div class="area-sub">Fixed map centre · Prion origin point · Highest-tier rewards · Unique special rules · Faction flashpoint</div>
+      </div>
+    </div>
+
+    <div style="padding:.45rem .85rem;border-top:1px solid rgba(160,58,42,.4);border-bottom:1px solid rgba(160,58,42,.4);background:rgba(160,58,42,.06);font-size:.62rem;color:var(--ink-dim);line-height:1.6;">
+      <b style="color:var(--red);">⚠ GROUND ZERO — SPECIAL RULES APPLY.</b> This is not a standard area tile. The City Ruins has unique prion mechanics, unique intel prerequisites, and unique rewards that exist nowhere else on the map. Read all rules below before planning an expedition here.
+    </div>
+
+    <div class="area-body" style="grid-template-columns:1fr 1fr 1.2fr;">
+      <div class="area-col">
+        <div class="area-col-head">// Special Prion Rules</div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Prion Baseline — All thresholds +4.</b> The city carries the original aggressive mutation. No building reduces this baseline — it applies on top of all your protections. Detection Lab, Quarantine Suite, Vaccine: all still apply their normal reductions, but the starting threshold is higher here than anywhere else on the map.<small>Example: expedition return threshold is normally 6 with no lab. At Ground Zero it is 10 before reductions.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>The Silent are here.</b> Any encounter roll of 4 or below results in Silent contact rather than a standard threat. They are not hostile by default — but any combat with them triggers prion wound rules (D6 per wound: on 1 the fighter is exposed to the city strain, which carries +2 additional to all future thresholds for that individual permanently).<small>The city strain is not the same as field prion exposure. A Medicine Scholar can document this distinction if present for 2+ expeditions.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">☣</span><div class="threat-text"><b>Minimum prerequisites to enter safely.</b> Without Prion Detection Lab + Quarantine Suite: all members are automatically Exposed on return regardless of roll. No exceptions.<small>This is the only location on the map where prerequisites are mandatory rather than advisory.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">⚔</span><div class="threat-text"><b>Raiders — Extreme.</b> The Reapers consider this their territory. Any expedition here triggers a Reapers awareness check — on D6: 1–3 they send a patrol the following season regardless of whether combat occurred this visit.<small>Other factions also operate here. Encounter rolls 5–8 may produce Remnant Authority patrols in later seasons.</small></div></div>
+        <div class="threat-row"><span class="threat-icon">🧱</span><div class="threat-text"><b>Collapse — High.</b> Post-flare fires, the burn team operations, and years of neglect have made every multi-storey structure critically unstable. Upper floors: 25% collapse risk per visit. Engineering Scholar on site halves this.<small>Collapse: D6 members injured, expedition partially cut short. Certain structures are permanently inaccessible without engineering assessment.</small></div></div>
+      </div>
+
+      <div class="area-col">
+        <div class="area-col-head">// Structures Found</div>
+        <div class="struct-item"><span class="struct-name">The Government Quarter</span><span class="struct-desc">Pre-collapse administrative buildings. Contains the sealed government archive — the single highest-value location on the entire map. Star charts, sextant calibrations, and the sealed Project Meridian document are here. Requires Scholar + 3+ expeditions to locate and access. Remnant Authority knows it exists and actively seeks it.</span></div>
+        <div class="struct-item"><span class="struct-name">The Hospital Complex</span><span class="struct-desc">Largest medical site on the map. Salvaged Medicine in quantities unavailable elsewhere. Metal instruments. Chemical Reagents. Prion samples from the original strain — uniquely valuable for Vaccine research (each sample from here counts as 2 Research Points). Non-renewable once swept.</span></div>
+        <div class="struct-item"><span class="struct-name">The University District</span><span class="struct-desc">Salvaged Books at highest concentration anywhere. Blueprints T2–T5 possible. Glass vessels, chemical reagents. Blueprint T5 probability here is 3× standard. Scholar essential — without one present, all blueprint rolls are at −4.</span></div>
+        <div class="struct-item"><span class="struct-name">Industrial Core</span><span class="struct-desc">Scrap metal in massive quantities. Precision metal parts. Concrete mix. Gun parts — both Basic and Advanced in the same location. The largest single deposit of Advanced Gun Parts on the map.</span></div>
+        <div class="struct-item"><span class="struct-name">The Submerged Lower City</span><span class="struct-desc">Copper wire and copper pipe at highest concentration anywhere on the map — more than any coastal submerged district. <b>Pressurised Dive Gear Workshop (T4) mandatory</b> — deepest submerged site on the map, standard gear cannot reach it. Bodies everywhere. Prion rules apply at full baseline even underwater. The Drowned do not operate here — this territory is unclaimed.</span></div>
+        <div class="struct-item"><span class="struct-name">The Burn Team Perimeter</span><span class="struct-desc">Remnants of the containment operation. Sealing Material in large quantities. Chemical Reagents from decontamination stores. And field notes — documents that describe what the burn teams found and why they stopped.</span></div>
+      </div>
+
+      <div class="area-col">
+        <div class="area-col-head">// Key Resources Available</div>
+        <div class="res-yield-list">
+          <div class="ry"><b>Star Charts / Sextant</b> <span class="tag-rare">Government Quarter only · non-renewable</span></div>
+          <div class="ry"><b>Prion Samples (City Strain)</b> <span class="tag-rare">2× Research Points each</span></div>
+          <div class="ry"><b>Blueprints T1–T5</b> <span class="tag-bonus">T5: 3× standard probability</span></div>
+          <div class="ry"><b>Salvaged Books</b> <span class="tag-bonus">+20 yield · University District</span></div>
+          <div class="ry"><b>Advanced Gun Parts</b> <span class="tag-bonus">Largest deposit on map</span></div>
+          <div class="ry"><b>Salvaged Medicine</b> <span class="tag-bonus">+15 yield · non-renewable</span></div>
+          <div class="ry"><b>Metal Instruments</b> <span class="tag-bonus">+10 yield · Hospital</span></div>
+          <div class="ry"><b>Chemical Reagents</b> <span class="tag-bonus">+8 yield · multiple sites</span></div>
+          <div class="ry"><b>Copper Wire</b> <span class="tag-rare">Submerged only · highest concentration on map</span></div>
+          <div class="ry"><b>Copper Pipe</b> <span class="tag-rare">Submerged only</span></div>
+          <div class="ry"><b>Scrap Metal</b> <span class="tag-bonus">Vast quantities · Industrial Core</span></div>
+          <div class="ry"><b>Precision Metal Parts</b></div>
+          <div class="ry"><b>Sealing Material</b> <span class="tag-bonus">+8 yield · Burn Perimeter</span></div>
+          <div class="ry"><b>Concrete Mix</b></div>
+          <div class="ry"><b>Glass Vessels</b></div>
+          <div class="ry"><b>Burn Team Field Notes</b> <span class="tag-rare">1 per expedition · named document</span></div>
+        </div>
+      </div>
+
+      <div class="area-note" style="border-color:rgba(160,58,42,.3);">
+        <b style="color:var(--red);">⚠ The City is the endgame.</b> The government archive here holds the only complete star charts on the map — without them, the Ocean Ark sails blind. Every faction knows the archive exists. The Remnant Authority is actively working to reach it. The Reapers hold the outer perimeter by force. The Silent live in the ruins and have knowledge of the interior that no one else possesses. Getting to the archive first — or preventing others from doing so — is the central late-game conflict. Whatever your relationship with the Reapers, the Drowned, the Covenant, and the Authority, it converges here.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ RESTORABLE LOCATIONS SECTION ══ -->
+  <div class="sec-head" style="margin-top:1.4rem;">Restorable Locations — Found &amp; Repaired</div>
+
+  <div class="info-grid" style="margin-bottom:.7rem;">
+    <div class="info-card">
+      <div class="info-title">// What Is Restoration?</div>
+      <div class="info-line">Some structures found during expeditions can be <b>repaired rather than stripped</b>. Instead of harvesting a site for materials, you assess it, spend resources to restore it, and gain a functioning building — cheaper and faster than building from scratch, but with trade-offs a purpose-built structure avoids.</div>
+      <div class="info-line" style="margin-top:.25rem;">Restored buildings count fully toward all win condition prerequisites including the Ocean Ark chain.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Location Dependency</div>
+      <div class="info-line">A restored building stays <b>where it was found</b>. Workers assigned to it must travel there each season — they are not available for settlement tasks and face area hazards at that distance.</div>
+      <div class="info-line" style="margin-top:.25rem;"><b>Zone 1–2:</b> No extra risk. <b>Zone 3:</b> Patrol recommended. <b>Zone 4+:</b> Dedicated guard required or raid vulnerability each season.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Upsides</div>
+      <div class="info-line">30–60% cheaper in resources than building from scratch. Faster — 0.5–1 season less build time. No blueprint required for T1–T2 equivalents. Can reach T3-equivalent function without a Scholar if the condition roll is high enough.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Downsides</div>
+      <div class="info-line">Fixed off-site location. Workers exposed to area hazards. Cannot be upgraded past T3 equivalent — T4/T5 always require building from scratch. Requires occasional maintenance rolls that purpose-built structures do not.</div>
+      <div class="info-line" style="margin-top:.25rem;"><b>Exception:</b> a T3-restored structure can be demolished and rebuilt on the same site at −25% resource cost.</div>
+    </div>
+  </div>
+
+  <!-- ASSESSMENT ROLL -->
+  <div class="sec-head">Scout Assessment Roll</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.4rem;line-height:1.55;">Before restoration begins, a Scout expedition spends one season assessing the structure. Roll <b>D20 + Scout bonuses</b>. Engineering Scholar on the team: +3.</p>
+  <div class="roll-cards">
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--red);">1–5</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--red);">Ruined</span> Beyond restoration. Treat as a standard scavenge site — strip for materials only.</div>
+    </div>
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--amber);">6–12</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--amber);">Salvageable</span> Standard reduced cost. Build time unchanged. Output −10% efficiency vs. purpose-built.</div>
+    </div>
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--green);">13–17</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--green);">Mostly Intact</span> −25% on restore cost. Build time −0.5 seasons. Output equivalent to purpose-built.</div>
+    </div>
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--green);">18–20</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--green);">Structurally Sound</span> −40% total cost. Build time −0.5 seasons. Scholar not required even for Scholar-gated equivalents.</div>
+    </div>
+  </div>
+  <div class="area-note" style="margin:.4rem 0 .8rem;"><b>Nat 1:</b> Expedition disturbs an unstable structure — 1D3 members roll D6 (1–2: injured). Site marked Ruined. &nbsp;&nbsp; <b>Nat 20:</b> Assessment reveals a bonus resource cache — GM rolls a standard area yield for the structure type.</div>
+
+  <!-- MAINTENANCE ROLL -->
+  <div class="sec-head">Ongoing Maintenance</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.4rem;line-height:1.55;">Roll <b>D6 at the end of each season</b> a restored building is active.</p>
+  <div class="roll-cards">
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--red);">1</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--red);">Maintenance Required</span> Output halved next season unless 3–5 Timber + Scrap Metal are spent on repairs before then.</div>
+    </div>
+    <div class="roll-card">
+      <div class="rc-roll">2–5</div>
+      <div class="rc-content"><span class="rc-cond">No Issue</span> Building operates normally this season.</div>
+    </div>
+    <div class="roll-card">
+      <div class="rc-roll" style="color:var(--green);">6</div>
+      <div class="rc-content"><span class="rc-cond" style="color:var(--green);">Windfall</span> Something useful found during routine upkeep — one free area resource roll at −4 difficulty, no expedition required.</div>
+    </div>
+  </div>
+  <div class="area-note" style="margin:.4rem 0 .8rem;"><b>Reducing risk:</b> Engineering Scholar visits every 2 seasons: rolls 2–6 count as no issue. Carpentry School built at your settlement: roll 1 still triggers maintenance, rolls 2–6 are always clear.</div>
+
+  <!-- RESTORABLE LOCATIONS TABLE -->
+  <div class="sec-head">Restorable Locations by Area Type</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.6rem;line-height:1.55;">Only T1–T3 equivalents are restorable. Costs shown are <b>Salvageable condition</b> — apply condition roll reductions on top.</p>
+
+  <div style="display:flex;flex-direction:column;gap:.4rem;">
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Farmstead / Smallholding</span>
+        <span class="re-area re-rural">Rural</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Animal Husbandry Pen</span>
+        <span class="re-tier" style="color:var(--t2);">T·II</span>
+        <span class="re-bp">No BP</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×15 · Stone ×10 · Rope ×8</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Off-site. −10% food yield if Salvageable. Prion test still required on all animals.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Village Clinic / Hospital Complex</span>
+        <span class="re-area re-rural">Rural</span><span class="re-area re-urban">Urban</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Field Surgery Station</span>
+        <span class="re-tier" style="color:var(--t1);">T·I</span>
+        <span class="re-bp">No BP</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×8 · Cloth ×10 · Salvaged Medicine ×4</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Off-site. Injured fighters must be transported — 1 season travel cost from Zone 3+.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Hospital Complex / Field Hospital</span>
+        <span class="re-area re-urban">Urban</span><span class="re-area re-mil">Military</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Advanced Surgery Theatre</span>
+        <span class="re-tier" style="color:var(--t3);">T·III</span>
+        <span class="re-bp">T·III BP + Med Scholar</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Stone ×20 · Timber ×15 · Glass Vessels ×10 · Metal Instruments ×6</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Off-site prion risk each season. Max T3 — cannot be upgraded to full purpose-built Theatre.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Industrial Estate / Motor Pool</span>
+        <span class="re-area re-urban">Urban</span><span class="re-area re-mil">Military</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Reinforced Vault Storage</span>
+        <span class="re-tier" style="color:var(--t3);">T·III</span>
+        <span class="re-bp">T·III BP + Eng Scholar</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Stone ×35 · Scrap Metal ×20 · Timber ×15 · Concrete Mix ×10</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Off-site. −60% spoilage (vs −80% for full T4 built vault). Resources must be transported each season.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Armoury / Guard Post</span>
+        <span class="re-area re-mil">Military</span><span class="re-area re-urban">Urban</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Watchtower Network</span>
+        <span class="re-tier" style="color:var(--t2);">T·II</span>
+        <span class="re-bp">No BP</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×20 · Stone ×15 · Rope ×10 · Scrap Metal ×8</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Covers its own zone only — not your settlement. Requires 2+ linked towers for full Network bonus.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Rural Workshop / Industrial Forge</span>
+        <span class="re-area re-rural">Rural</span><span class="re-area re-urban">Urban</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Forge Basics</span>
+        <span class="re-tier" style="color:var(--t2);">T·II</span>
+        <span class="re-bp">No BP</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Stone ×20 · Clay ×15 · Scrap Metal ×15 · Charcoal ×8 <span style="color:var(--faded);">(setup)</span></div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Charcoal upkeep ×8/season (vs ×10 built). Cannot smelt steel — Forge Basics output only.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Harbour &amp; Docklands Structure</span>
+        <span class="re-area re-coast">Coastal</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Fishing Net Rig</span>
+        <span class="re-tier" style="color:var(--t2);">T·II</span>
+        <span class="re-bp">No BP</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×20 · Canvas ×10 · Rope ×12</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Off-site. Drowned patrol may demand toll (D6: 5–6 triggers contact if not Allied).</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Harbour Warehouse</span>
+        <span class="re-area re-coast">Coastal</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Coastal Trading Post</span>
+        <span class="re-tier" style="color:var(--t3);">T·III</span>
+        <span class="re-bp">T·III BP + Eng Scholar</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×30 · Stone ×20 · Scrap Metal ×15 · Canvas ×10</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> Drowned territory: relationship check required first season of operation.</div>
+      </div>
+    </div>
+
+    <div class="rest-entry">
+      <div class="re-head">
+        <span class="re-found">Dry-Docked Vessel (Harbour)</span>
+        <span class="re-area re-coast">Coastal</span>
+        <span class="re-arrow">→</span>
+        <span class="re-becomes">Sail-Rigged Coastal Vessel</span>
+        <span class="re-tier" style="color:var(--t3);">T·III</span>
+        <span class="re-bp">T·III BP + Eng Scholar</span>
+      </div>
+      <div class="re-body">
+        <div class="re-cost"><span class="re-lbl">Cost</span> Timber ×40 · Canvas ×20 · Rope ×25 · Pitch ×15</div>
+        <div class="re-tradeoff"><span class="re-lbl">Trade-off</span> +10% storm loss risk vs. purpose-built. Cannot be upgraded to Deep-Keel — must build new vessel for T4.</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="area-note" style="margin-top:.5rem;">
+    <b>⚠ Win condition:</b> Restored buildings count fully toward all prerequisite chains. The only exception is that T4/T5 builds — including the Deep-Keel Sailing Ship and Ocean Ark Fleet components — cannot be achieved through restoration and must always be purpose-built.
+  </div>
+
+</div><!-- /panel-areas -->
+
+<div id="panel-jobs" class="tab-panel">
+<div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Starting Population</div>
+      <div class="info-line"><b>100 people per bunker</b> at game start. Workers are anyone aged ~15–60 — roughly <b>80 of 100</b> are able-bodied. The remaining 20 are elderly, children, or unfit for demanding labour.</div>
+      <div class="info-line" style="margin-top:.25rem;">Population grows at <b>+2/season</b> base when Well-Fed and housed. Growth halts at Rationing. Starvation: −3/season.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Flexible Reassignment</div>
+      <div class="info-line">Workers can be <b>freely reassigned</b> at the start of each season. Reassignment mid-season costs 0.25 seasons efficiency on the receiving role.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Militia</b> can be pulled to labour tasks in peacetime at no cost. <b>Idle Reserve</b> is your surge buffer — never drop it below 8.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Scholars (Separate Pool)</div>
+      <div class="info-line">Scholars are <b>not drawn from the 80-worker pool</b>. They are tracked independently. See the Scholar &amp; Blueprints file for full Scholar rules. Upkeep is still drawn from the settlement food/water supply.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Scaling Jobs as You Grow</div>
+      <div class="info-line">Every time population grows by ~20, revisit your allocation. As construction buildings come online, shift workers from Builders into Producers. As food becomes secure, more workers can join Scouts or build second walls.</div>
+    </div>
+</div>
+
+  <div class="sec-head">Starting Allocation — 100 Population</div>
+  <div style="font-size:.6rem;color:var(--faded);margin-bottom:.6rem;font-style:italic;">80 workers · 20 non-workers (elderly, children, unfit). Scholars tracked separately.</div>
+
+  <div class="pop-bar">
+    <div class="pb-seg pb-farm" title="Farmers">🌾</div>
+    <div class="pb-seg pb-build" title="Builders">🏗</div>
+    <div class="pb-seg pb-def" title="Defenders">⚔</div>
+    <div class="pb-seg pb-scout" title="Scouts">🗺</div>
+    <div class="pb-seg pb-work" title="Workers/Crafters">⚙</div>
+    <div class="pb-seg pb-idle" title="Idle Reserve">◌</div>
+  </div>
+  <div class="pb-labels">
+    <span><span class="pb-dot" style="background:#3a6e40;"></span>Farmers 20</span>
+    <span><span class="pb-dot" style="background:#2a5580;"></span>Builders 15</span>
+    <span><span class="pb-dot" style="background:#6e2a1a;"></span>Defenders 12</span>
+    <span><span class="pb-dot" style="background:#5a3a80;"></span>Scouts 10</span>
+    <span><span class="pb-dot" style="background:#7a5a18;"></span>Workers 10</span>
+    <span><span class="pb-dot" style="background:#2a2416;"></span>Idle Reserve 13</span>
+  </div>
+
+  <div class="job-grid">
+
+    <div class="job-card jc-farm">
+      <div class="job-head"><span class="job-role">🌾 Farmers &amp; Food Workers</span><span class="job-num" style="color:#4a9e5c;">20</span></div>
+      <div class="job-pct">20% of workforce</div>
+      <div class="job-body">Tend crop plots, animal pens, fishing rigs, and food processing. Each farmer produces roughly <b>2.5 food/season</b> base. Agriculture Scholar raises this to 3.5. Minimum viable: 15 farmers for 100 people at Adequate supply.</div>
+      <div class="job-note">Drop below 15 and you enter Rationing. Drop below 10 and Starvation begins within 2 seasons.</div>
+    </div>
+
+    <div class="job-card jc-build">
+      <div class="job-head"><span class="job-role">🏗 Builders</span><span class="job-num" style="color:#3a7abf;">15</span></div>
+      <div class="job-pct">15% of workforce</div>
+      <div class="job-body">Construct and upgrade buildings. Each builder contributes <b>1 construction point/season</b>. Most T1 buildings require 4–6 points; T2 require 8–12; T3 require 15–20. Reassign back to Workers once the current build queue is clear.</div>
+      <div class="job-note">Engineering Scholar on site: +3 construction points per season from the whole team.</div>
+    </div>
+
+    <div class="job-card jc-def">
+      <div class="job-head"><span class="job-role">⚔ Militia Defenders</span><span class="job-num" style="color:#a03a2a;">12</span></div>
+      <div class="job-pct">12% of workforce</div>
+      <div class="job-body">Man the walls, patrol the perimeter, respond to raids. Starting militia of 12 is sufficient for defence against Opportunistic and Standard raids. Expand to 18 in high-threat environments. Militia train 1 season before gaining full ATK/DEF bonus.</div>
+      <div class="job-note">In peacetime militia can do light labour at 50% efficiency without losing combat readiness.</div>
+    </div>
+
+    <div class="job-card jc-scout">
+      <div class="job-head"><span class="job-role">🗺 Scouts</span><span class="job-num" style="color:#8b5fcf;">10</span></div>
+      <div class="job-pct">10% of workforce</div>
+      <div class="job-body">Run expeditions, map the zone, gather intel, make first contact. Each Scout carries <b>5 items per expedition</b> (8 with Scout Training Grounds). A team of 4 is minimum for Zone 3. Zone 4 requires 6+. Zone 5 requires 8+. Ground Zero requires 10+.</div>
+      <div class="job-note">Never send fewer than 2 per team. Zone 3 requires 4+. Zone 4 requires 6+. Zone 5 requires 8+. Ground Zero requires 10+. Scouts double as your diplomatic envoys — a team of 4 makes first contact safely.</div>
+    </div>
+
+    <div class="job-card jc-work">
+      <div class="job-head"><span class="job-role">⚙ Workers &amp; Crafters</span><span class="job-num" style="color:#c9952a;">10</span></div>
+      <div class="job-pct">10% of workforce</div>
+      <div class="job-body">Operate production buildings: forge, kiln, tannery, bullet press, workshops. Each worker assigned to a production building contributes <b>1 production unit/season</b> to that building's output. More workers = more output up to each building's worker cap.</div>
+      <div class="job-note">Workers reassigned from Builders once construction slows. The most flexible role — first to absorb from Idle when a new building comes online.</div>
+    </div>
+
+    <div class="job-card jc-idle">
+      <div class="job-head"><span class="job-role">◌ Idle Reserve</span><span class="job-num" style="color:var(--faded);">13</span></div>
+      <div class="job-pct">13% of workforce</div>
+      <div class="job-body">Unassigned population. Available for emergency reassignment at any time. Acts as a buffer for sudden casualty replacement, unexpected build projects, or seasonal demand spikes. <b>Never drop below 8.</b></div>
+      <div class="job-note">Below 8 Idle: any unexpected event (raid, disease, building emergency) forces you to pull from critical roles and destabilises the whole allocation.</div>
+    </div>
+
+  </div>
+
+  <div class="sec-head">Population Events (D6 — once per season)</div>
+  <table class="event-table">
+    <thead><tr><th>Roll</th><th>Event</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Illness outbreak</td><td>D6 workers incapacitated for 0.5 seasons. Medicine Scholar or Field Surgery Station: D3 only.</td></tr>
+      <tr><td>2</td><td>Skilled survivor arrives</td><td>+1 worker with a relevant skill. GM determines domain. They join Idle Reserve initially.</td></tr>
+      <tr><td>3</td><td>Supply dispute</td><td>Morale −1 this season. Resolved if food supply is Adequate or above — no effect.</td></tr>
+      <tr><td>4</td><td>Birth season</td><td>+1 population (non-worker for 10 seasons). No immediate labour impact.</td></tr>
+      <tr><td>5</td><td>Worker accident</td><td>1 worker injured (0.5 seasons offline). Field Surgery Station: no efficiency loss.</td></tr>
+      <tr><td>6</td><td>Community effort</td><td>All construction this season +2 points. Morale +1.</td></tr>
+    </tbody>
+  </table>
+
+</div><!-- /panel-jobs -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian · Scavenging &amp; Building Reference · Rev. 6</footer>
+</div>
+</body>
+</html>

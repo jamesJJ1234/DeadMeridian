@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combat — Dead Meridian</title>
+<style>
+  :root{
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --blue:#3a7abf; --purple:#8b5fcf;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:2rem 1rem 3rem;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:1080px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:1.8rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.5rem auto;width:75%;}
+  .stamp-row{display:flex;justify-content:center;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.5rem;letter-spacing:.22em;padding:2px 8px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1.2deg);} .stamp:last-child{transform:rotate(.7deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.3rem,4vw,2.4rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12),0 2px 0 rgba(0,0,0,.9);margin:.3rem 0;}
+  .subtitle{font-size:.63rem;color:var(--faded);letter-spacing:.25em;text-transform:uppercase;}
+
+  /* ═══ RADIO TAB SYSTEM — zero JS, works as a local file ═══ */
+  .tab-radio{display:none;}
+  .tabs{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tab-lbl{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid var(--faded);background:transparent;color:var(--faded);
+    padding:.4rem .9rem;cursor:pointer;transition:all .15s;user-select:none;}
+  .tab-lbl:hover{border-color:var(--ink-dim);color:var(--ink-dim);}
+  .tab-panels{border:1px solid var(--border-mid);border-top:none;}
+  .tab-panel{display:none;padding:1rem;}
+
+  /* Default — core visible, core label active */
+  #panel-core{display:block;}
+  .tab-lbl[for="rc-core"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+
+  /* Weapons tab */
+  #rc-weapons:checked ~ .tabs .tab-lbl[for="rc-weapons"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rc-weapons:checked ~ .tabs .tab-lbl[for="rc-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rc-weapons:checked ~ .tab-panels #panel-weapons{display:block;}
+  #rc-weapons:checked ~ .tab-panels #panel-core{display:none;}
+  #rc-weapons:checked ~ .tab-panels #panel-defence{display:none;}
+  #rc-weapons:checked ~ .tab-panels #panel-casualties{display:none;}
+
+  /* Defence tab */
+  #rc-defence:checked ~ .tabs .tab-lbl[for="rc-defence"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rc-defence:checked ~ .tabs .tab-lbl[for="rc-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rc-defence:checked ~ .tab-panels #panel-defence{display:block;}
+  #rc-defence:checked ~ .tab-panels #panel-core{display:none;}
+  #rc-defence:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rc-defence:checked ~ .tab-panels #panel-casualties{display:none;}
+
+  /* Casualties tab */
+  #rc-casualties:checked ~ .tabs .tab-lbl[for="rc-casualties"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rc-casualties:checked ~ .tabs .tab-lbl[for="rc-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rc-casualties:checked ~ .tab-panels #panel-casualties{display:block;}
+  #rc-casualties:checked ~ .tab-panels #panel-core{display:none;}
+  #rc-casualties:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rc-casualties:checked ~ .tab-panels #panel-defence{display:none;}
+
+  /* Core tab re-selected explicitly */
+  #rc-core:checked ~ .tabs .tab-lbl[for="rc-core"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rc-core:checked ~ .tab-panels #panel-core{display:block;}
+  #rc-core:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rc-core:checked ~ .tab-panels #panel-defence{display:none;}
+  #rc-core:checked ~ .tab-panels #panel-casualties{display:none;}
+
+  /* ═══ CONTENT STYLES ═══ */
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:1rem;}
+  .info-card{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.02);}
+  .info-title{font-family:var(--fd);font-size:.68rem;color:var(--ink);letter-spacing:.08em;margin-bottom:.25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+  .info-line{font-size:.62rem;color:var(--ink-dim);line-height:1.65;}
+  .info-line b{color:var(--ink);}
+  .sec-head{font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--faded);padding:.3rem 0 .25rem;border-bottom:1px solid var(--border-mid);margin:.9rem 0 .5rem;}
+  .ctable{width:100%;border-collapse:collapse;font-size:.63rem;margin:.5rem 0;}
+  .ctable th{font-family:var(--fd);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.3rem .5rem;text-align:left;font-weight:normal;}
+  .ctable td{padding:.38rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .ctable tr:last-child td{border-bottom:none;}
+  .ctable tr:hover td{background:rgba(200,168,75,.02);}
+  .ctable td:first-child{color:var(--ink);font-family:var(--fd);}
+  .sb{display:inline-block;font-size:.55rem;letter-spacing:.07em;border:1px solid;padding:1px 6px;white-space:nowrap;font-family:var(--fd);}
+  .sb-pos{color:var(--green);border-color:rgba(61,138,74,.4);}
+  .sb-neg{color:var(--red);border-color:rgba(160,58,42,.4);}
+  .sb-neu{color:var(--ink-dim);border-color:var(--border-mid);}
+  .sb-warn{color:var(--amber);border-color:rgba(201,149,42,.4);}
+  .sb-blue{color:var(--blue);border-color:rgba(58,122,191,.4);}
+  .sb-pur{color:var(--purple);border-color:rgba(139,95,207,.4);}
+  .unit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem;margin:.5rem 0;}
+  .ucard{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.015);position:relative;overflow:hidden;}
+  .ucard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .uc-militia::before{background:var(--red);} .uc-scout::before{background:var(--purple);} .uc-worker::before{background:var(--faded);}
+  .uc-militia{border-color:rgba(160,58,42,.25);} .uc-scout{border-color:rgba(139,95,207,.25);} .uc-worker{border-color:rgba(74,64,32,.3);}
+  .uname{font-family:var(--fd);font-size:.78rem;letter-spacing:.05em;padding-left:.5rem;margin-bottom:.3rem;}
+  .uc-militia .uname{color:var(--red);} .uc-scout .uname{color:var(--purple);} .uc-worker .uname{color:var(--faded);}
+  .ustat-row{display:flex;gap:.3rem;flex-wrap:wrap;padding-left:.5rem;margin-bottom:.3rem;}
+  .ubody{font-size:.61rem;color:var(--faded);line-height:1.55;padding-left:.5rem;}
+  .ubody b{color:var(--ink-dim);}
+  details.wcard{border:1px solid var(--border-mid);margin-bottom:.4rem;overflow:hidden;}
+  details.wcard>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.38rem .75rem;user-select:none;flex-wrap:wrap;}
+  details.wcard>summary::-webkit-details-marker{display:none;}
+  details.wcard>summary::after{content:'▼';font-size:.5rem;color:var(--faded);margin-left:auto;transition:transform .2s;}
+  details.wcard[open]>summary::after{transform:rotate(180deg);}
+  details.wcard[open]>summary{border-bottom:1px solid var(--border);}
+  .wbody{display:none;}
+  details.wcard[open] .wbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.4rem .8rem;padding:.5rem .75rem .6rem;}
+  .wcol-lbl{font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faded);margin-bottom:.2rem;}
+  .wstat{font-size:.62rem;color:var(--ink-dim);line-height:1.55;}
+  .wstat b{color:var(--ink);}
+  .wname{font-family:var(--fd);font-size:.82rem;flex:1;}
+  .round-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .rphase{flex:1;min-width:130px;border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .rnum{font-family:var(--fd);font-size:1.1rem;color:var(--amber);line-height:1;margin-bottom:.15rem;}
+  .rlabel{font-family:var(--fd);font-size:.65rem;color:var(--ink);letter-spacing:.06em;margin-bottom:.2rem;}
+  .rdesc{font-size:.59rem;color:var(--faded);line-height:1.5;}
+  .rdesc b{color:var(--ink-dim);}
+  .d20-band{display:flex;height:22px;border:1px solid var(--border-mid);overflow:hidden;margin:.4rem 0;}
+  .d20-seg{display:flex;align-items:center;justify-content:center;font-size:.44rem;font-family:var(--fd);color:rgba(0,0,0,.7);letter-spacing:.04em;}
+  .d20-miss{background:#5a1a0a;flex:3;} .d20-graze{background:#7a3a10;flex:4;} .d20-hit{background:#1e4a20;flex:7;} .d20-solid{background:#2a6830;flex:4;} .d20-crit{background:#3a8840;flex:2;}
+  .d20-labels{display:flex;justify-content:space-between;font-size:.5rem;color:var(--faded);margin-top:.15rem;}
+  .inj-track{display:flex;gap:.35rem;flex-wrap:wrap;margin:.5rem 0;}
+  .ipip{flex:1;min-width:100px;border:1px solid;padding:.35rem .5rem;text-align:center;}
+  .i-ok{border-color:rgba(61,138,74,.4);} .i-inj{border-color:rgba(201,149,42,.4);} .i-sev{border-color:rgba(160,80,30,.4);} .i-dead{border-color:rgba(160,58,42,.5);}
+  .iname{font-family:var(--fd);font-size:.68rem;letter-spacing:.05em;}
+  .i-ok .iname{color:var(--green);} .i-inj .iname{color:var(--amber);} .i-sev .iname{color:#c06020;} .i-dead .iname{color:var(--red);}
+  .imod{font-size:.6rem;font-family:var(--fd);margin:.1rem 0;}
+  .idesc{font-size:.56rem;color:var(--faded);line-height:1.4;}
+  .fort-strip{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .fblock{border:1px solid var(--border-mid);padding:.4rem .65rem;flex:1;min-width:140px;background:rgba(200,168,75,.015);}
+  .fbname{font-family:var(--fd);font-size:.7rem;color:var(--ink);margin-bottom:.2rem;}
+  .fbstat{font-size:.6rem;color:var(--ink-dim);line-height:1.55;}
+  .fbstat b{color:var(--green);}
+  .c-pos{color:var(--green);} .c-neg{color:var(--red);} .c-warn{color:var(--amber);}
+  .note-box{border:1px solid rgba(201,149,42,.3);background:rgba(201,149,42,.04);padding:.5rem .75rem;font-size:.62rem;color:var(--ink-dim);line-height:1.6;margin:.5rem 0;}
+  .note-box b{color:var(--amber);}
+  footer{text-align:center;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.5rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+  @media(max-width:680px){
+    .unit-grid,.round-track,.inj-track,.fort-strip{flex-direction:column;}
+    .info-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">Combat Reference</span>
+    <span class="stamp">Player Edition</span>
+  </div>
+  <h1>Combat</h1>
+  <p class="subtitle">Raids · Encounters · Weapons · Fortifications · Casualties</p>
+</header>
+
+<input type="radio" class="tab-radio" name="rc" id="rc-core" checked>
+<input type="radio" class="tab-radio" name="rc" id="rc-weapons">
+<input type="radio" class="tab-radio" name="rc" id="rc-defence">
+<input type="radio" class="tab-radio" name="rc" id="rc-casualties">
+
+<div class="tabs">
+  <label class="tab-lbl" for="rc-core">⚔ Core Rules</label>
+  <label class="tab-lbl" for="rc-weapons">🔫 Weapons</label>
+  <label class="tab-lbl" for="rc-defence">🛡 Defence &amp; Fortification</label>
+  <label class="tab-lbl" for="rc-casualties">🩸 Casualties</label>
+</div>
+
+<div class="tab-panels">
+
+<div id="panel-core" class="tab-panel">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// The Attack Roll</div>
+      <div class="info-line">Roll D20 + Attack Value + Weapon Bonus + Modifiers. Subtract the defender's Defence Value. The result is the <b>margin</b> — which band it falls in determines the outcome for that round.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Combat Scale</div>
+      <div class="info-line">Combat resolves at <b>group level</b>. Each side rolls once per group per round. Individual weapon stats are averaged across the group. A group can be any size from 2 to your full militia.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// When Combat Triggers</div>
+      <div class="info-line"><b>Raid:</b> A faction attacks your settlement.<br><b>Expedition Encounter:</b> Scouts meet hostiles in the field.<br><b>Assault:</b> You attack another faction.<br><b>Skirmish:</b> Fewer than 6 fighters per side.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Time Cost</div>
+      <div class="info-line">Raid defence: <b>0 seasons.</b> Assault on a defended position: <b>0.5 seasons.</b> Siege: <b>1+ seasons.</b> Fighters in combat roles cannot produce resources that season.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Result Bands</div>
+  <div class="d20-band">
+    <div class="d20-seg d20-miss">MISS</div>
+    <div class="d20-seg d20-graze">GRAZE</div>
+    <div class="d20-seg d20-hit">HIT</div>
+    <div class="d20-seg d20-solid">SOLID HIT</div>
+    <div class="d20-seg d20-crit">CRIT</div>
+  </div>
+  <div class="d20-labels">
+    <span style="color:var(--red);">−3 or lower</span>
+    <span style="color:var(--amber);">−2 to +3</span>
+    <span>+4 to +9</span>
+    <span style="color:var(--green);">+10 to +14</span>
+    <span style="color:var(--green);">+15 or higher</span>
+  </div>
+  <table class="ctable" style="margin-top:.6rem;">
+    <thead>
+      <tr><th>Result</th><th>Margin</th><th>Casualties on Defender</th><th>Effect on Attacker next round</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="c-neg">Miss</span></td>
+        <td>−3 or lower</td>
+        <td>None.</td>
+        <td><span class="c-neg">Exposed</span> — defender gains +2 to their attack roll next round. Attacker cannot Hold.</td>
+      </tr>
+      <tr>
+        <td><span class="c-warn">Graze</span></td>
+        <td>−2 to +3</td>
+        <td>1 Injured per 5 fighters. Cannot kill directly.</td>
+        <td><span class="c-warn">Checked</span> — no bonus or penalty either side.</td>
+      </tr>
+      <tr>
+        <td>Hit</td>
+        <td>+4 to +9</td>
+        <td>1 casualty per 4 fighters. D6: 1–3 Injured · 4–5 Severely Injured · 6 Killed.</td>
+        <td><span class="c-pos">Steady</span> — clean exchange, no modifier carry-over.</td>
+      </tr>
+      <tr>
+        <td><span class="c-pos">Solid Hit</span></td>
+        <td>+10 to +14</td>
+        <td>1 casualty per 3 fighters. D6: 1–2 Injured · 3–4 Severely Injured · 5–6 Killed.</td>
+        <td><span class="c-pos">Momentum</span> — +2 to attacker's next roll. Defender's return roll this round −1.</td>
+      </tr>
+      <tr>
+        <td><span class="c-pos">Critical</span></td>
+        <td>+15 or higher</td>
+        <td>1 casualty per 2 fighters. D6: 1 Injured · 2–3 Severely Injured · 4–6 Killed. Defender must Withdraw next round.</td>
+        <td><span class="c-pos">Overwhelming</span> — defender's return roll −3. Free pursuit on Withdraw: Hit+ = +D6 casualties.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note-box"><b>Nat 1:</b> Always a Miss. Attacker suffers 1 Injured from friendly fire. &nbsp;&nbsp; <b>Nat 20:</b> Always a Critical. May name one specific individual as the casualty.</div>
+
+  <div class="sec-head">Round Sequence</div>
+  <div class="round-track">
+    <div class="rphase">
+      <div class="rnum">1</div>
+      <div class="rlabel">Declare</div>
+      <div class="rdesc">Both sides secretly choose <b>Attack</b>, <b>Hold</b>, or <b>Withdraw</b>. Reveal simultaneously. Cannot change once revealed.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">2</div>
+      <div class="rlabel">Initiative</div>
+      <div class="rdesc">Both roll D20. Higher acts first. Tie: defender first. <b>Scouts +3</b> in field encounters. Ambush: attacker goes first automatically.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">3</div>
+      <div class="rlabel">Ranged</div>
+      <div class="rdesc">LR bolt-action first, then rifles and SMGs, then pistols and bows. Apply casualties before melee resolves.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">4</div>
+      <div class="rlabel">Melee</div>
+      <div class="rdesc">Both sides roll simultaneously. <b>Hold</b> groups add +2 DEF to all allies at same position and absorb the first allied casualty each round.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">5</div>
+      <div class="rlabel">Morale</div>
+      <div class="rdesc">Any side taking <b>30%+ casualties</b> this round rolls a Morale Check (D20 + modifier). Failure: group Withdraws next round involuntarily.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">6</div>
+      <div class="rlabel">Repeat</div>
+      <div class="rdesc">Continue until one side Withdraws, surrenders, or is eliminated. Max <b>6 rounds</b> before mutual exhaustion — treat as a draw.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Morale</div>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// Morale Check Triggers</div>
+      <div class="info-line">30%+ casualties in one round · Leader killed · Settlement breached · 50%+ total casualties in the engagement.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Morale Roll</div>
+      <div class="info-line">D20 + modifier. <b>10+:</b> hold position. <b>7–9:</b> fall back one position, lose Hold bonus. <b>1–6:</b> full Withdraw.</div>
+      <div class="info-line" style="margin-top:.3rem;"><b>Modifiers:</b> Militia +3 · Scouts +2 · Conscripts −2 · Palisade Wall present +2 · Leader alive +2 · Outnumbered 2:1+ −3</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Withdrawal</div>
+      <div class="info-line">Withdrawing groups flee. 25% chance of 1 additional casualty during flight. The opposing side may pursue with Scouts — on Hit or better deal +D6 casualties to the retreating group.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Surrender</div>
+      <div class="info-line">Either side may surrender at the start of any round. No further casualties. Prisoners cost <b>1 food + 1 water per season</b>. Options: ransom to their faction, recruit, or release.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Unit Types</div>
+  <div class="unit-grid">
+    <div class="ucard uc-militia">
+      <div class="uname">⚔ Militia</div>
+      <div class="ustat-row">
+        <span class="sb sb-pos">ATK +3</span>
+        <span class="sb sb-blue">DEF +4</span>
+        <span class="sb sb-neu">Morale +3</span>
+      </div>
+      <div class="ubody">Trained defenders. Full combat effectiveness in all roles. Starting allocation: 12. Expand to 18 for high-raid environments. Can hold positions, flank, and pursue. Return to full readiness after 1 season off combat duty.</div>
+    </div>
+    <div class="ucard uc-scout">
+      <div class="uname">🗺 Scouts</div>
+      <div class="ustat-row">
+        <span class="sb sb-pos">ATK +2</span>
+        <span class="sb sb-blue">DEF +2</span>
+        <span class="sb sb-warn">Initiative +3</span>
+      </div>
+      <div class="ubody">Mobile and fast. +3 to initiative in field encounters. Best for ambush, flanking, retreat, and pursuit. <b>Cannot hold fortified positions</b> without −2 DEF penalty. Use to outmanoeuvre, not to man walls.</div>
+    </div>
+    <div class="ucard uc-worker">
+      <div class="uname">⚙ Conscripted Workers</div>
+      <div class="ustat-row">
+        <span class="sb sb-neg">ATK +0</span>
+        <span class="sb sb-neg">DEF +1</span>
+        <span class="sb sb-neg">Morale −2</span>
+      </div>
+      <div class="ubody">Untrained fighters. Terrible in open combat. Only useful behind a fortification bonus manning walls. <b>If over 50% of your force are conscripts, all morale rolls take −3.</b> Never send on expeditions in combat roles.</div>
+    </div>
+  </div>
+  <div class="note-box"><b>⚠ Scholar Safety:</b> Scholars present in the settlement during a raid are not automatically in combat. If the settlement is <b>breached</b>, roll D6 per Scholar: on a 1 they are caught in the fighting and roll on the Injury track. A Masterwork long-range bolt-action can target a named Scholar before combat begins — Nat 20 required.</div>
+</div><!-- /panel-core -->
+
+<div id="panel-weapons" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Weapon Assignment</div>
+      <div class="info-line">Weapons are assigned to <b>groups</b>, not individuals. A group's weapon stat is the <b>most common weapon type</b> in that group. Mixed groups use the lower bonus.</div>
+      <div class="info-line" style="margin-top:.25rem;">Example: 8 militia — 5 Standard pistols, 3 Crude → group uses Standard stats.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Range Bands</div>
+      <div class="info-line"><b>Close:</b> pistols, melee, SMGs, shortbow.<br><b>Medium:</b> bolt-actions, shortbow, longbow.<br><b>Full:</b> semi-auto rifles, longbow.<br><b>Extreme:</b> LR bolt-action only.<br>Firing outside range: −4 to roll.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Jam Rules</div>
+      <div class="info-line">With <b>scavenged ammo</b>: D10 per group each round. On a <b>1</b>, one weapon jams — that fighter cannot attack this round. Crude weapons jam on 1–2. Clearing costs the fighter's next full action. <b>Bullet Press ammo: no jams.</b></div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Ammo Per Round</div>
+      <div class="info-line">Pistol: 2 small · SMG: 6 small · Bolt: 1 large · Semi-auto: 3 large · LR bolt: 1 large · Bow: 3 arrows.<br><br>Track per group. Group that runs out of ammo/arrows drops to <b>melee</b> for remaining rounds.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Melee</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;">MELEE</span>
+      <span class="wname">Improvised &amp; Bladed Weapons</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+0</b> improvised · <b>+1</b> bladed (machete, axe) · <b>+2</b> heavy (sledgehammer, spear)</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Close only.</b> No ammo. No jam risk.</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Heavy weapons: on a Critical, roll D6 per defender — on 5–6 a second fighter is knocked prone and skips their next round.</div></div>
+      <div><div class="wcol-lbl">// Notes</div><div class="wstat">The fallback when ammo runs out. Only option in tunnels and collapsed structures. Conscripts default to improvised melee unless armed.</div></div>
+    </div>
+  </details>
+
+
+  <div class="sec-head">Bows — Crafted Weapons</div>
+  <div class="note-box" style="margin-bottom:.5rem;"><b>No ammo cost. No jam. Ever.</b> Bows consume arrows (3 per group per round) instead of bullets. Arrows are crafted at the Carpentry School from Timber only — no Gun Bench, no bullet components. The trade-off is lower ATK than equivalent firearms and no suppression or Extreme range options.</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;color:#4a9e5c;border-color:rgba(74,158,92,.4);">SHORTBOW</span>
+      <span class="wname">Shortbow</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Carpentry School · Timber ×4 · Rope ×2</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+0</b> to attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Medium.</b> Can fire at Close with no penalty. Cannot reach Full or Extreme.</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#9aaa30;">Arrows</span> · 3 per round · <b>No jam. Ever.</b> Arrows crafted at Carpentry School: Timber ×2 per 10 arrows.</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Silent — ranged attacks with shortbows do not trigger raid detection rolls in scouting encounters. Best weapon for equipping Conscripts who would otherwise waste bullets on poor ATK rolls.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;color:#3a7abf;border-color:rgba(58,122,191,.4);">LONGBOW</span>
+      <span class="wname">Longbow</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Carpentry School · Timber ×8 · Rope ×4 · 2 seasons</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+1</b> to attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Full.</b> Can fire at Close or Medium with no penalty. Cannot reach Extreme.</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#9aaa30;">Arrows</span> · 3 per round · <b>No jam. Ever.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Silent — same as shortbow, no detection triggers in scouting. On a Solid Hit or better, may name one specific individual in the enemy group as the casualty — same as a Standard bolt-action but without the bullet cost. Takes 2 seasons to craft at the Carpentry School.</div></div>
+    </div>
+  </details>
+
+  <div class="sec-head">Firearms — by Quality</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#888;border-color:rgba(136,136,136,.4);flex-shrink:0;">CRUDE</span>
+      <span class="wname">Crude Pistol</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×2</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>−1</b> to all attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Close only.</b></div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#7abccc;">Small</span> · 2 per round · <b>15% jam</b> (D20: 1–3). Scavenged ammo: jam D10 on 1–2.</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Single-shot before clearing. Clearing costs the fighter's action (still attacks at additional −2 penalty).</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#4a9e5c;border-color:rgba(74,158,92,.4);flex-shrink:0;">STANDARD</span>
+      <span class="wname">Standard Pistol &amp; Bolt-Action</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×4</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat">Pistol: <b>+0</b> · Bolt-action: <b>+1</b></div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">Pistol: Close · Bolt-action: Medium</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">Pistol: <span style="color:#7abccc;">Small</span> 2/round · Bolt: <span style="color:#cc8844;">Large</span> 1/shot · <b>5% jam</b> (D20: 1).</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Bolt-action fires once per round only. On Solid Hit or better, may name one specific individual in the enemy group as the casualty.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#3a7abf;border-color:rgba(58,122,191,.4);flex-shrink:0;">RELIABLE</span>
+      <span class="wname">Reliable Pistol · Bolt-Action · SMG · Semi-Auto</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×6 or Adv ×3</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+1</b> to all attack rolls across all Reliable types.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">Pistol: Close · SMG: Close–Med · Bolt: Medium · Semi-auto: Full</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">Pistol/SMG: <span style="color:#7abccc;">Small</span> · Bolt/Semi: <span style="color:#cc8844;">Large</span> · SMG: 6/round · <b>2% jam.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat"><b>SMG at Close range:</b> fires twice (2 full rolls, costs 12 small). <b>Semi-auto:</b> can suppress — target group gets −2 DEF next round.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#c9952a;border-color:rgba(201,149,42,.5);flex-shrink:0;">MASTERWORK</span>
+      <span class="wname">Masterwork LR Bolt-Action · Semi-Auto · SMG</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Adv ×6</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+2</b> to all attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">LR Bolt: <b>Extreme</b> · Semi-auto: Full · SMG: Close–Med</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">LR/Semi: <span style="color:#cc8844;">Large</span> · SMG: <span style="color:#7abccc;">Small</span> 6/round · <b>No jam. Ever.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat"><b>LR Bolt — pre-combat shot:</b> before Round 1, the sniper fires once at a named target. Hit+: D6 — 1–3 Severely Injured, 4–6 Killed. <b>Nat 20:</b> any target including Scholars. No return fire at Extreme range.</div></div>
+    </div>
+  </details>
+
+  <div class="sec-head">Weapon Reference Table</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Weapon</th><th>Quality</th><th>ATK</th><th>Range</th><th>Ammo / Round</th><th>Jam</th><th>Craft Cost</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Improvised Melee</td><td>—</td><td>+0</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Bladed Weapon</td><td>—</td><td>+1</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Heavy Melee</td><td>—</td><td>+2</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Shortbow</td><td style="color:#4a9e5c;">Standard</td><td>+0</td><td>Close–Med</td><td>3 Arrows</td><td>None</td><td><span style="color:#4a9e5c;">Carpentry School</span></td></tr>
+      <tr><td>Longbow</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close–Full</td><td>3 Arrows</td><td>None</td><td><span style="color:#4a9e5c;">Carpentry School ×2 seasons</span></td></tr>
+      <tr><td>Crude Pistol</td><td style="color:#888;">Crude</td><td>−1</td><td>Close</td><td>2 Small</td><td>15%</td><td><span style="color:#9aaa30;">Basic ×2</span></td></tr>
+      <tr><td>Standard Pistol</td><td style="color:#4a9e5c;">Standard</td><td>+0</td><td>Close</td><td>2 Small</td><td>5%</td><td><span style="color:#9aaa30;">Basic ×4</span></td></tr>
+      <tr><td>Standard Bolt-Action</td><td style="color:#4a9e5c;">Standard</td><td>+1</td><td>Medium</td><td>1 Large</td><td>5%</td><td><span style="color:#9aaa30;">Basic ×4</span></td></tr>
+      <tr><td>Reliable Pistol</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close</td><td>2 Small</td><td>2%</td><td><span style="color:#9aaa30;">Basic ×6</span></td></tr>
+      <tr><td>Reliable Bolt-Action</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Medium</td><td>1 Large</td><td>2%</td><td><span style="color:#9aaa30;">Basic ×6</span></td></tr>
+      <tr><td>Reliable SMG</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close–Med</td><td>6 Small</td><td>2%</td><td><span style="color:#8b5fcf;">Adv ×3</span></td></tr>
+      <tr><td>Reliable Semi-Auto</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Full</td><td>3 Large</td><td>2%</td><td><span style="color:#8b5fcf;">Adv ×3</span></td></tr>
+      <tr><td>Masterwork SMG</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Close–Med</td><td>6 Small</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+      <tr><td>Masterwork Semi-Auto</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Full</td><td>3 Large</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+      <tr><td>Masterwork LR Bolt-Action</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Extreme</td><td>1 Large</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+    </tbody>
+  </table>
+</div><!-- /panel-weapons -->
+
+<div id="panel-defence" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Defence Value</div>
+      <div class="info-line">Every defending group has a base DEF from unit type plus fortification bonuses. Attackers must beat the total with their margin to inflict casualties.<br><br><b>Militia:</b> DEF +4 · <b>Scouts:</b> DEF +2 · <b>Conscripts:</b> DEF +1</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Perimeter Layers</div>
+      <div class="info-line">Your settlement has an <b>Outer</b> and an <b>Inner</b> perimeter. Raiders must breach the outer before engaging defenders directly. A Critical result against a perimeter position breaches it — cannot be repaired mid-combat.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Hold Formation</div>
+      <div class="info-line">Groups assigned to <b>Hold</b> do not attack that round but add <b>+2 DEF</b> to all allies at their position and absorb the first casualty inflicted on those allies each round.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Night Raids</div>
+      <div class="info-line">Night raids: <b>all attack rolls −2</b> for both sides. The <b>Watchtower Network</b> completely negates this penalty for your defenders. Without it, your fighters suffer the same penalty as the attackers.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Fortification Buildings</div>
+  <div class="fort-strip">
+    <div class="fblock">
+      <div class="fbname">Palisade Wall <span style="color:var(--faded);font-size:.55rem;">(Tier I)</span></div>
+      <div class="fbstat"><b>+4 DEF</b> for all defenders on the outer perimeter. <b>−20% raid damage</b> to structures if the perimeter holds for the full engagement.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Watchtower Network <span style="color:var(--faded);font-size:.55rem;">(Tier II)</span></div>
+      <div class="fbstat"><b>+2 warning seasons</b> before any raid. <b>Negates night raid penalty</b> completely. <b>+2 initiative</b> on all raid encounters.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Scout Training Grounds <span style="color:var(--faded);font-size:.55rem;">(Tier III)</span></div>
+      <div class="fbstat">Scouts gain <b>+1 ATK and +1 DEF</b>. Allows <b>Flanking</b>: one Scout group removes the defender's fortification bonus for one round.</div>
+    </div>
+  </div>
+  <div class="fort-strip">
+    <div class="fblock">
+      <div class="fbname">Reinforced Bunker Extension <span style="color:var(--faded);font-size:.55rem;">(Tier IV)</span></div>
+      <div class="fbstat"><b>+6 DEF</b> on the inner perimeter. Requires <b>2 Critical hits</b> to breach. Defenders inside gain <b>+2 morale.</b></div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Prion Barrier / Burn Wall <span style="color:var(--faded);font-size:.55rem;">(Tier III)</span></div>
+      <div class="fbstat">Attackers crossing the Burn Wall roll D6: on 1–2 take 1 automatic Injury before engaging. <b>+2 DEF</b> as additional outer layer.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Reinforced Vault Storage <span style="color:var(--faded);font-size:.55rem;">(Tier IV)</span></div>
+      <div class="fbstat">All resources stored inside are <b>immune to raider looting</b> even if the settlement is fully breached.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Raid Types</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Type</th><th>Typical Force</th><th>Warning (Watchtower)</th><th>Special Rules</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Opportunistic</td><td>4–8 fighters, improvised weapons</td><td>None</td><td>Flee on first morale failure. Goal is loot, not destruction.</td></tr>
+      <tr><td>Standard Raid</td><td>10–20 fighters, mixed arms</td><td>1 season</td><td>2–3 rounds before attacker morale check. May return next season if successful.</td></tr>
+      <tr><td>Organised Assault</td><td>20–40 fighters, organised</td><td>2 seasons</td><td>Full 6 rounds. May have fortification-breaking tools (+2 to breach attempts).</td></tr>
+      <tr><td>Siege</td><td>40+ fighters, sustained</td><td>2 seasons</td><td>Lasts 1–3 seasons. Resources drained each season the siege continues.</td></tr>
+      <tr><td>Prion Wanderer Swarm</td><td>Infected wildlife, no weapons</td><td>None</td><td>Militia roll D20. 15+: contained. Below 15: 1 prion exposure check per fighter.</td></tr>
+    </tbody>
+  </table>
+  <div class="note-box"><b>⚠ When You Are the Attacker:</b> You lose your own fortification bonuses and face the defender's position bonuses. Always scout first — unknown defences impose <b>−2 to all your attack rolls</b>.</div>
+</div><!-- /panel-defence -->
+
+<div id="panel-casualties" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Casualties Are Permanent</div>
+      <div class="info-line">Every fighter lost is a worker, farmer, or defender gone. Combat is meant to feel costly. Winning a raid with 8 dead is not a clean victory — it is a crisis that will take seasons to recover from.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Casualty Tracks</div>
+      <div class="info-line">After combat, all casualties sort into: <b>Injured</b> (recover), <b>Severely Injured</b> (may die without treatment), and <b>Killed</b> (permanent). Deduct Killed from population immediately.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Medical Buildings</div>
+      <div class="info-line"><b>None:</b> Severely Injured — 50% death chance per season without treatment.<br><b>Field Surgery Station (T1):</b> −25% injury-to-death. Treats 5/season.<br><b>Advanced Surgery Theatre (T3):</b> −50%. Treats 15/season. Severe cases recover in 0.5 seasons.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Settlement Morale</div>
+      <div class="info-line">After any raid or assault — win or lose — your settlement suffers <b>−2 morale for 2 seasons.</b> If you decisively repelled the attack with fewer than 10% casualties, gain <b>+2 morale</b> instead.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Injury States</div>
+  <div class="inj-track">
+    <div class="ipip i-ok">
+      <div class="iname">Active</div>
+      <div class="imod" style="color:var(--green);">Full duty</div>
+      <div class="idesc">Combat-ready. No penalties to any role.</div>
+    </div>
+    <div class="ipip i-inj">
+      <div class="iname">Injured</div>
+      <div class="imod" style="color:var(--amber);">0.5 seasons offline</div>
+      <div class="idesc">Cannot fight. Works at 50% in labour roles. Heals without treatment given time.</div>
+    </div>
+    <div class="ipip i-sev">
+      <div class="iname">Severely Injured</div>
+      <div class="imod" style="color:#c06020;">1 season offline</div>
+      <div class="idesc">Cannot fight or work. 50% death risk each season without Field Surgery Theatre.</div>
+    </div>
+    <div class="ipip i-dead">
+      <div class="iname">Killed</div>
+      <div class="imod" style="color:var(--red);">Permanent loss</div>
+      <div class="idesc">Removed from population immediately. Any named role becomes vacant.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Scholar Casualty Rules</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Situation</th><th>Roll</th><th>Outcome</th><th>Satisfaction Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Settlement breached, Scholar present</td><td>D6 per Scholar</td><td>1: caught in combat → roll injury table. 2–6: safe.</td><td>−3 Sat to all Scholars regardless.</td></tr>
+      <tr><td>Scholar on expedition, combat occurs</td><td>Automatic</td><td>D6 each round: 1–2 Injured · 3 Severely Injured · 4–6 unharmed.</td><td>−1 Sat per round of exposure.</td></tr>
+      <tr><td>Targeted by Masterwork LR bolt-action, Nat 20</td><td>No save</td><td>D6: 1–3 Severely Injured · 4–6 Killed.</td><td>−10 Sat to all Scholars if K3 killed.</td></tr>
+      <tr><td>Scholar killed in any combat</td><td>—</td><td>Domain knowledge lost unless Archive built or apprentice trained.</td><td>See Scholar file for Knowledge Inheritance.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Post-Combat Checklist</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>#</th><th>Action</th><th>When</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Count casualties — Injured / Severely Injured / Killed</td><td>Immediately</td><td>Deduct Killed from population. Assign Injured and Severe to recovery.</td></tr>
+      <tr><td>2</td><td>Ammo audit</td><td>Immediately</td><td>Deduct spent rounds. Flag if below 1 full combat's worth remaining.</td></tr>
+      <tr><td>3</td><td>Structural damage check</td><td>If perimeter breached</td><td>Each breached structure: 0.25–0.5 seasons + resources to repair.</td></tr>
+      <tr><td>4</td><td>Resource loss from raid</td><td>If you were the defender</td><td>Unprotected stockpiles: 10–30% raided. Vault protects stored resources.</td></tr>
+      <tr><td>5</td><td>Prion check on returning fighters</td><td>If combat was in the field</td><td>Any fighter from military or wasteland zones must pass Detection Lab check before re-entry.</td></tr>
+      <tr><td>6</td><td>Morale adjustment</td><td>Next season start</td><td>−2 morale for 2 seasons. +2 if decisively repelled with under 10% casualties.</td></tr>
+      <tr><td>7</td><td>Scholar safety check</td><td>If settlement breached</td><td>D6 per Scholar — see table above.</td></tr>
+      <tr><td>8</td><td>Prisoner handling</td><td>If any prisoners taken</td><td>1 food + 1 water per prisoner per season. Ransom, recruit, or release.</td></tr>
+    </tbody>
+  </table>
+</div><!-- /panel-casualties -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian · Combat Reference · Player Edition</footer>
+</div>
+</body>
+</html>

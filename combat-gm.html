@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combat GM — Dead Meridian</title>
+<style>
+  :root{
+    --bg:#0d0b08; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.2);
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --blue:#3a7abf; --purple:#8b5fcf;
+    --fd:Georgia,'Times New Roman',serif; --fm:'Courier New',Courier,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--fm);padding:2rem 1rem 3rem;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(200,168,75,.015) 27px,rgba(200,168,75,.015) 28px),radial-gradient(ellipse at 8% 0%,rgba(55,35,4,.6) 0%,transparent 50%),radial-gradient(ellipse at 92% 100%,rgba(35,22,2,.45) 0%,transparent 50%);}
+  .page{max-width:1080px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:1.8rem;}
+  header::before,header::after{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,var(--ink-dim),transparent);margin:.5rem auto;width:75%;}
+  .stamp-row{display:flex;justify-content:center;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap;}
+  .stamp{border:1px solid var(--faded);color:var(--faded);font-size:.5rem;letter-spacing:.22em;padding:2px 8px;opacity:.5;text-transform:uppercase;}
+  .stamp:first-child{transform:rotate(-1.2deg);} .stamp:last-child{transform:rotate(.7deg);}
+  h1{font-family:var(--fd);font-size:clamp(1.3rem,4vw,2.4rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 40px rgba(200,168,75,.12),0 2px 0 rgba(0,0,0,.9);margin:.3rem 0;}
+  .subtitle{font-size:.63rem;color:var(--faded);letter-spacing:.25em;text-transform:uppercase;}
+
+  /* ═══ RADIO TAB SYSTEM — zero JS, works as a local file ═══ */
+  .tab-radio{display:none;}
+  .tabs{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tab-lbl{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid var(--faded);background:transparent;color:var(--faded);
+    padding:.4rem .9rem;cursor:pointer;transition:all .15s;user-select:none;}
+  .tab-lbl:hover{border-color:var(--ink-dim);color:var(--ink-dim);}
+  .tab-panels{border:1px solid var(--border-mid);border-top:none;}
+  .tab-panel{display:none;padding:1rem;}
+
+  /* Default — core visible, core label active */
+  #panel-core{display:block;}
+  .tab-lbl[for="rg-core"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+
+  /* Weapons tab */
+  #rg-weapons:checked ~ .tabs .tab-lbl[for="rg-weapons"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rg-weapons:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rg-weapons:checked ~ .tab-panels #panel-weapons{display:block;}
+  #rg-weapons:checked ~ .tab-panels #panel-core{display:none;}
+  #rg-weapons:checked ~ .tab-panels #panel-defence{display:none;}
+  #rg-weapons:checked ~ .tab-panels #panel-casualties{display:none;}
+  #rg-weapons:checked ~ .tab-panels #panel-factions{display:none;}
+  #rg-weapons:checked ~ .tab-panels #panel-diplomacy{display:none;}
+
+  /* Defence tab */
+  #rg-defence:checked ~ .tabs .tab-lbl[for="rg-defence"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rg-defence:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rg-defence:checked ~ .tab-panels #panel-defence{display:block;}
+  #rg-defence:checked ~ .tab-panels #panel-core{display:none;}
+  #rg-defence:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rg-defence:checked ~ .tab-panels #panel-casualties{display:none;}
+  #rg-defence:checked ~ .tab-panels #panel-factions{display:none;}
+  #rg-defence:checked ~ .tab-panels #panel-diplomacy{display:none;}
+
+  /* Casualties tab */
+  #rg-casualties:checked ~ .tabs .tab-lbl[for="rg-casualties"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rg-casualties:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rg-casualties:checked ~ .tab-panels #panel-casualties{display:block;}
+  #rg-casualties:checked ~ .tab-panels #panel-core{display:none;}
+  #rg-casualties:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rg-casualties:checked ~ .tab-panels #panel-defence{display:none;}
+  #rg-casualties:checked ~ .tab-panels #panel-factions{display:none;}
+  #rg-casualties:checked ~ .tab-panels #panel-diplomacy{display:none;}
+
+  /* Factions tab */
+  #rg-factions:checked ~ .tabs .tab-lbl[for="rg-factions"]{border-color:var(--red);color:var(--red);background:rgba(160,58,42,.06);}
+  #rg-factions:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rg-factions:checked ~ .tab-panels #panel-factions{display:block;}
+  #rg-factions:checked ~ .tab-panels #panel-core{display:none;}
+  #rg-factions:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rg-factions:checked ~ .tab-panels #panel-defence{display:none;}
+  #rg-factions:checked ~ .tab-panels #panel-casualties{display:none;}
+
+  /* Diplomacy tab */
+  #rg-diplomacy:checked ~ .tabs .tab-lbl[for="rg-diplomacy"]{border-color:#2a9aaa;color:#2a9aaa;background:rgba(42,154,170,.06);}
+  #rg-diplomacy:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--faded);color:var(--faded);background:transparent;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-diplomacy{display:block;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-core{display:none;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-defence{display:none;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-casualties{display:none;}
+  #rg-diplomacy:checked ~ .tab-panels #panel-factions{display:none;}
+
+  /* Core tab re-selected explicitly */
+  #rg-core:checked ~ .tabs .tab-lbl[for="rg-core"]{border-color:var(--ink);color:var(--ink);background:rgba(200,168,75,.06);}
+  #rg-core:checked ~ .tab-panels #panel-core{display:block;}
+  #rg-core:checked ~ .tab-panels #panel-weapons{display:none;}
+  #rg-core:checked ~ .tab-panels #panel-defence{display:none;}
+  #rg-core:checked ~ .tab-panels #panel-casualties{display:none;}
+  #rg-core:checked ~ .tab-panels #panel-factions{display:none;}
+  #rg-core:checked ~ .tab-panels #panel-diplomacy{display:none;}
+
+  /* ═══ CONTENT STYLES ═══ */
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:1rem;}
+  .info-card{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.02);}
+  .info-title{font-family:var(--fd);font-size:.68rem;color:var(--ink);letter-spacing:.08em;margin-bottom:.25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+  .info-line{font-size:.62rem;color:var(--ink-dim);line-height:1.65;}
+  .info-line b{color:var(--ink);}
+  .sec-head{font-family:var(--fd);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--faded);padding:.3rem 0 .25rem;border-bottom:1px solid var(--border-mid);margin:.9rem 0 .5rem;}
+  .ctable{width:100%;border-collapse:collapse;font-size:.63rem;margin:.5rem 0;}
+  .ctable th{font-family:var(--fd);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.3rem .5rem;text-align:left;font-weight:normal;}
+  .ctable td{padding:.38rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .ctable tr:last-child td{border-bottom:none;}
+  .ctable tr:hover td{background:rgba(200,168,75,.02);}
+  .ctable td:first-child{color:var(--ink);font-family:var(--fd);}
+  .sb{display:inline-block;font-size:.55rem;letter-spacing:.07em;border:1px solid;padding:1px 6px;white-space:nowrap;font-family:var(--fd);}
+  .sb-pos{color:var(--green);border-color:rgba(61,138,74,.4);}
+  .sb-neg{color:var(--red);border-color:rgba(160,58,42,.4);}
+  .sb-neu{color:var(--ink-dim);border-color:var(--border-mid);}
+  .sb-warn{color:var(--amber);border-color:rgba(201,149,42,.4);}
+  .sb-blue{color:var(--blue);border-color:rgba(58,122,191,.4);}
+  .sb-pur{color:var(--purple);border-color:rgba(139,95,207,.4);}
+  .unit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem;margin:.5rem 0;}
+  .ucard{border:1px solid var(--border-mid);padding:.55rem .75rem;background:rgba(200,168,75,.015);position:relative;overflow:hidden;}
+  .ucard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .uc-militia::before{background:var(--red);} .uc-scout::before{background:var(--purple);} .uc-worker::before{background:var(--faded);}
+  .uc-militia{border-color:rgba(160,58,42,.25);} .uc-scout{border-color:rgba(139,95,207,.25);} .uc-worker{border-color:rgba(74,64,32,.3);}
+  .uname{font-family:var(--fd);font-size:.78rem;letter-spacing:.05em;padding-left:.5rem;margin-bottom:.3rem;}
+  .uc-militia .uname{color:var(--red);} .uc-scout .uname{color:var(--purple);} .uc-worker .uname{color:var(--faded);}
+  .ustat-row{display:flex;gap:.3rem;flex-wrap:wrap;padding-left:.5rem;margin-bottom:.3rem;}
+  .ubody{font-size:.61rem;color:var(--faded);line-height:1.55;padding-left:.5rem;}
+  .ubody b{color:var(--ink-dim);}
+  details.wcard{border:1px solid var(--border-mid);margin-bottom:.4rem;overflow:hidden;}
+  details.wcard>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.38rem .75rem;user-select:none;flex-wrap:wrap;}
+  details.wcard>summary::-webkit-details-marker{display:none;}
+  details.wcard>summary::after{content:'▼';font-size:.5rem;color:var(--faded);margin-left:auto;transition:transform .2s;}
+  details.wcard[open]>summary::after{transform:rotate(180deg);}
+  details.wcard[open]>summary{border-bottom:1px solid var(--border);}
+  .wbody{display:none;}
+  details.wcard[open] .wbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.4rem .8rem;padding:.5rem .75rem .6rem;}
+  .wcol-lbl{font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faded);margin-bottom:.2rem;}
+  .wstat{font-size:.62rem;color:var(--ink-dim);line-height:1.55;}
+  .wstat b{color:var(--ink);}
+  .wname{font-family:var(--fd);font-size:.82rem;flex:1;}
+  .round-track{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .rphase{flex:1;min-width:130px;border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .rnum{font-family:var(--fd);font-size:1.1rem;color:var(--amber);line-height:1;margin-bottom:.15rem;}
+  .rlabel{font-family:var(--fd);font-size:.65rem;color:var(--ink);letter-spacing:.06em;margin-bottom:.2rem;}
+  .rdesc{font-size:.59rem;color:var(--faded);line-height:1.5;}
+  .rdesc b{color:var(--ink-dim);}
+  .d20-band{display:flex;height:22px;border:1px solid var(--border-mid);overflow:hidden;margin:.4rem 0;}
+  .d20-seg{display:flex;align-items:center;justify-content:center;font-size:.44rem;font-family:var(--fd);color:rgba(0,0,0,.7);letter-spacing:.04em;}
+  .d20-miss{background:#5a1a0a;flex:3;} .d20-graze{background:#7a3a10;flex:4;} .d20-hit{background:#1e4a20;flex:7;} .d20-solid{background:#2a6830;flex:4;} .d20-crit{background:#3a8840;flex:2;}
+  .d20-labels{display:flex;justify-content:space-between;font-size:.5rem;color:var(--faded);margin-top:.15rem;}
+  .inj-track{display:flex;gap:.35rem;flex-wrap:wrap;margin:.5rem 0;}
+  .ipip{flex:1;min-width:100px;border:1px solid;padding:.35rem .5rem;text-align:center;}
+  .i-ok{border-color:rgba(61,138,74,.4);} .i-inj{border-color:rgba(201,149,42,.4);} .i-sev{border-color:rgba(160,80,30,.4);} .i-dead{border-color:rgba(160,58,42,.5);}
+  .iname{font-family:var(--fd);font-size:.68rem;letter-spacing:.05em;}
+  .i-ok .iname{color:var(--green);} .i-inj .iname{color:var(--amber);} .i-sev .iname{color:#c06020;} .i-dead .iname{color:var(--red);}
+  .imod{font-size:.6rem;font-family:var(--fd);margin:.1rem 0;}
+  .idesc{font-size:.56rem;color:var(--faded);line-height:1.4;}
+  .fort-strip{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0;}
+  .fblock{border:1px solid var(--border-mid);padding:.4rem .65rem;flex:1;min-width:140px;background:rgba(200,168,75,.015);}
+  .fbname{font-family:var(--fd);font-size:.7rem;color:var(--ink);margin-bottom:.2rem;}
+  .fbstat{font-size:.6rem;color:var(--ink-dim);line-height:1.55;}
+  .fbstat b{color:var(--green);}
+  /* Faction cards */
+  .fac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.6rem;margin:.5rem 0;}
+  .fac-card{border:1px solid var(--border-mid);overflow:hidden;}
+  .fac-head{padding:.45rem .75rem;border-bottom:1px solid var(--border-mid);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  .fac-name{font-family:var(--fd);font-size:.82rem;flex:1;}
+  .fac-tag{font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid;padding:1px 6px;white-space:nowrap;font-family:var(--fd);flex-shrink:0;}
+  .fac-body{font-size:.61rem;color:var(--faded);line-height:1.6;padding:.45rem .75rem;}
+  .fac-body b{color:var(--ink-dim);}
+  .fac-stats{font-size:.61rem;color:var(--ink-dim);line-height:1.6;padding:.35rem .75rem;border-top:1px solid var(--border);background:rgba(200,168,75,.015);}
+  .fac-stats b{color:var(--ink);}
+  .c-pos{color:var(--green);} .c-neg{color:var(--red);} .c-warn{color:var(--amber);}
+  .note-box{border:1px solid rgba(201,149,42,.3);background:rgba(201,149,42,.04);padding:.5rem .75rem;font-size:.62rem;color:var(--ink-dim);line-height:1.6;margin:.5rem 0;}
+  .note-box b{color:var(--amber);}
+  .warn-box{border:1px solid rgba(160,58,42,.4);background:rgba(160,58,42,.04);padding:.5rem .75rem;font-size:.62rem;color:var(--ink-dim);line-height:1.6;margin:.5rem 0;}
+  .warn-box b{color:var(--red);}
+  footer{text-align:center;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.5rem;letter-spacing:.2em;color:var(--faded);opacity:.4;text-transform:uppercase;}
+  @media(max-width:680px){
+    .unit-grid,.round-track,.inj-track,.fort-strip,.fac-grid{flex-direction:column;}
+    .info-grid{grid-template-columns:1fr;}
+  }
+
+  /* Diplomacy tab additional styles */
+  .mtable{width:100%;border-collapse:collapse;font-size:.63rem;margin:.5rem 0;}
+  .mtable th{font-family:var(--fd);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--faded);border-bottom:1px solid var(--border-mid);padding:.3rem .5rem;text-align:left;font-weight:normal;}
+  .mtable td{padding:.38rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-dim);line-height:1.5;}
+  .mtable tr:last-child td{border-bottom:none;} .mtable tr:hover td{background:rgba(200,168,75,.02);}
+  .mtable td:first-child{color:var(--ink);font-family:var(--fd);font-size:.68rem;}
+  .diplo-track{display:flex;height:22px;border:1px solid var(--border-mid);overflow:hidden;margin:.4rem 0;}
+  .dt-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:.43rem;font-family:var(--fd);color:rgba(255,255,255,.4);letter-spacing:.04em;}
+  .dt-war{background:#4a0e06;} .dt-hostile{background:#6a1a0c;} .dt-wary{background:#3a2808;}
+  .dt-neutral{background:#222216;} .dt-cautious{background:#162814;} .dt-friendly{background:#1a3a1c;} .dt-allied{background:#1c4820;}
+  .dt-labels{display:flex;justify-content:space-between;font-size:.5rem;color:var(--faded);margin-top:.1rem;}
+  .tval-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.4rem;margin:.5rem 0;}
+  .tcard{border:1px solid var(--border-mid);padding:.4rem .6rem;background:rgba(200,168,75,.015);}
+  .tcard-name{font-family:var(--fd);font-size:.67rem;color:var(--ink);margin-bottom:.15rem;border-bottom:1px solid var(--border);padding-bottom:.12rem;}
+  .tcard-val{font-family:var(--fd);font-size:1.05rem;font-weight:bold;color:var(--amber);line-height:1;margin-bottom:.06rem;}
+  .tcard-unit{font-size:.5rem;color:var(--faded);letter-spacing:.08em;text-transform:uppercase;}
+  .tcard-note{font-size:.56rem;color:var(--faded);margin-top:.18rem;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="stamp-row">
+    <span class="stamp">Dead Meridian</span>
+    <span class="stamp">Combat Reference</span>
+    <span class="stamp">GM Edition — Restricted</span>
+  </div>
+  <h1>Combat</h1>
+  <p class="subtitle">Raids · Encounters · Weapons · Fortifications · Casualties · <span style="color:var(--red);letter-spacing:.15em;">Faction Intelligence</span></p>
+</header>
+
+<input type="radio" class="tab-radio" name="rg" id="rg-core" checked>
+<input type="radio" class="tab-radio" name="rg" id="rg-weapons">
+<input type="radio" class="tab-radio" name="rg" id="rg-defence">
+<input type="radio" class="tab-radio" name="rg" id="rg-casualties">
+<input type="radio" class="tab-radio" name="rg" id="rg-factions">
+<input type="radio" class="tab-radio" name="rg" id="rg-diplomacy">
+
+<div class="tabs">
+  <label class="tab-lbl" for="rg-core">⚔ Core Rules</label>
+  <label class="tab-lbl" for="rg-weapons">🔫 Weapons</label>
+  <label class="tab-lbl" for="rg-defence">🛡 Defence &amp; Fortification</label>
+  <label class="tab-lbl" for="rg-casualties">🩸 Casualties</label>
+  <label class="tab-lbl" for="rg-factions" style="border-color:rgba(160,58,42,.5);color:var(--red);">☠ Factions [GM]</label>
+  <label class="tab-lbl" for="rg-diplomacy" style="border-color:rgba(42,154,170,.5);color:#2a9aaa;">🤝 Diplomacy [GM]</label>
+</div>
+
+<div class="tab-panels">
+
+<div id="panel-core" class="tab-panel">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// The Attack Roll</div>
+      <div class="info-line">Roll D20 + Attack Value + Weapon Bonus + Modifiers. Subtract the defender's Defence Value. The result is the <b>margin</b> — which band it falls in determines the outcome for that round.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Combat Scale</div>
+      <div class="info-line">Combat resolves at <b>group level</b>. Each side rolls once per group per round. Individual weapon stats are averaged across the group. A group can be any size from 2 to the full force.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// When Combat Triggers</div>
+      <div class="info-line"><b>Raid:</b> A faction attacks a settlement.<br><b>Expedition Encounter:</b> Scouts meet hostiles in the field.<br><b>Assault:</b> A faction attacks another faction's location.<br><b>Skirmish:</b> Fewer than 6 fighters per side.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Time Cost</div>
+      <div class="info-line">Raid defence: <b>0 seasons.</b> Assault on a defended position: <b>0.5 seasons.</b> Siege: <b>1+ seasons.</b> Fighters in combat roles cannot produce resources that season.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Result Bands</div>
+  <div class="d20-band">
+    <div class="d20-seg d20-miss">MISS</div>
+    <div class="d20-seg d20-graze">GRAZE</div>
+    <div class="d20-seg d20-hit">HIT</div>
+    <div class="d20-seg d20-solid">SOLID HIT</div>
+    <div class="d20-seg d20-crit">CRIT</div>
+  </div>
+  <div class="d20-labels">
+    <span style="color:var(--red);">−3 or lower</span>
+    <span style="color:var(--amber);">−2 to +3</span>
+    <span>+4 to +9</span>
+    <span style="color:var(--green);">+10 to +14</span>
+    <span style="color:var(--green);">+15 or higher</span>
+  </div>
+  <table class="ctable" style="margin-top:.6rem;">
+    <thead>
+      <tr><th>Result</th><th>Margin</th><th>Casualties on Defender</th><th>Effect on Attacker next round</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="c-neg">Miss</span></td>
+        <td>−3 or lower</td>
+        <td>None.</td>
+        <td><span class="c-neg">Exposed</span> — defender gains +2 to their next attack roll. Attacker cannot Hold.</td>
+      </tr>
+      <tr>
+        <td><span class="c-warn">Graze</span></td>
+        <td>−2 to +3</td>
+        <td>1 Injured per 5 fighters. Cannot kill directly.</td>
+        <td><span class="c-warn">Checked</span> — no bonus or penalty either side.</td>
+      </tr>
+      <tr>
+        <td>Hit</td>
+        <td>+4 to +9</td>
+        <td>1 casualty per 4 fighters. D6: 1–3 Injured · 4–5 Severely Injured · 6 Killed.</td>
+        <td><span class="c-pos">Steady</span> — clean exchange, no modifier carry-over.</td>
+      </tr>
+      <tr>
+        <td><span class="c-pos">Solid Hit</span></td>
+        <td>+10 to +14</td>
+        <td>1 casualty per 3 fighters. D6: 1–2 Injured · 3–4 Severely Injured · 5–6 Killed.</td>
+        <td><span class="c-pos">Momentum</span> — +2 to attacker's next roll. Defender's return roll this round −1.</td>
+      </tr>
+      <tr>
+        <td><span class="c-pos">Critical</span></td>
+        <td>+15 or higher</td>
+        <td>1 casualty per 2 fighters. D6: 1 Injured · 2–3 Severely Injured · 4–6 Killed. Defender must Withdraw next round.</td>
+        <td><span class="c-pos">Overwhelming</span> — defender's return roll −3. Free pursuit on Withdraw: Hit+ = +D6 casualties.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note-box"><b>Nat 1:</b> Always a Miss. Attacker suffers 1 Injured from friendly fire. &nbsp;&nbsp; <b>Nat 20:</b> Always a Critical. May name one specific individual as the casualty.</div>
+
+  <div class="sec-head">Round Sequence</div>
+  <div class="round-track">
+    <div class="rphase">
+      <div class="rnum">1</div>
+      <div class="rlabel">Declare</div>
+      <div class="rdesc">Both sides secretly choose <b>Attack</b>, <b>Hold</b>, or <b>Withdraw</b>. Reveal simultaneously.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">2</div>
+      <div class="rlabel">Initiative</div>
+      <div class="rdesc">Both roll D20. Higher acts first. Tie: defender first. <b>Scouts +3</b> in field encounters. Ambush: attacker goes first automatically.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">3</div>
+      <div class="rlabel">Ranged</div>
+      <div class="rdesc">LR bolt-action first, then rifles and SMGs, then pistols and bows. Apply casualties before melee resolves.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">4</div>
+      <div class="rlabel">Melee</div>
+      <div class="rdesc">Both sides roll simultaneously. <b>Hold</b> groups add +2 DEF to all allies at same position and absorb the first allied casualty each round.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">5</div>
+      <div class="rlabel">Morale</div>
+      <div class="rdesc">Any side taking <b>30%+ casualties</b> this round rolls Morale Check (D20 + modifier). Failure: group Withdraws next round.</div>
+    </div>
+    <div class="rphase">
+      <div class="rnum">6</div>
+      <div class="rlabel">Repeat</div>
+      <div class="rdesc">Max <b>6 rounds</b> before mutual exhaustion — treat as a draw. Both sides retreat.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Morale</div>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// Morale Check Triggers</div>
+      <div class="info-line">30%+ casualties in one round · Leader killed · Settlement breached · 50%+ total casualties in the engagement.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Morale Roll</div>
+      <div class="info-line">D20 + modifier. <b>10+:</b> hold. <b>7–9:</b> fall back, lose Hold bonus. <b>1–6:</b> full Withdraw.<br><br><b>Modifiers:</b> Militia +3 · Scouts +2 · Conscripts −2 · Palisade Wall +2 · Leader alive +2 · Outnumbered 2:1+ −3</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Raider Morale (GM)</div>
+      <div class="info-line">If raiders take <b>40%+ total casualties</b>, GM rolls D20. On 1–8 they break and flee. Pursuit option: send Scouts, roll D20 — Hit or better recovers <b>D6×5 resources</b> from their abandoned supplies.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Surrender</div>
+      <div class="info-line">Either side may surrender at round start. No further casualties. Prisoners cost <b>1 food + 1 water per season</b>. Options: ransom to their faction, recruit, or release.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Unit Types</div>
+  <div class="unit-grid">
+    <div class="ucard uc-militia">
+      <div class="uname">⚔ Militia</div>
+      <div class="ustat-row">
+        <span class="sb sb-pos">ATK +3</span>
+        <span class="sb sb-blue">DEF +4</span>
+        <span class="sb sb-neu">Morale +3</span>
+      </div>
+      <div class="ubody">Trained defenders. Full combat effectiveness in all roles. Starting allocation: 12. Expand to 18 for high-raid environments.</div>
+    </div>
+    <div class="ucard uc-scout">
+      <div class="uname">🗺 Scouts</div>
+      <div class="ustat-row">
+        <span class="sb sb-pos">ATK +2</span>
+        <span class="sb sb-blue">DEF +2</span>
+        <span class="sb sb-warn">Initiative +3</span>
+      </div>
+      <div class="ubody">Mobile and fast. +3 initiative in field encounters. Best for ambush, flanking, pursuit. <b>Cannot hold fortified positions</b> without −2 DEF penalty.</div>
+    </div>
+    <div class="ucard uc-worker">
+      <div class="uname">⚙ Conscripted Workers</div>
+      <div class="ustat-row">
+        <span class="sb sb-neg">ATK +0</span>
+        <span class="sb sb-neg">DEF +1</span>
+        <span class="sb sb-neg">Morale −2</span>
+      </div>
+      <div class="ubody">Untrained. Only useful behind a fortification bonus. <b>If over 50% of force are conscripts, all morale rolls −3.</b> Never use in field combat roles.</div>
+    </div>
+  </div>
+  <div class="note-box"><b>⚠ Scholar Safety:</b> If settlement is <b>breached</b>, roll D6 per Scholar: on a 1 they are caught in the fighting and roll on the Injury track. A Masterwork LR bolt-action can target a named Scholar before combat — Nat 20 required.</div>
+</div><!-- /panel-core -->
+
+<div id="panel-weapons" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Weapon Assignment</div>
+      <div class="info-line">Weapons assigned to <b>groups</b>, not individuals. A group's stat is the <b>most common weapon type</b>. Mixed groups use the lower bonus.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Range Bands</div>
+      <div class="info-line"><b>Close:</b> pistols, melee, SMGs, shortbow · <b>Medium:</b> bolt-actions, shortbow, longbow · <b>Full:</b> semi-auto rifles, longbow · <b>Extreme:</b> LR bolt-action only. Outside range: −4 to roll.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Jam Rules</div>
+      <div class="info-line">Scavenged ammo: D10 per group per round. <b>1 = jam</b> (fighter can't attack). Crude: 1–2. Clearing costs next action. <b>Bullet Press ammo: no jams.</b></div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Ammo Per Round</div>
+      <div class="info-line">Pistol: 2 small · SMG: 6 small · Bolt: 1 large · Semi-auto: 3 large · LR bolt: 1 large · Bow: 3 arrows. Group that runs out drops to melee.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Melee</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;">MELEE</span>
+      <span class="wname">Improvised &amp; Bladed Weapons</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+0</b> improvised · <b>+1</b> bladed · <b>+2</b> heavy</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Close only.</b> No ammo. No jam.</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Heavy: on Critical, D6 per defender — 5–6 knocks prone (skips next round).</div></div>
+      <div><div class="wcol-lbl">// Notes</div><div class="wstat">Only option in tunnels and collapsed structures. Fallback when ammo runs out.</div></div>
+    </div>
+  </details>
+
+
+  <div class="sec-head">Bows — Crafted Weapons</div>
+  <div class="note-box" style="margin-bottom:.5rem;"><b>No ammo cost. No jam. Ever.</b> Bows consume arrows (3 per group per round) instead of bullets. Arrows are crafted at the Carpentry School from Timber only — no Gun Bench, no bullet components. The trade-off is lower ATK than equivalent firearms and no suppression or Extreme range options.</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;color:#4a9e5c;border-color:rgba(74,158,92,.4);">SHORTBOW</span>
+      <span class="wname">Shortbow</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Carpentry School · Timber ×4 · Rope ×2</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+0</b> to attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Medium.</b> Can fire at Close with no penalty. Cannot reach Full or Extreme.</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#9aaa30;">Arrows</span> · 3 per round · <b>No jam. Ever.</b> Arrows crafted at Carpentry School: Timber ×2 per 10 arrows.</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Silent — ranged attacks with shortbows do not trigger raid detection rolls in scouting encounters. Best weapon for equipping Conscripts who would otherwise waste bullets on poor ATK rolls.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb sb-neu" style="flex-shrink:0;color:#3a7abf;border-color:rgba(58,122,191,.4);">LONGBOW</span>
+      <span class="wname">Longbow</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Carpentry School · Timber ×8 · Rope ×4 · 2 seasons</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+1</b> to attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Full.</b> Can fire at Close or Medium with no penalty. Cannot reach Extreme.</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#9aaa30;">Arrows</span> · 3 per round · <b>No jam. Ever.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Silent — same as shortbow, no detection triggers in scouting. On a Solid Hit or better, may name one specific individual in the enemy group as the casualty — same as a Standard bolt-action but without the bullet cost. Takes 2 seasons to craft at the Carpentry School.</div></div>
+    </div>
+  </details>
+
+  <div class="sec-head">Firearms — by Quality</div>
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#888;border-color:rgba(136,136,136,.4);flex-shrink:0;">CRUDE</span>
+      <span class="wname">Crude Pistol</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×2</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>−1</b> to attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat"><b>Close only.</b></div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat"><span style="color:#7abccc;">Small</span> · 2/round · <b>15% jam</b> (D20: 1–3).</div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Single-shot. Clearing costs action (still attacks at additional −2).</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#4a9e5c;border-color:rgba(74,158,92,.4);flex-shrink:0;">STANDARD</span>
+      <span class="wname">Standard Pistol &amp; Bolt-Action</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×4</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat">Pistol: <b>+0</b> · Bolt: <b>+1</b></div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">Pistol: Close · Bolt: Medium</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">Pistol: <span style="color:#7abccc;">Small</span> 2/round · Bolt: <span style="color:#cc8844;">Large</span> 1/shot · <b>5% jam.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat">Bolt fires once/round. On Solid Hit+, may name a specific individual as the casualty.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#3a7abf;border-color:rgba(58,122,191,.4);flex-shrink:0;">RELIABLE</span>
+      <span class="wname">Reliable Pistol · Bolt · SMG · Semi-Auto</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Basic ×6 or Adv ×3</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+1</b> across all Reliable types.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">Pistol: Close · SMG: Close–Med · Bolt: Med · Semi: Full</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">Pistol/SMG: <span style="color:#7abccc;">Small</span> · Bolt/Semi: <span style="color:#cc8844;">Large</span> · SMG 6/round · <b>2% jam.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat"><b>SMG at Close:</b> fires twice (2 rolls, 12 small bullets). <b>Semi-auto:</b> suppress — target DEF −2 next round.</div></div>
+    </div>
+  </details>
+
+  <details class="wcard">
+    <summary>
+      <span class="sb" style="color:#c9952a;border-color:rgba(201,149,42,.5);flex-shrink:0;">MASTERWORK</span>
+      <span class="wname">Masterwork LR Bolt · Semi-Auto · SMG</span>
+      <span style="color:var(--faded);font-size:.58rem;flex-shrink:0;">Gun Bench: Adv ×6</span>
+    </summary>
+    <div class="wbody">
+      <div><div class="wcol-lbl">// ATK Bonus</div><div class="wstat"><b>+2</b> to all attack rolls.</div></div>
+      <div><div class="wcol-lbl">// Range</div><div class="wstat">LR Bolt: <b>Extreme</b> · Semi: Full · SMG: Close–Med</div></div>
+      <div><div class="wcol-lbl">// Ammo &amp; Jam</div><div class="wstat">LR/Semi: <span style="color:#cc8844;">Large</span> · SMG: <span style="color:#7abccc;">Small</span> 6/round · <b>No jam. Ever.</b></div></div>
+      <div><div class="wcol-lbl">// Special</div><div class="wstat"><b>LR Bolt — pre-combat shot:</b> before Round 1, fires once at named target. Hit+: D6 — 1–3 Severely Injured, 4–6 Killed. <b>Nat 20:</b> any target including Scholars.</div></div>
+    </div>
+  </details>
+
+  <div class="sec-head">Weapon Reference Table</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Weapon</th><th>Quality</th><th>ATK</th><th>Range</th><th>Ammo / Round</th><th>Jam</th><th>Craft Cost</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Improvised Melee</td><td>—</td><td>+0</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Bladed Weapon</td><td>—</td><td>+1</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Heavy Melee</td><td>—</td><td>+2</td><td>Close</td><td>None</td><td>None</td><td>None</td></tr>
+      <tr><td>Shortbow</td><td style="color:#4a9e5c;">Standard</td><td>+0</td><td>Close–Med</td><td>3 Arrows</td><td>None</td><td><span style="color:#4a9e5c;">Carpentry School</span></td></tr>
+      <tr><td>Longbow</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close–Full</td><td>3 Arrows</td><td>None</td><td><span style="color:#4a9e5c;">Carpentry School ×2 seasons</span></td></tr>
+      <tr><td>Crude Pistol</td><td style="color:#888;">Crude</td><td>−1</td><td>Close</td><td>2 Small</td><td>15%</td><td><span style="color:#9aaa30;">Basic ×2</span></td></tr>
+      <tr><td>Standard Pistol</td><td style="color:#4a9e5c;">Standard</td><td>+0</td><td>Close</td><td>2 Small</td><td>5%</td><td><span style="color:#9aaa30;">Basic ×4</span></td></tr>
+      <tr><td>Standard Bolt-Action</td><td style="color:#4a9e5c;">Standard</td><td>+1</td><td>Medium</td><td>1 Large</td><td>5%</td><td><span style="color:#9aaa30;">Basic ×4</span></td></tr>
+      <tr><td>Reliable Pistol</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close</td><td>2 Small</td><td>2%</td><td><span style="color:#9aaa30;">Basic ×6</span></td></tr>
+      <tr><td>Reliable Bolt-Action</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Medium</td><td>1 Large</td><td>2%</td><td><span style="color:#9aaa30;">Basic ×6</span></td></tr>
+      <tr><td>Reliable SMG</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Close–Med</td><td>6 Small</td><td>2%</td><td><span style="color:#8b5fcf;">Adv ×3</span></td></tr>
+      <tr><td>Reliable Semi-Auto</td><td style="color:#3a7abf;">Reliable</td><td>+1</td><td>Full</td><td>3 Large</td><td>2%</td><td><span style="color:#8b5fcf;">Adv ×3</span></td></tr>
+      <tr><td>Masterwork SMG</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Close–Med</td><td>6 Small</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+      <tr><td>Masterwork Semi-Auto</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Full</td><td>3 Large</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+      <tr><td>Masterwork LR Bolt-Action</td><td style="color:#c9952a;">Masterwork</td><td>+2</td><td>Extreme</td><td>1 Large</td><td>None</td><td><span style="color:#8b5fcf;">Adv ×6</span></td></tr>
+    </tbody>
+  </table>
+</div><!-- /panel-weapons -->
+
+<div id="panel-defence" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Defence Value</div>
+      <div class="info-line">Every defending group has base DEF from unit type plus fortification bonuses.<br><br><b>Militia:</b> DEF +4 · <b>Scouts:</b> DEF +2 · <b>Conscripts:</b> DEF +1</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Perimeter Layers</div>
+      <div class="info-line">Settlements have an <b>Outer</b> and <b>Inner</b> perimeter. Raiders must breach the outer before engaging defenders directly. A Critical on a perimeter position breaches it — cannot be repaired mid-combat.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Hold Formation</div>
+      <div class="info-line">Hold groups do not attack but add <b>+2 DEF</b> to all allies at their position and absorb the first allied casualty each round.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Night Raids</div>
+      <div class="info-line">Night raids: <b>all attack rolls −2</b> for both sides. <b>Watchtower Network</b> negates this for defenders completely.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Fortification Buildings</div>
+  <div class="fort-strip">
+    <div class="fblock">
+      <div class="fbname">Palisade Wall <span style="color:var(--faded);font-size:.55rem;">(Tier I)</span></div>
+      <div class="fbstat"><b>+4 DEF</b> outer perimeter defenders. <b>−20% raid damage</b> if perimeter holds.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Watchtower Network <span style="color:var(--faded);font-size:.55rem;">(Tier II)</span></div>
+      <div class="fbstat"><b>+2 warning seasons.</b> <b>Negates night penalty.</b> <b>+2 initiative</b> all raids.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Scout Training Grounds <span style="color:var(--faded);font-size:.55rem;">(Tier III)</span></div>
+      <div class="fbstat">Scouts <b>+1 ATK, +1 DEF.</b> Flanking action removes defender's fortification bonus for 1 round.</div>
+    </div>
+  </div>
+  <div class="fort-strip">
+    <div class="fblock">
+      <div class="fbname">Reinforced Bunker Extension <span style="color:var(--faded);font-size:.55rem;">(Tier IV)</span></div>
+      <div class="fbstat"><b>+6 DEF</b> inner perimeter. Requires <b>2 Crits</b> to breach. Defenders: <b>+2 morale.</b></div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Prion Barrier / Burn Wall <span style="color:var(--faded);font-size:.55rem;">(Tier III)</span></div>
+      <div class="fbstat">Attackers crossing roll D6: 1–2 = 1 automatic Injury. <b>+2 DEF</b> outer perimeter.</div>
+    </div>
+    <div class="fblock">
+      <div class="fbname">Reinforced Vault Storage <span style="color:var(--faded);font-size:.55rem;">(Tier IV)</span></div>
+      <div class="fbstat">Stored resources <b>immune to raider looting</b> even if settlement is breached.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Raid Types</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Type</th><th>Typical Force</th><th>Warning (Watchtower)</th><th>Special Rules</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Opportunistic</td><td>4–8 fighters, improvised</td><td>None</td><td>Flee on first morale failure. Goal is loot only.</td></tr>
+      <tr><td>Standard Raid</td><td>10–20 fighters, mixed arms</td><td>1 season</td><td>2–3 rounds before attacker morale check. May return if successful.</td></tr>
+      <tr><td>Organised Assault</td><td>20–40 fighters, organised</td><td>2 seasons</td><td>Full 6 rounds. May have fortification-breaking tools (+2 to breach).</td></tr>
+      <tr><td>Siege</td><td>40+ fighters, sustained</td><td>2 seasons</td><td>Lasts 1–3 seasons. Resources drained each season.</td></tr>
+      <tr><td>Prion Wanderer Swarm</td><td>Infected wildlife</td><td>None</td><td>Militia roll D20. 15+: contained. Below 15: 1 prion check per fighter.</td></tr>
+    </tbody>
+  </table>
+  <div class="note-box"><b>⚠ When Attacking:</b> The attacker loses their own fortification bonuses and faces the defender's position bonuses instead. Unknown defences: <b>−2 to all attack rolls.</b></div>
+</div><!-- /panel-defence -->
+
+<div id="panel-casualties" class="tab-panel">
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// Casualties Are Permanent</div>
+      <div class="info-line">Every fighter lost is a worker, farmer, or defender gone permanently. Combat is meant to feel costly — a raid won with 8 dead is a crisis that will take seasons to recover from.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Casualty Tracks</div>
+      <div class="info-line">After combat, all casualties sort into: <b>Injured</b> (recover), <b>Severely Injured</b> (may die without treatment), and <b>Killed</b> (permanent). Deduct Killed from population immediately.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Medical Buildings</div>
+      <div class="info-line"><b>None:</b> Severely Injured — 50% death chance/season.<br><b>Field Surgery Station (T1):</b> −25% injury-to-death. Treats 5/season.<br><b>Advanced Surgery Theatre (T3):</b> −50%. Treats 15/season. Severe: 0.5 seasons recovery.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Settlement Morale</div>
+      <div class="info-line">After any raid or assault: <b>−2 morale for 2 seasons.</b> Decisively repelled with under 10% casualties: <b>+2 morale</b> instead.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Injury States</div>
+  <div class="inj-track">
+    <div class="ipip i-ok">
+      <div class="iname">Active</div>
+      <div class="imod" style="color:var(--green);">Full duty</div>
+      <div class="idesc">Combat-ready. No penalties.</div>
+    </div>
+    <div class="ipip i-inj">
+      <div class="iname">Injured</div>
+      <div class="imod" style="color:var(--amber);">0.5 seasons offline</div>
+      <div class="idesc">Cannot fight. 50% efficiency in labour. Heals without treatment.</div>
+    </div>
+    <div class="ipip i-sev">
+      <div class="iname">Severely Injured</div>
+      <div class="imod" style="color:#c06020;">1 season offline</div>
+      <div class="idesc">Cannot fight or work. 50% death risk each season without Theatre.</div>
+    </div>
+    <div class="ipip i-dead">
+      <div class="iname">Killed</div>
+      <div class="imod" style="color:var(--red);">Permanent loss</div>
+      <div class="idesc">Removed from population immediately. Named role becomes vacant.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Scholar Casualty Rules</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Situation</th><th>Roll</th><th>Outcome</th><th>Satisfaction Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Settlement breached, Scholar present</td><td>D6 per Scholar</td><td>1: caught in combat → injury roll. 2–6: safe.</td><td>−3 Sat to all Scholars regardless.</td></tr>
+      <tr><td>Scholar on expedition, combat occurs</td><td>Automatic</td><td>D6 each round: 1–2 Injured · 3 Severely Injured · 4–6 unharmed.</td><td>−1 Sat per round of exposure.</td></tr>
+      <tr><td>Masterwork LR bolt-action, Nat 20</td><td>No save</td><td>D6: 1–3 Severely Injured · 4–6 Killed.</td><td>−10 Sat if K3 killed.</td></tr>
+      <tr><td>Scholar killed in any combat</td><td>—</td><td>Domain knowledge lost unless Archive built or apprentice trained.</td><td>See Scholar file for Knowledge Inheritance.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Post-Combat Checklist</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>#</th><th>Action</th><th>When</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Count casualties — Injured / Severely Injured / Killed</td><td>Immediately</td><td>Deduct Killed from population. Assign Injured and Severe to recovery.</td></tr>
+      <tr><td>2</td><td>Ammo audit</td><td>Immediately</td><td>Deduct spent rounds. Flag if below 1 full combat's worth remaining.</td></tr>
+      <tr><td>3</td><td>Structural damage check</td><td>If perimeter breached</td><td>Each breached structure: 0.25–0.5 seasons + resources to repair.</td></tr>
+      <tr><td>4</td><td>Resource loss from raid</td><td>If defending</td><td>Unprotected stockpiles: 10–30% raided. Vault protects stored resources.</td></tr>
+      <tr><td>5</td><td>Prion check on returning fighters</td><td>If combat in field</td><td>Any fighter from military or wasteland zones: Detection Lab check before re-entry.</td></tr>
+      <tr><td>6</td><td>Morale adjustment</td><td>Next season start</td><td>−2 morale for 2 seasons. +2 if decisively repelled with under 10% casualties.</td></tr>
+      <tr><td>7</td><td>Scholar safety check</td><td>If settlement breached</td><td>D6 per Scholar — see table above.</td></tr>
+      <tr><td>8</td><td>Prisoner handling</td><td>If any captured</td><td>1 food + 1 water/season per prisoner. Ransom, recruit, or release.</td></tr>
+    </tbody>
+  </table>
+</div><!-- /panel-casualties -->
+
+<div id="panel-factions" class="tab-panel">
+  <div class="warn-box"><b>☠ GM RESTRICTED — Do not share with players.</b> Reveals faction combat stats, weapon inventories, aggression ratings, and strategic weaknesses. Disclose only through successful scouting, NPC contact, or traded intelligence.</div>
+
+  <div class="info-grid" style="margin-bottom:.8rem;">
+    <div class="info-card">
+      <div class="info-title">// How to Use Faction Stats</div>
+      <div class="info-line">Strength = total combat power rating (1–10). Aggression = likelihood of acting each season (roll D6 at season end — if result ≤ Aggression, faction acts). Full stats only known through successful scouting.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Faction Actions</div>
+      <div class="info-line">When a faction acts (Aggression roll succeeds): D6 — <b>1–2:</b> raid nearest settlement · <b>3–4:</b> expand territory or claim a resource site · <b>5:</b> trade demand or tribute request · <b>6:</b> diplomatic contact.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Respawn &amp; Recovery</div>
+      <div class="info-line">Faction losing 60%+ fighters enters <b>Fractured</b> state — no actions for 2 seasons, then rebuilds at 40% strength per season. Exception: warlord factions (Reapers) — kill the warlord and the faction dissolves permanently.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Intel Decay</div>
+      <div class="info-line">After <b>3 seasons without scouting</b> a faction, their fighter count and weapon tier revert to Unknown — they may have grown or rearmed. Broadcast Tower partially tracks radio-using factions.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">The Reapers</div>
+  <div class="fac-grid">
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--red);">Overview</span>
+        <span class="fac-tag" style="color:var(--red);border-color:rgba(160,58,42,.4);">Warlord Faction</span>
+      </div>
+      <div class="fac-body">Pure raider gang. No interest in building — entirely parasitic. <b>Base at the outer perimeter of Ground Zero</b> — the city ruins at the map centre. They do not go deep into the city (prion risk), but they control access to it and extract resources from the outer industrial ring. <b>Leader: "Crowbar"</b> — kills deserters personally. If Crowbar is killed (named casualty from a Nat 20), the faction dissolves permanently within 2 seasons.</div>
+      <div class="fac-stats"><b>Strength:</b> 7 · <b>Aggression:</b> 5 · <b>Fighters:</b> ~35 · <b>ATK:</b> +3 · <b>DEF:</b> +2 · <b>Morale:</b> +1 (collapses if Crowbar falls)<br><b>Weapons:</b> Mostly Standard. 3–4 Reliable SMGs held by inner circle only. Scavenged ammo — jam rules apply in any fight over 3 rounds.<br><b>Weakness:</b> No Bullet Press. Ammo runs out in prolonged fights. Draw it past 4 rounds and their attack rolls start dropping by −1 per round as ammo degrades.</div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:#4a9e5c;">Overview</span>
+        <span class="fac-tag" style="color:#4a9e5c;border-color:rgba(74,158,92,.4);">Organised Commune</span>
+      </div>
+      <div class="fac-body"><b>The Covenant.</b> Agricultural base with a defensive posture. Rural farmland cluster with partial palisade walls and an Elder Council of three — cannot be decapitated with a single kill. Will negotiate if approached peacefully and given time.</div>
+      <div class="fac-stats"><b>Strength:</b> 5 · <b>Aggression:</b> 2 · <b>Fighters:</b> ~22 · <b>ATK:</b> +2 · <b>DEF:</b> +5 (fortified farmstead) · <b>Morale:</b> +4<br><b>Weapons:</b> Standard bolt-actions (hunting rifles). A few Reliable bolt-actions from pre-collapse stock. Moderate large bullet reserves — will become ammo-critical in a sustained fight beyond 4 rounds.<br><b>Opportunity:</b> Food surplus and live animals. They want medicine and Salvaged Books. Trade routes with them are highly valuable.</div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--blue);">Overview</span>
+        <span class="fac-tag" style="color:var(--blue);border-color:rgba(58,122,191,.4);">Maritime Faction</span>
+      </div>
+      <div class="fac-body"><b>The Drowned.</b> Controls coastal access and submerged city dive rights. Only operational boats on the map. Fortified harbour district. <b>Leader: "The Captain"</b> — charismatic and calculating. Prefers leverage over direct conflict. Charges tolls for sea access. Will not fight wars they can't win.</div>
+      <div class="fac-stats"><b>Strength:</b> 6 · <b>Aggression:</b> 2 · <b>Fighters:</b> ~28 · <b>ATK:</b> +3 · <b>DEF:</b> +4 (harbour fortifications) · <b>Morale:</b> +3<br><b>Weapons:</b> Reliable across the board. 2 Masterwork semi-autos. Working Bullet Press (small bullets). Large ammo is their weak point — target that in any prolonged engagement.<br><b>Opportunity:</b> The only reliable large-scale source of copper wire. They know this and price it accordingly. They want Detection Lab access, medicine, and large bullets.</div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:#a06030;">Overview</span>
+        <span class="fac-tag" style="color:#a06030;border-color:rgba(160,96,48,.4);">Wasteland Nomads</span>
+      </div>
+      <div class="fac-body"><b>The Silent.</b> Prion-exposed survivors. Nomadic cells of 4–8. Operate in zones no other faction will enter. Not organised — each cell is autonomous. Do not respond to diplomatic contact through normal channels.<br><br><b>Prion Wound Rule:</b> Any fighter wounded by The Silent rolls D6: on a 1 they receive a prion exposure. Detection Lab check required on return.</div>
+      <div class="fac-stats"><b>Strength:</b> 3 · <b>Aggression:</b> 3 · <b>Fighters:</b> ~15 total (cells of 4–8) · <b>ATK:</b> +1 · <b>DEF:</b> +1 · <b>Morale:</b> +2 (prion exposure made them fearless)<br><b>Weapons:</b> Crude and Standard melee/pistols. One cell has a Standard bolt-action.<br><b>Opportunity:</b> They carry prion samples passively. With careful contact, trade 1–3 samples per season. Worth far more than fighting them.</div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--amber);">Overview</span>
+        <span class="fac-tag" style="color:var(--amber);border-color:rgba(201,149,42,.4);">Government Remnant</span>
+      </div>
+      <div class="fac-body"><b>The Remnant Authority.</b> Sealed hardened bunker complex. Bureaucratic and disciplined. Will attempt to absorb weaker settlements diplomatically first — military action is their last resort, but when they commit, they commit fully. <b>Leader: "The Director"</b> — former civil servant with access to pre-collapse blueprint records. Demands 10% tribute per season from settlements they consider within their jurisdiction.</div>
+      <div class="fac-stats"><b>Strength:</b> 9 · <b>Aggression:</b> 2 · <b>Fighters:</b> ~55 · <b>ATK:</b> +4 · <b>DEF:</b> +7 (hardened bunker) · <b>Morale:</b> +5<br><b>Weapons:</b> Reliable standard-issue, 8–10 Masterwork rifles. Working Bullet Press (both bullet types). Active Gun Bench — ongoing weapon production each season.<br><b>Special:</b> Cannot be destroyed by conventional raids. Always signals 2 seasons in advance before any military action. Offers blueprint copies (T4–T5) in exchange for loyalty pledges. Treat as the endgame pressure — not another raider. <b>The Director actively seeks the government archive at Ground Zero.</b> Each season at Aggression roll success they send a scouting party toward the city. If they reach the archive before the players, they acquire its contents and their Strength increases to 11.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Faction Relationship Matrix</div>
+  <table class="ctable">
+    <thead>
+      <tr><th>Faction</th><th>Reapers</th><th>Covenant</th><th>The Drowned</th><th>The Silent</th><th>Remnant Authority</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>The Reapers</td><td>—</td><td><span class="c-neg">Hostile</span> (raided repeatedly)</td><td><span class="c-warn">Wary</span> (armed deterrence)</td><td><span class="c-warn">Neutral</span> (avoid each other)</td><td><span class="c-neg">Very Hostile</span> (hunted as criminals)</td></tr>
+      <tr><td>The Covenant</td><td><span class="c-neg">Hostile</span></td><td>—</td><td><span class="c-warn">Trading</span> (cautious)</td><td><span class="c-neg">Wary</span> (prion fear)</td><td><span class="c-warn">Tense</span> (tribute disputed)</td></tr>
+      <tr><td>The Drowned</td><td><span class="c-warn">Tolerated</span> (pays tolls)</td><td><span class="c-warn">Trading</span></td><td>—</td><td><span class="c-warn">Neutral</span></td><td><span class="c-warn">Tense</span> (sea vs. land dispute)</td></tr>
+      <tr><td>The Silent</td><td><span class="c-warn">Avoid</span></td><td><span class="c-neg">Wary</span></td><td><span class="c-warn">Neutral</span></td><td>—</td><td><span class="c-neg">Hunted</span></td></tr>
+      <tr><td>Remnant Authority</td><td><span class="c-neg">Actively Hunting</span></td><td><span class="c-warn">Tribute Demand</span></td><td><span class="c-warn">Disputed Territory</span></td><td><span class="c-neg">Actively Hunting</span></td><td>—</td></tr>
+    </tbody>
+  </table>
+  <div class="note-box" style="margin-top:.8rem;"><b>⚠ Use Factions Dynamically:</b> These are starting positions, not fixed states. If the players ally with the Covenant, the Reapers should increase pressure on the Covenant to punish the alliance. If The Drowned acquire a second Bullet Press, upgrade their ammo stats mid-campaign. The Remnant Authority should feel like an inevitable endgame clock — always present, always tightening — rather than just another raider band waiting to be dealt with.</div>
+</div><!-- /panel-factions -->
+
+
+<div id="panel-diplomacy" class="tab-panel">
+  <div class="warn-box"><b>🤝 GM CONTEXT — Trade &amp; Relationship System.</b> These rules govern all inter-faction dealings including player factions. The relationship scale, negotiation rolls, and deal types apply equally to player settlements. The faction-specific wants and offers here supplement the combat intelligence in the Factions tab.</div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">// What Can Be Traded</div>
+      <div class="info-line">Any tangible resource, building output, or service. Resources have base <b>Trade Values (TV).</b> Blueprints, Scholars, and unique items have negotiated values.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Cannot trade:</b> Population (triggers permanent −15 relationship with all who learn of it) · prion-contaminated goods without disclosure · promises that cannot be mechanically kept.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// Trade Goods Buildings</div>
+      <div class="info-line">Some buildings produce <b>Trade Goods</b> — processed outputs valued above raw equivalents.</div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Fermentation &amp; Brewing:</b> +12 goods/season<br><b>Map Printing Press:</b> +8 goods/season<br><b>Coastal Trading Post:</b> +20 goods/season<br><b>Document Printing Press:</b> +15 goods/season</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// The Negotiation Roll</div>
+      <div class="info-line">Proposing a trade or agreement: roll <b>D20 + Relationship Modifier.</b></div>
+      <div class="info-line" style="margin-top:.2rem;"><b>Bonuses:</b> Scholar on diplomatic team: +2. Coastal Trading Post with maritime factions: +3. The result determines whether they accept, counter-offer, or refuse.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">// How Relationships Change</div>
+      <div class="info-line">Moves slowly through <b>consistent actions.</b> Two completed fair trades = +1 tier. Two consecutive missed deliveries = −2 tiers.</div>
+      <div class="info-line" style="margin-top:.2rem;">Killing a faction leader or breaking a sealed deal = <b>immediate −3 tiers.</b> Significant betrayals reach other factions within 2 seasons. Protecting a faction in combat can jump +1 tier immediately.</div>
+    </div>
+  </div>
+
+  <div class="sec-head">Relationship Scale</div>
+  <div class="diplo-track">
+    <div class="dt-seg dt-war">WAR</div><div class="dt-seg dt-hostile">HOSTILE</div>
+    <div class="dt-seg dt-wary">WARY</div><div class="dt-seg dt-neutral">NEUTRAL</div>
+    <div class="dt-seg dt-cautious">CAUTIOUS</div><div class="dt-seg dt-friendly">FRIENDLY</div>
+    <div class="dt-seg dt-allied">ALLIED</div>
+  </div>
+  <div class="dt-labels">
+    <span style="color:var(--red);">−3</span><span style="color:var(--red);">−2</span><span style="color:var(--amber);">−1</span>
+    <span>0</span><span style="color:#9aaa30;">+1</span><span style="color:var(--green);">+2</span><span style="color:var(--green);">+3</span>
+  </div>
+  <table class="mtable" style="margin-top:.5rem;">
+    <thead><tr><th>Tier</th><th>Roll Modifier</th><th>Trade Access</th><th>Aggression</th><th>How to Move Up</th></tr></thead>
+    <tbody>
+      <tr><td><span class="c-neg">War (−3)</span></td><td>−6</td><td>None — contact is hostile</td><td>Raids on sight every 1–2 seasons</td><td>Ceasefire offer, prisoner exchange, or 3 seasons no contact (cools to Hostile)</td></tr>
+      <tr><td><span class="c-neg">Hostile (−2)</span></td><td>−4</td><td>None without parley</td><td>Raids opportunistically, Aggression +2</td><td>Deliver requested resource unprompted, or negotiate ceasefire (need 12+ on roll)</td></tr>
+      <tr><td><span class="c-warn">Wary (−1)</span></td><td>−2</td><td>Emergency trade only</td><td>Will not raid proactively but retaliates</td><td>2 successful trades at slight loss to you, or rescue their people from a threat</td></tr>
+      <tr><td>Neutral (0)</td><td>+0</td><td>Standard trade at market rates</td><td>Faction base aggression unchanged</td><td>3 fair trades, or 1 significant act of aid such as protecting them in combat</td></tr>
+      <tr><td><span class="c-pos">Cautious (+1)</span></td><td>+2</td><td>Standard + access to surplus stockpiles</td><td>Aggression −1, will not raid unless provoked</td><td>2 seasons of consistent trade, or share a Blueprint copy</td></tr>
+      <tr><td><span class="c-pos">Friendly (+2)</span></td><td>+4</td><td>Full access including faction-exclusive goods</td><td>Aggression −3, warns you before others attack</td><td>1 season of allied cooperation, or offer a Scholar apprentice slot</td></tr>
+      <tr><td><span class="c-pos">Allied (+3)</span></td><td>+6</td><td>Full access + joint expedition rights</td><td>No aggression — sends fighters to assist</td><td>Sealed alliance (roll 16+), both sides commit resources to formalise</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">Negotiation Roll Results</div>
+  <table class="mtable">
+    <thead><tr><th>Roll (D20 + modifier)</th><th>Outcome</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td style="color:var(--red);">1–4</td><td><b>Refused — Insulted.</b> Relationship drops 1 tier.</td><td>Cannot re-attempt same deal for 2 seasons. Nat 1 drops 2 tiers.</td></tr>
+      <tr><td style="color:var(--amber);">5–8</td><td><b>Refused — Politely.</b> Declined, no relationship change. States reason if Cautious or above.</td><td>Re-attempt next season with a modified offer. Stated reason is useful intelligence.</td></tr>
+      <tr><td style="color:var(--amber);">9–11</td><td><b>Counter-offer.</b> Modified terms, usually 20–30% more favourable to them.</td><td>Accept, negotiate further at −2 on next roll, or decline without penalty.</td></tr>
+      <tr><td>12–14</td><td><b>Accepted — Standard terms.</b> Deal proceeds as proposed.</td><td>Completion improves relationship +0.5 (two completions = +1 tier).</td></tr>
+      <tr><td style="color:var(--green);">15–17</td><td><b>Accepted — Favourable.</b> Small bonus: D6×5 trade goods or a useful rumour.</td><td>Relationship +0.5. Reciprocating builds further goodwill.</td></tr>
+      <tr><td style="color:var(--green);">18–20</td><td><b>Enthusiastic.</b> Accepts and proposes ongoing arrangement. First season: +15% value to you.</td><td>Relationship +1 immediately. Nat 20: unsolicited offer — GM determines what they bring.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head">What Each Faction Wants and Offers</div>
+  <div class="fac-grid">
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--red);">The Reapers</span>
+        <span class="fac-tag" style="color:var(--red);border-color:rgba(160,58,42,.4);">Default: Hostile</span>
+      </div>
+      <div class="fac-body">
+        <b>They want:</b> Food (any) · Scrap Metal · Salvaged Medicine · Small Bullets · Other factions' defence intel<br>
+        <b>They offer:</b> Raided settlement goods · Large bullets looted · Crude firearms · Wasteland location intel<br><br>
+        <b>GM note:</b> The Reapers rarely trade in good faith. Any negotiation is likely a delay tactic before raiding. A Cautious or above relationship requires Crowbar's personal approval — roleplay as grudging and transactional.
+      </div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:#4a9e5c;">The Covenant</span>
+        <span class="fac-tag" style="color:#4a9e5c;border-color:rgba(74,158,92,.4);">Default: Wary</span>
+      </div>
+      <div class="fac-body">
+        <b>They want:</b> Salvaged Medicine · Salvaged Books · Medicinal Seeds · Chemical Reagents · Prion-safe water intelligence<br>
+        <b>They offer:</b> Food surplus · Live animals (tested) · Hides · Seeds · Large bullets from hunting stock · Safe rural passage<br><br>
+        <b>GM note:</b> The Covenant's Elder Council votes on all deals — takes one additional season to confirm major agreements. They are the most reliable long-term partners if trust is established. They will share food in a genuine crisis even at Wary.
+      </div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--blue);">The Drowned</span>
+        <span class="fac-tag" style="color:var(--blue);border-color:rgba(58,122,191,.4);">Default: Neutral</span>
+      </div>
+      <div class="fac-body">
+        <b>They want:</b> Detection Lab access (rented) · Salvaged Medicine · Chemical Reagents · Stone and Timber · Large bullets<br>
+        <b>They offer:</b> Copper Wire · Copper Pipe · Maritime Blueprints T3–T4 · Salt · Fish · Sea passage rights · Star Chart copies<br><br>
+        <b>GM note:</b> The Captain knows they hold a monopoly on copper wire and prices it accordingly. They will not sell star charts until at least Cautious. At Friendly, The Captain may offer to escort player vessels through contested water — a significant military asset.
+      </div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:#a06030;">The Silent</span>
+        <span class="fac-tag" style="color:#a06030;border-color:rgba(160,96,48,.4);">Default: Neutral</span>
+      </div>
+      <div class="fac-body">
+        <b>They want:</b> Food (desperately) · Clean Water · Salvaged Medicine · Shelter in winter · Amnesty from prion protocols<br>
+        <b>They offer:</b> Prion Samples (reliable supply) · Wasteland salvage · Hides and Pelts · Faction movement intel · Crude firearms<br><br>
+        <b>GM note:</b> Contact must be initiated carefully — approaching a Silent cell in wasteland without prior agreement triggers a combat check. <b>The Silent live inside the city ruins</b> — the only faction that operates freely in Ground Zero. They know the interior layout that no other faction does, including the location of the government archive. This knowledge is tradeable. Once contact is established they are loyal suppliers of prion samples — city strain samples count as 2 Research Points each. They respond well to being treated as people rather than a biohazard.
+      </div>
+    </div>
+    <div class="fac-card">
+      <div class="fac-head">
+        <span class="fac-name" style="color:var(--amber);">Remnant Authority</span>
+        <span class="fac-tag" style="color:var(--amber);border-color:rgba(201,149,42,.4);">Default: Neutral, tribute expected</span>
+      </div>
+      <div class="fac-body">
+        <b>They want:</b> 10% surplus tribute per season · Loyalty declarations · Prion Samples · Skilled workers or Scholars<br>
+        <b>They offer:</b> Blueprint copies T2–T4 · Large bullet supply · Protection guarantees · Pre-collapse records · Formal territory rights<br><br>
+        <b>GM note:</b> Tribute can be paid in low-value goods (stone, timber, sand) to satisfy the requirement mechanically while protecting high-value stockpiles. Friendly reduces tribute to 5%. Allied eliminates it in exchange for other loyalty commitments. The Director responds very positively to offers of Scholars for apprenticeship — this is their primary interest beyond tribute.
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-head">Resource Trade Values</div>
+  <p style="font-size:.62rem;color:var(--faded);margin-bottom:.5rem;line-height:1.6;">Base values in <b>TV units.</b> All trades are negotiable. Scarcity raises willingness to pay. Surplus lowers it.</p>
+  <div class="tval-grid">
+    <div class="tcard"><div class="tcard-name">Food (any type)</div><div class="tcard-val">1</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">Winter: +50% TV. Settlements with surpluses undercut each other.</div></div>
+    <div class="tcard"><div class="tcard-name">Clean Water</div><div class="tcard-val">2</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">4 TV near wasteland. More valuable than food when contamination is active.</div></div>
+    <div class="tcard"><div class="tcard-name">Trade Goods</div><div class="tcard-val">3</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">Standard inter-faction currency. Accepted everywhere at face value.</div></div>
+    <div class="tcard"><div class="tcard-name">Scrap Metal</div><div class="tcard-val">2</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">High demand from building factions. The Reapers trade food for scrap at 2:1.</div></div>
+    <div class="tcard"><div class="tcard-name">Salvaged Medicine</div><div class="tcard-val">5</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">Universally scarce. The Silent pay 8 TV per unit.</div></div>
+    <div class="tcard"><div class="tcard-name">Small Bullets</div><div class="tcard-val">4</div><div class="tcard-unit">TV per 10 rounds</div><div class="tcard-note">Always in demand. Factions without Bullet Press pay premium. Pressed rounds: +1 TV per 10.</div></div>
+    <div class="tcard"><div class="tcard-name">Large Bullets</div><div class="tcard-val">6</div><div class="tcard-unit">TV per 10 rounds</div><div class="tcard-note">Rifle factions pay 8 TV per 10 when supply is low.</div></div>
+    <div class="tcard"><div class="tcard-name">Salvaged Books</div><div class="tcard-val">8</div><div class="tcard-unit">TV per 5 units</div><div class="tcard-note">Covenant pays 12 TV per 5. Remnant Authority also values highly.</div></div>
+    <div class="tcard"><div class="tcard-name">Chemical Reagents</div><div class="tcard-val">10</div><div class="tcard-unit">TV per 5 units</div><div class="tcard-note">Research factions pay 15 TV per 5.</div></div>
+    <div class="tcard"><div class="tcard-name">Blueprint Copy</div><div class="tcard-val">20–60</div><div class="tcard-unit">TV by tier</div><div class="tcard-note">T1: 20 · T2: 30 · T3: 45 · T4: 60 TV. T5 blueprints are alliance-shared only, never sold.</div></div>
+    <div class="tcard"><div class="tcard-name">Prion Samples</div><div class="tcard-val">25</div><div class="tcard-unit">TV per unit</div><div class="tcard-note">Only valuable to research factions. Remnant Authority pays 40 TV per unit.</div></div>
+    <div class="tcard"><div class="tcard-name">Copper Wire</div><div class="tcard-val">15</div><div class="tcard-unit">TV per 5 units</div><div class="tcard-note">Non-craftable. The Drowned are the primary source and price accordingly.</div></div>
+  </div>
+
+  <div class="sec-head">Deal Types</div>
+  <table class="mtable">
+    <thead><tr><th>Deal Type</th><th>Structure</th><th>Breaking It</th></tr></thead>
+    <tbody>
+      <tr><td>Spot Trade</td><td>One-time exchange this season. No ongoing obligation. Most common type.</td><td>No penalty once complete. Delivering short: −1 tier.</td></tr>
+      <tr><td>Ongoing Supply</td><td>Agreed resource delivered each season for a set number of seasons.</td><td>One missed delivery: −1 tier. Two consecutive: −2 tiers and possible retaliation. Notify in advance to avoid penalty.</td></tr>
+      <tr><td>Non-Aggression Pact</td><td>Neither side raids the other for the agreed duration. Requires Neutral or above.</td><td>Violation: −2 tiers immediately. The other faction notifies their allies.</td></tr>
+      <tr><td>Intelligence Exchange</td><td>Share map tiles, faction info, or resource locations in exchange for the same.</td><td>False intel discovered: −3 tiers. All factions learn of it within 2 seasons.</td></tr>
+      <tr><td>Military Alliance</td><td>Commit fighters to defend each other for 1 season. Requires Friendly or above.</td><td>Failure to honour: −3 tiers. Abandoned faction may become Hostile.</td></tr>
+      <tr><td>Sealed Deal</td><td>Formal agreement with a printed document (requires Document Printing Press). Both sides keep a copy.</td><td>Breaking it: −3 tiers with them and −1 tier with all factions who know of the deal. Cannot be denied.</td></tr>
+    </tbody>
+  </table>
+  <div class="note-box"><b>Remnant Authority Tribute:</b> They expect 10% of visible surplus each season. Refusing counts as a Hostile action and starts their aggression clock. Paying in low-value goods (stone, timber, sand) satisfies the tribute mechanically while protecting high-value stockpiles. Friendly relationship reduces tribute to 5%. Allied relationship eliminates it entirely in exchange for other loyalty commitments.</div>
+</div><!-- /panel-diplomacy -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian · Combat Reference · GM Edition — Restricted</footer>
+</div>
+</body>
+</html>
