@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GM Roller — Dead Meridian</title>
+<style>
+  :root {
+    --bg:#0a0906; --ink:#c8a84b; --ink-dim:#8a7235; --faded:#4a4020;
+    --border:rgba(200,168,75,0.11); --border-mid:rgba(200,168,75,0.22);
+    --red:#a03a2a; --green:#3d8a4a; --amber:#c9952a; --blue:#3a7abf; --purple:#8b5fcf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--bg); color:var(--ink);
+    font-family:'Courier New', Courier, monospace;
+    min-height:100vh; padding:1.5rem 1rem 4rem;
+    background-image:
+      radial-gradient(ellipse at 15% 0%, rgba(55,35,4,.7) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(35,20,2,.5) 0%, transparent 55%),
+      repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(200,168,75,.012) 28px, rgba(200,168,75,.012) 29px);
+  }
+  .page { max-width:900px; margin:0 auto; }
+
+  /* HEADER */
+  header { text-align:center; margin-bottom:1.8rem; padding-bottom:1rem; border-bottom:1px solid var(--border-mid); }
+  .gm-stamp { font-size:.48rem; letter-spacing:.32em; text-transform:uppercase; color:var(--faded); opacity:.5; display:block; margin-bottom:.5rem; }
+  h1 { font-family:Georgia,'Times New Roman',serif; font-size:clamp(1.5rem,5vw,2.6rem); letter-spacing:.08em; text-transform:uppercase; color:var(--ink); text-shadow:0 0 50px rgba(200,168,75,.15); }
+  .subtitle { font-size:.58rem; color:var(--faded); letter-spacing:.2em; text-transform:uppercase; margin-top:.3rem; }
+
+  /* CONTROLS */
+  .controls { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-bottom:.6rem; }
+  @media(max-width:540px){ .controls{ grid-template-columns:1fr; } }
+  .ctrl-group { display:flex; flex-direction:column; gap:.25rem; }
+  .ctrl-lbl { font-size:.48rem; letter-spacing:.18em; text-transform:uppercase; color:var(--faded); }
+  select, input[type=number] {
+    background:rgba(200,168,75,.04); border:1px solid var(--border-mid);
+    color:var(--ink); font-family:'Courier New',Courier,monospace; font-size:.72rem;
+    padding:.42rem .6rem; outline:none; width:100%; cursor:pointer;
+  }
+  select option { background:#1a1610; color:var(--ink); }
+  select:focus, input[type=number]:focus { border-color:var(--ink-dim); }
+
+  .mod-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.6rem; margin-bottom:.8rem; }
+  @media(max-width:540px){ .mod-row{ grid-template-columns:1fr 1fr; } }
+
+  /* ROLL BUTTON */
+  .roll-btn {
+    width:100%; padding:.85rem; background:transparent;
+    border:1px solid var(--ink-dim); color:var(--ink);
+    font-family:Georgia,'Times New Roman',serif; font-size:1.1rem;
+    letter-spacing:.18em; text-transform:uppercase; cursor:pointer;
+    margin-bottom:1.2rem; transition:all .15s;
+  }
+  .roll-btn:hover { background:rgba(200,168,75,.06); border-color:var(--ink); }
+  .roll-btn:active { transform:scale(.99); }
+
+  /* LOCATION INFO STRIP */
+  .loc-strip {
+    display:none; border:1px solid var(--border-mid);
+    background:rgba(200,168,75,.015); padding:.5rem .8rem;
+    margin-bottom:.6rem; font-size:.62rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .loc-strip.visible { display:block; }
+  .loc-strip b { color:var(--ink); }
+  .loc-name { font-family:Georgia,serif; font-size:.85rem; color:var(--ink); display:block; margin-bottom:.15rem; }
+
+  /* RESULTS GRID */
+  .results-panel { display:none; }
+  .results-panel.visible { display:block; }
+  .results-head {
+    font-family:Georgia,serif; font-size:.68rem; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--faded); padding:.25rem 0;
+    border-bottom:1px solid var(--border-mid); margin-bottom:.5rem;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .results-grid { display:flex; flex-direction:column; gap:.3rem; }
+
+  /* RESULT ROW */
+  .rr {
+    display:grid; grid-template-columns:2fr .6fr .5fr 1.2fr;
+    gap:.3rem; align-items:center;
+    border:1px solid var(--border); padding:.3rem .6rem;
+    font-size:.62rem; min-width:0;
+  }
+  .rr.found { border-color:rgba(61,138,74,.35); background:rgba(61,138,74,.025); }
+  .rr.not-found { border-color:var(--border); opacity:.45; }
+  .rr.nat20 { border-color:rgba(201,149,42,.5); background:rgba(201,149,42,.04); }
+  .rr.nat1 { border-color:rgba(160,58,42,.4); background:rgba(160,58,42,.03); }
+  .rr-name { color:var(--ink); font-family:Georgia,serif; font-size:.65rem; min-width:0; overflow-wrap:break-word; }
+  .rr-roll { font-family:Georgia,serif; font-size:.85rem; text-align:center; }
+  .rr.found .rr-roll { color:var(--green); }
+  .rr.not-found .rr-roll { color:var(--red); }
+  .rr.nat20 .rr-roll { color:var(--amber); }
+  .rr-status { font-size:.52rem; letter-spacing:.06em; text-transform:uppercase; }
+  .rr.found .rr-status { color:var(--green); }
+  .rr.not-found .rr-status { color:var(--red); }
+  .rr.nat20 .rr-status { color:var(--amber); }
+  .rr-yield { font-family:Georgia,serif; font-size:.75rem; color:var(--amber); text-align:right; }
+  .rr.not-found .rr-yield { color:var(--faded); font-size:.58rem; font-family:inherit; }
+
+  /* HAUL SUMMARY */
+  .haul-box {
+    display:none; border:1px solid rgba(200,168,75,.3);
+    background:rgba(200,168,75,.03); padding:.6rem .8rem; margin-bottom:.6rem;
+  }
+  .haul-box.visible { display:block; }
+  .haul-title { font-family:Georgia,serif; font-size:.72rem; color:var(--ink); margin-bottom:.4rem; letter-spacing:.06em; }
+  .haul-items { display:flex; flex-wrap:wrap; gap:.3rem; }
+  .haul-item {
+    font-size:.6rem; border:1px solid rgba(61,138,74,.4);
+    background:rgba(61,138,74,.04); color:var(--green); padding:2px 8px;
+    font-family:'Courier New',monospace;
+  }
+  .haul-item.special { border-color:rgba(201,149,42,.5); background:rgba(201,149,42,.05); color:var(--amber); }
+  .haul-none { font-size:.6rem; color:var(--faded); font-style:italic; }
+
+  /* NOTES */
+  .notes-list { display:flex; flex-direction:column; gap:.25rem; margin-top:.5rem; }
+  .note-item { font-size:.58rem; color:var(--amber); border-left:2px solid rgba(201,149,42,.4); padding-left:.5rem; line-height:1.5; }
+
+  /* HISTORY */
+  .history-head {
+    font-family:Georgia,serif; font-size:.65rem; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--faded); padding:.25rem 0; border-bottom:1px solid var(--border-mid);
+    margin:1.2rem 0 .4rem; display:flex; justify-content:space-between; align-items:center;
+  }
+  .clear-btn {
+    font-size:.47rem; font-family:'Courier New',monospace; letter-spacing:.1em; text-transform:uppercase;
+    background:none; border:1px solid var(--faded); color:var(--faded); padding:2px 7px; cursor:pointer;
+  }
+  .clear-btn:hover { border-color:var(--red); color:var(--red); }
+  .hist-list { list-style:none; }
+  .hist-item {
+    display:flex; gap:.6rem; align-items:baseline; padding:.28rem 0;
+    border-bottom:1px solid var(--border); font-size:.6rem; color:var(--ink-dim);
+    flex-wrap:wrap;
+  }
+  .hist-item:last-child { border-bottom:none; }
+  .h-loc { color:var(--ink); font-family:Georgia,serif; }
+  .h-found { color:var(--green); }
+  .h-time { color:var(--faded); font-size:.5rem; margin-left:auto; }
+
+  footer { text-align:center; margin-top:2rem; padding-top:.8rem; border-top:1px solid var(--border); font-size:.47rem; letter-spacing:.2em; color:var(--faded); opacity:.4; text-transform:uppercase; }
+
+  /* ── TAB SYSTEM ── */
+  .tab-radio { display:none; }
+  .tabs { display:flex; gap:.3rem; flex-wrap:wrap; margin-bottom:0; }
+  .tab-lbl {
+    font-family:'Courier New',monospace; font-size:.6rem; letter-spacing:.12em;
+    text-transform:uppercase; border:1px solid var(--faded); background:transparent;
+    color:var(--faded); padding:.38rem .9rem; cursor:pointer; user-select:none;
+    transition:all .15s; display:inline-block;
+  }
+  .tab-lbl:hover { border-color:var(--ink-dim); color:var(--ink-dim); }
+  .tab-panels { border:1px solid var(--border-mid); border-top:none; padding:1rem; }
+  .tab-panel { display:none; }
+  #tp-scav { display:block; }
+  .tab-lbl[for="tr-scav"] { border-color:var(--ink); color:var(--ink); background:rgba(200,168,75,.06); }
+
+  #tr-prion:checked ~ .tabs .tab-lbl[for="tr-prion"]  { border-color:#9aaa30; color:#9aaa30; background:rgba(154,170,48,.06); }
+  #tr-prion:checked ~ .tabs .tab-lbl[for="tr-scav"]   { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-prion:checked ~ .tabs .tab-lbl[for="tr-faction"] { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-prion:checked ~ .tab-panels #tp-prion   { display:block; }
+  #tr-prion:checked ~ .tab-panels #tp-scav    { display:none; }
+  #tr-prion:checked ~ .tab-panels #tp-faction { display:none; }
+  #tr-prion:checked ~ .tab-panels #tp-combat  { display:none; }
+
+  #tr-faction:checked ~ .tabs .tab-lbl[for="tr-faction"] { border-color:var(--red); color:var(--red); background:rgba(160,58,42,.06); }
+  #tr-faction:checked ~ .tabs .tab-lbl[for="tr-scav"]    { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-faction:checked ~ .tabs .tab-lbl[for="tr-prion"]   { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-faction:checked ~ .tab-panels #tp-faction { display:block; }
+  #tr-faction:checked ~ .tab-panels #tp-scav   { display:none; }
+  #tr-faction:checked ~ .tab-panels #tp-prion  { display:none; }
+  #tr-faction:checked ~ .tab-panels #tp-combat { display:none; }
+
+  #tr-scav:checked ~ .tabs .tab-lbl[for="tr-scav"]    { border-color:var(--ink); color:var(--ink); background:rgba(200,168,75,.06); }
+  #tr-scav:checked ~ .tabs .tab-lbl[for="tr-prion"]   { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-scav:checked ~ .tabs .tab-lbl[for="tr-faction"] { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-scav:checked ~ .tab-panels #tp-scav    { display:block; }
+  #tr-scav:checked ~ .tab-panels #tp-prion   { display:none; }
+  #tr-scav:checked ~ .tab-panels #tp-faction { display:none; }
+  #tr-scav:checked ~ .tab-panels #tp-combat  { display:none; }
+
+  /* Prion tab styles */
+  .prion-section { margin-bottom:1.2rem; }
+  .p-sec-head {
+    font-family:Georgia,serif; font-size:.68rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--faded); padding:.25rem 0;
+    border-bottom:1px solid var(--border-mid); margin-bottom:.5rem;
+  }
+  .p-controls { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
+  @media(max-width:540px){ .p-controls{ grid-template-columns:1fr 1fr; } }
+  .p-result-box {
+    display:none; border:1px solid var(--border-mid);
+    background:rgba(200,168,75,.01); padding:.7rem .9rem; margin-bottom:.6rem;
+  }
+  .p-result-box.visible { display:block; }
+  .p-stage-name {
+    font-family:Georgia,serif; font-size:1.3rem; margin-bottom:.3rem;
+  }
+  .p-stage-clear  { color:var(--green); }
+  .p-stage-exp    { color:#9aaa30; }
+  .p-stage-carry  { color:var(--amber); }
+  .p-stage-inf    { color:#c06020; }
+  .p-stage-term   { color:var(--red); }
+  .p-roll-line { font-size:.62rem; color:var(--ink-dim); margin-bottom:.4rem; }
+  .p-roll-line b { color:var(--ink); }
+  .p-outcome { font-size:.65rem; color:var(--ink-dim); line-height:1.65; }
+  .p-outcome b { color:var(--ink); }
+  .p-chain-note {
+    margin-top:.5rem; padding:.4rem .6rem;
+    border:1px solid rgba(154,170,48,.3); background:rgba(154,170,48,.04);
+    font-size:.6rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .p-chain-note b { color:#9aaa30; }
+  .p-hist-item { display:flex; gap:.5rem; flex-wrap:wrap; padding:.25rem 0; border-bottom:1px solid var(--border); font-size:.58rem; color:var(--ink-dim); }
+  .p-hist-item:last-child { border-bottom:none; }
+  .p-stage-tag { font-family:Georgia,serif; font-size:.65rem; }
+
+  /* Faction tab styles */
+  .f-controls { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
+  @media(max-width:540px){ .f-controls{ grid-template-columns:1fr; } }
+  .f-result-box {
+    display:none; border:1px solid var(--border-mid);
+    background:rgba(200,168,75,.01); padding:.7rem .9rem; margin-bottom:.6rem;
+  }
+  .f-result-box.visible { display:block; }
+  .f-action-name { font-family:Georgia,serif; font-size:1.1rem; color:var(--ink); margin-bottom:.25rem; }
+  .f-roll-line { font-size:.62rem; color:var(--ink-dim); margin-bottom:.4rem; }
+  .f-roll-line b { color:var(--ink); }
+  .f-outcome { font-size:.64rem; color:var(--ink-dim); line-height:1.7; }
+  .f-outcome b { color:var(--ink); }
+  .f-gm-note {
+    margin-top:.5rem; padding:.4rem .6rem;
+    border:1px solid rgba(160,58,42,.3); background:rgba(160,58,42,.04);
+    font-size:.6rem; color:var(--ink-dim); line-height:1.6;
+  }
+  .f-gm-note b { color:var(--red); }
+  .f-hist-item { display:flex; gap:.5rem; flex-wrap:wrap; padding:.25rem 0; border-bottom:1px solid var(--border); font-size:.58rem; color:var(--ink-dim); }
+  .f-hist-item:last-child { border-bottom:none; }
+
+
+  #tr-combat:checked ~ .tabs .tab-lbl[for="tr-combat"]  { border-color:var(--purple); color:var(--purple); background:rgba(139,95,207,.06); }
+  #tr-combat:checked ~ .tabs .tab-lbl[for="tr-scav"]    { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-combat:checked ~ .tabs .tab-lbl[for="tr-prion"]   { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-combat:checked ~ .tabs .tab-lbl[for="tr-faction"] { border-color:var(--faded); color:var(--faded); background:transparent; }
+  #tr-combat:checked ~ .tab-panels #tp-combat  { display:block; }
+  #tr-combat:checked ~ .tab-panels #tp-scav    { display:none; }
+  #tr-combat:checked ~ .tab-panels #tp-prion   { display:none; }
+  #tr-combat:checked ~ .tab-panels #tp-faction { display:none; }
+
+  /* Combat tab styles */
+  .cbt-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
+  @media(max-width:580px){ .cbt-grid{ grid-template-columns:1fr; } }
+  .cbt-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
+  @media(max-width:580px){ .cbt-3{ grid-template-columns:1fr 1fr; } }
+  .cbt-result-box { display:none; margin-bottom:.6rem; }
+  .cbt-result-box.visible { display:block; }
+  .round-card {
+    border:1px solid var(--border-mid); padding:.6rem .8rem;
+    background:rgba(200,168,75,.01); margin-bottom:.4rem;
+  }
+  .round-header {
+    display:flex; align-items:baseline; gap:.6rem;
+    border-bottom:1px solid var(--border); padding-bottom:.3rem; margin-bottom:.4rem;
+    flex-wrap:wrap;
+  }
+  .round-num { font-family:Georgia,serif; font-size:1.1rem; color:var(--amber); min-width:4rem; }
+  .round-label { font-family:Georgia,serif; font-size:.72rem; color:var(--ink); flex:1; }
+  .round-margin { font-size:.6rem; color:var(--ink-dim); margin-left:auto; }
+  .side-row { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; }
+  @media(max-width:480px){ .side-row{ grid-template-columns:1fr; } }
+  .side-block { padding:.35rem .5rem; border:1px solid var(--border); }
+  .side-atk { border-color:rgba(61,138,74,.3); background:rgba(61,138,74,.02); }
+  .side-def { border-color:rgba(58,122,191,.3); background:rgba(58,122,191,.02); }
+  .side-title { font-size:.5rem; letter-spacing:.15em; text-transform:uppercase; color:var(--faded); margin-bottom:.2rem; }
+  .side-roll { font-family:Georgia,serif; font-size:1.3rem; line-height:1; }
+  .side-roll.hit { color:var(--green); }
+  .side-roll.miss { color:var(--red); }
+  .side-roll.nat20 { color:var(--amber); }
+  .side-roll.nat1 { color:var(--red); opacity:.6; }
+  .side-detail { font-size:.58rem; color:var(--ink-dim); line-height:1.55; margin-top:.15rem; }
+  .side-detail b { color:var(--ink); }
+  .result-band {
+    font-family:Georgia,serif; font-size:.75rem; letter-spacing:.06em;
+    padding:2px 8px; display:inline-block; margin:.25rem 0;
+  }
+  .band-miss    { color:var(--red);    border:1px solid rgba(160,58,42,.4);    background:rgba(160,58,42,.04); }
+  .band-graze   { color:var(--amber);  border:1px solid rgba(201,149,42,.4);   background:rgba(201,149,42,.04); }
+  .band-hit     { color:var(--green);  border:1px solid rgba(61,138,74,.3);    background:rgba(61,138,74,.03); }
+  .band-solid   { color:var(--green);  border:1px solid rgba(61,138,74,.5);    background:rgba(61,138,74,.05); }
+  .band-crit    { color:var(--amber);  border:1px solid rgba(201,149,42,.6);   background:rgba(201,149,42,.07); }
+  .cas-line { font-size:.62rem; color:var(--ink-dim); line-height:1.65; margin-top:.2rem; }
+  .cas-line b { color:var(--ink); }
+  .morale-note {
+    margin-top:.35rem; padding:.3rem .5rem;
+    border:1px solid rgba(201,149,42,.3); background:rgba(201,149,42,.04);
+    font-size:.58rem; color:var(--ink-dim); line-height:1.5;
+  }
+  .morale-note b { color:var(--amber); }
+  .cbt-hist-item { display:flex; gap:.5rem; flex-wrap:wrap; padding:.25rem 0; border-bottom:1px solid var(--border); font-size:.58rem; color:var(--ink-dim); }
+  .cbt-hist-item:last-child { border-bottom:none; }
+
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <span class="gm-stamp">Dead Meridian · GM Tool · Restricted</span>
+  <h1>GM Roller</h1>
+  <p class="subtitle">Scavenge · Prion · Faction · Combat · Session Tool Only</p>
+</header>
+
+<input type="radio" class="tab-radio" name="gm-tool" id="tr-scav" checked>
+<input type="radio" class="tab-radio" name="gm-tool" id="tr-prion">
+<input type="radio" class="tab-radio" name="gm-tool" id="tr-faction">
+<input type="radio" class="tab-radio" name="gm-tool" id="tr-combat">
+
+<div class="tabs">
+  <label class="tab-lbl" for="tr-scav">⚄ Scavenge</label>
+  <label class="tab-lbl" for="tr-prion">☣ Prion</label>
+  <label class="tab-lbl" for="tr-faction" style="border-color:rgba(160,58,42,.5);color:var(--red);">⚔ Faction</label>
+  <label class="tab-lbl" for="tr-combat" style="border-color:rgba(139,95,207,.5);color:var(--purple);">🎲 Combat</label>
+</div>
+
+<div class="tab-panels">
+
+<div id="tp-scav" class="tab-panel">
+<!-- LOCATION + STRUCTURE -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label class="ctrl-lbl">Area Type</label>
+    <select id="area-select" onchange="updateStructures()">
+      <option value="urban">Urban</option>
+      <option value="rural">Rural</option>
+      <option value="coastal">Coastal</option>
+      <option value="military">Military</option>
+      <option value="wasteland">Wasteland</option>
+      <option value="ground_zero">Ground Zero — City Ruins</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label class="ctrl-lbl">Specific Location</label>
+    <select id="struct-select" onchange="updateLocInfo()"></select>
+  </div>
+</div>
+
+<!-- MODIFIERS -->
+<div class="mod-row">
+  <div class="ctrl-group">
+    <label class="ctrl-lbl">Scholar Bonus</label>
+    <select id="scholar-bonus">
+      <option value="0">None (+0)</option>
+      <option value="2">Domain Scholar (+2)</option>
+      <option value="4">Field Assignment (+4)</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label class="ctrl-lbl">Scout Bonus</label>
+    <select id="scout-bonus">
+      <option value="0">None (+0)</option>
+      <option value="1">Trained (+1)</option>
+      <option value="2">Training Grounds (+2)</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label class="ctrl-lbl">Custom Mod</label>
+    <input type="number" id="extra-mod" value="0" min="-10" max="10">
+  </div>
+</div>
+
+<!-- LOCATION INFO -->
+<div class="loc-strip" id="loc-strip">
+  <span class="loc-name" id="loc-name"></span>
+  <span id="loc-desc"></span>
+</div>
+
+<button class="roll-btn" onclick="rollLocation()">Roll Full Location Sweep</button>
+
+<!-- BLUEPRINT SECTION -->
+<div id="bp-section" style="display:none;border:1px solid rgba(139,95,207,.3);background:rgba(139,95,207,.03);padding:.55rem .8rem;margin-bottom:.5rem;">
+  <div style="font-family:Georgia,serif;font-size:.68rem;color:var(--purple);margin-bottom:.35rem;letter-spacing:.06em;">Blueprint Rolls</div>
+  <div id="bp-grid" style="display:flex;flex-direction:column;gap:.25rem;"></div>
+  <div style="font-size:.55rem;color:var(--faded);margin-top:.3rem;line-height:1.5;">Scholar bonus +4 applies to all BP rolls · Nat 20 = complete blueprint (not fragment) · Fragments require 3 of same tier to combine</div>
+</div>
+
+<!-- HAUL SUMMARY -->
+<div class="haul-box" id="haul-box">
+  <div class="haul-title" id="haul-title"></div>
+  <div class="haul-items" id="haul-items"></div>
+</div>
+
+<!-- NOTES -->
+<div id="notes-section" style="display:none; margin-bottom:.6rem;">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- FULL RESULTS -->
+<div class="results-panel" id="results-panel">
+  <div class="results-head">
+    <span>All Rolls</span>
+    <span id="roll-summary" style="font-size:.52rem;font-family:'Courier New',monospace;"></span>
+  </div>
+  <div class="results-grid" id="results-grid"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="history-head">
+  <span>Session History</span>
+  <button class="clear-btn" onclick="clearHistory()">Clear</button>
+</div>
+<ul class="hist-list" id="hist-list">
+  <li class="hist-item" style="justify-content:center;color:var(--faded);font-size:.57rem;font-style:italic;">— No rolls this session —</li>
+</ul>
+
+
+</div><!-- /tp-scav -->
+
+<div id="tp-prion" class="tab-panel">
+  <div class="prion-section">
+    <div class="p-sec-head">Prion Exposure Check</div>
+    <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Roll when a fighter or Scout returns from a zone with prion risk, after combat wounds at Ground Zero, or when a live animal or wasteland hide enters the settlement. D20 vs. the exposure threshold.</p>
+    <div class="p-controls">
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Current Stage</label>
+        <select id="p-stage">
+          <option value="clear">Clear</option>
+          <option value="exposed">Exposed</option>
+          <option value="carrier">Carrier</option>
+          <option value="infected">Infected</option>
+          <option value="terminal">Terminal</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Base Threshold</label>
+        <select id="p-threshold">
+          <option value="6">Standard (6)</option>
+          <option value="10">Ground Zero (10)</option>
+          <option value="8">Wasteland Den (8)</option>
+          <option value="4">Combat Wound (4)</option>
+          <option value="12">City Strain Wound (12)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Building Reductions</label>
+        <select id="p-buildings">
+          <option value="0">None (−0)</option>
+          <option value="2">Detection Lab (−2)</option>
+          <option value="4">Detection + Quarantine (−4)</option>
+          <option value="6">Full Protocol (−6)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">NBC Gear</label>
+        <select id="p-nbc">
+          <option value="0">Not Equipped (−0)</option>
+          <option value="4">NBC Gear Equipped (−4)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Ground Zero +4</label>
+        <select id="p-gz">
+          <option value="0">No</option>
+          <option value="4">Yes (+4 threshold)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Custom Mod</label>
+        <input type="number" id="p-custom" value="0" min="-10" max="10">
+      </div>
+    </div>
+    <button class="roll-btn" onclick="rollPrion()" style="margin-bottom:.7rem;">Roll Prion Check</button>
+    <div class="p-result-box" id="p-result-box">
+      <div class="p-stage-name" id="p-stage-name"></div>
+      <div class="p-roll-line" id="p-roll-line"></div>
+      <div class="p-outcome" id="p-outcome"></div>
+      <div class="p-chain-note" id="p-chain-note" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="prion-section">
+    <div class="p-sec-head">Settlement Outbreak Check</div>
+    <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Roll at season end if a Carrier was present but undetected, or if prion protocol was skipped. D20 vs. outbreak threshold.</p>
+    <div class="p-controls">
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Carriers Present</label>
+        <select id="ob-carriers">
+          <option value="1">1 Carrier</option>
+          <option value="2">2 Carriers</option>
+          <option value="3">3+ Carriers</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Detection Lab</label>
+        <select id="ob-lab">
+          <option value="0">Not Built</option>
+          <option value="4">Built (−4 threshold)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Morale State</label>
+        <select id="ob-morale">
+          <option value="0">Neutral or above</option>
+          <option value="2">Poor / Broken (+2 threshold)</option>
+        </select>
+      </div>
+    </div>
+    <button class="roll-btn" onclick="rollOutbreak()" style="margin-bottom:.7rem;">Roll Outbreak Check</button>
+    <div class="p-result-box" id="ob-result-box">
+      <div class="p-stage-name" id="ob-stage-name"></div>
+      <div class="p-roll-line" id="ob-roll-line"></div>
+      <div class="p-outcome" id="ob-outcome"></div>
+    </div>
+  </div>
+
+  <div class="history-head" style="margin-top:.8rem;">
+    <span>Prion Roll History</span>
+    <button class="clear-btn" onclick="clearPrionHistory()">Clear</button>
+  </div>
+  <ul class="hist-list" id="p-hist-list">
+    <li class="p-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>
+  </ul>
+</div><!-- /tp-prion -->
+
+<div id="tp-faction" class="tab-panel">
+  <div class="p-sec-head">Faction Action Roll</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Roll at the end of each season to determine if a faction acts, and what they do. Each faction rolls separately. Aggression rating = target on D6 to trigger an action.</p>
+
+  <div class="f-controls">
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Faction</label>
+      <select id="f-faction">
+        <option value="reapers">The Reapers</option>
+        <option value="covenant">The Covenant</option>
+        <option value="drowned">The Drowned</option>
+        <option value="silent">The Silent</option>
+        <option value="remnant">Remnant Authority</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Relationship Tier</label>
+      <select id="f-rel">
+        <option value="war">War (−3)</option>
+        <option value="hostile">Hostile (−2)</option>
+        <option value="wary">Wary (−1)</option>
+        <option value="neutral" selected>Neutral (0)</option>
+        <option value="cautious">Cautious (+1)</option>
+        <option value="friendly">Friendly (+2)</option>
+        <option value="allied">Allied (+3)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Season Number</label>
+      <input type="number" id="f-season" value="1" min="1" max="99">
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Custom Modifier</label>
+      <input type="number" id="f-custom" value="0" min="-5" max="5">
+    </div>
+  </div>
+
+  <button class="roll-btn" onclick="rollFaction()" style="margin-bottom:.7rem;">Roll Faction Action</button>
+
+  <div class="f-result-box" id="f-result-box">
+    <div class="f-action-name" id="f-action-name"></div>
+    <div class="f-roll-line" id="f-roll-line"></div>
+    <div class="f-outcome" id="f-outcome"></div>
+    <div class="f-gm-note" id="f-gm-note" style="display:none;"></div>
+  </div>
+
+  <div class="p-sec-head" style="margin-top:1rem;">Negotiation Roll</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Roll when proposing a trade, treaty, or agreement. D20 + relationship modifier + any bonuses.</p>
+
+  <div class="f-controls">
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Faction</label>
+      <select id="n-faction">
+        <option value="reapers">The Reapers</option>
+        <option value="covenant">The Covenant</option>
+        <option value="drowned">The Drowned</option>
+        <option value="silent">The Silent</option>
+        <option value="remnant">Remnant Authority</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Relationship</label>
+      <select id="n-rel">
+        <option value="-6">War (−6)</option>
+        <option value="-4">Hostile (−4)</option>
+        <option value="-2">Wary (−2)</option>
+        <option value="0" selected>Neutral (+0)</option>
+        <option value="2">Cautious (+2)</option>
+        <option value="4">Friendly (+4)</option>
+        <option value="6">Allied (+6)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Scholar Present</label>
+      <select id="n-scholar">
+        <option value="0">No</option>
+        <option value="2">Yes (+2)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Trading Post Bonus</label>
+      <select id="n-tp">
+        <option value="0">No</option>
+        <option value="3">Maritime faction (+3)</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="roll-btn" onclick="rollNegotiation()" style="margin-bottom:.7rem;">Roll Negotiation</button>
+
+  <div class="f-result-box" id="n-result-box">
+    <div class="f-action-name" id="n-action-name"></div>
+    <div class="f-roll-line" id="n-roll-line"></div>
+    <div class="f-outcome" id="n-outcome"></div>
+    <div class="f-gm-note" id="n-gm-note" style="display:none;"></div>
+  </div>
+
+  <div class="history-head" style="margin-top:.8rem;">
+    <span>Faction Roll History</span>
+    <button class="clear-btn" onclick="clearFactionHistory()">Clear</button>
+  </div>
+  <ul class="hist-list" id="f-hist-list">
+    <li class="f-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>
+  </ul>
+</div><!-- /tp-faction -->
+
+<div id="tp-combat" class="tab-panel">
+
+  <div class="p-sec-head">Attack Roll</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Set up both sides then roll a full round. Both sides roll simultaneously — attacker and defender margins are resolved at the same time.</p>
+
+  <div class="cbt-grid" style="margin-bottom:.3rem;">
+    <div>
+      <div style="font-size:.48rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:.3rem;border-bottom:1px solid rgba(61,138,74,.3);padding-bottom:.15rem;">ATTACKER</div>
+      <div class="cbt-3" style="margin-bottom:.3rem;">
+        <div class="ctrl-group"><label class="ctrl-lbl">Unit Type</label>
+          <select id="atk-unit">
+            <option value="3">Militia (ATK +3)</option>
+            <option value="2">Scouts (ATK +2)</option>
+            <option value="0">Conscripts (ATK +0)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Weapon</label>
+          <select id="atk-wpn">
+            <option value="-1">Crude Pistol (−1)</option>
+            <option value="0">Standard Pistol (+0)</option>
+            <option value="0">Improvised Melee (+0)</option>
+            <option value="0">Shortbow (+0)</option>
+            <option value="1">Standard Bolt (+1)</option>
+            <option value="1">Reliable Pistol (+1)</option>
+            <option value="1">Reliable Bolt (+1)</option>
+            <option value="1">Reliable SMG (+1)</option>
+            <option value="1">Reliable Semi-Auto (+1)</option>
+            <option value="1">Longbow (+1)</option>
+            <option value="1">Bladed Weapon (+1)</option>
+            <option value="2">Heavy Melee (+2)</option>
+            <option value="2">Masterwork Any (+2)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Fighters</label>
+          <input type="number" id="atk-fighters" value="10" min="1" max="99">
+        </div>
+      </div>
+      <div class="cbt-3">
+        <div class="ctrl-group"><label class="ctrl-lbl">Extra ATK Mod</label>
+          <input type="number" id="atk-mod" value="0" min="-5" max="5">
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Momentum</label>
+          <select id="atk-momentum">
+            <option value="0">None</option>
+            <option value="2">Momentum (+2)</option>
+            <option value="-3">Exposed (−3)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Action</label>
+          <select id="atk-action">
+            <option value="attack">Attack</option>
+            <option value="hold">Hold</option>
+            <option value="withdraw">Withdraw</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:.48rem;letter-spacing:.15em;text-transform:uppercase;color:var(--blue);margin-bottom:.3rem;border-bottom:1px solid rgba(58,122,191,.3);padding-bottom:.15rem;">DEFENDER</div>
+      <div class="cbt-3" style="margin-bottom:.3rem;">
+        <div class="ctrl-group"><label class="ctrl-lbl">Unit Type</label>
+          <select id="def-unit">
+            <option value="4">Militia (DEF +4)</option>
+            <option value="2">Scouts (DEF +2)</option>
+            <option value="1">Conscripts (DEF +1)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Fortification</label>
+          <select id="def-fort">
+            <option value="0">None (+0)</option>
+            <option value="2">Burn Wall (+2)</option>
+            <option value="4">Palisade Wall (+4)</option>
+            <option value="6">Bunker Extension (+6)</option>
+            <option value="8">Palisade + Bunker (+10)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Fighters</label>
+          <input type="number" id="def-fighters" value="10" min="1" max="99">
+        </div>
+      </div>
+      <div class="cbt-3">
+        <div class="ctrl-group"><label class="ctrl-lbl">Extra DEF Mod</label>
+          <input type="number" id="def-mod" value="0" min="-5" max="5">
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Hold Bonus</label>
+          <select id="def-hold">
+            <option value="0">Not Holding (+0)</option>
+            <option value="2">Holding (+2 DEF)</option>
+          </select>
+        </div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Night Raid</label>
+          <select id="def-night">
+            <option value="0">Day</option>
+            <option value="-2">Night (−2 both)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cbt-grid" style="margin-bottom:.8rem;">
+    <div class="ctrl-group"><label class="ctrl-lbl">Round Number</label>
+      <input type="number" id="cbt-round" value="1" min="1" max="6">
+    </div>
+    <div class="ctrl-group"><label class="ctrl-lbl">Location</label>
+      <select id="cbt-location">
+        <option value="field">Field Encounter</option>
+        <option value="settlement">Settlement Raid</option>
+        <option value="ground_zero">Ground Zero</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="roll-btn" onclick="rollCombatRound()" style="margin-bottom:.7rem;">Roll Combat Round</button>
+
+  <div class="cbt-result-box" id="cbt-result-box">
+    <div class="round-card" id="cbt-round-card">
+      <div class="round-header">
+        <span class="round-num" id="cbt-rnum"></span>
+        <span class="round-label" id="cbt-rlabel"></span>
+        <span class="round-margin" id="cbt-rmargin"></span>
+      </div>
+      <div class="side-row">
+        <div class="side-block side-atk">
+          <div class="side-title">Attacker</div>
+          <div class="side-roll" id="cbt-atk-roll"></div>
+          <div class="side-detail" id="cbt-atk-detail"></div>
+          <div id="cbt-atk-band"></div>
+          <div class="cas-line" id="cbt-atk-cas"></div>
+          <div class="morale-note" id="cbt-atk-morale" style="display:none;"></div>
+        </div>
+        <div class="side-block side-def">
+          <div class="side-title">Defender</div>
+          <div class="side-roll" id="cbt-def-roll"></div>
+          <div class="side-detail" id="cbt-def-detail"></div>
+          <div id="cbt-def-band"></div>
+          <div class="cas-line" id="cbt-def-cas"></div>
+          <div class="morale-note" id="cbt-def-morale" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-sec-head" style="margin-top:.8rem;">Morale Check</div>
+  <p style="font-size:.6rem;color:var(--faded);margin-bottom:.5rem;line-height:1.55;">Roll when a side takes 30%+ casualties in one round, a leader is killed, the settlement is breached, or 50%+ total casualties are reached.</p>
+  <div class="cbt-3" style="margin-bottom:.6rem;">
+    <div class="ctrl-group"><label class="ctrl-lbl">Unit Type</label>
+      <select id="mor-unit">
+        <option value="3">Militia (+3)</option>
+        <option value="2">Scouts (+2)</option>
+        <option value="0">Conscripts (−2)</option>
+      </select>
+    </div>
+    <div class="ctrl-group"><label class="ctrl-lbl">Situation Mods</label>
+      <select id="mor-mods">
+        <option value="0">Standard</option>
+        <option value="2">Palisade Wall (+2)</option>
+        <option value="2">Leader Alive (+2)</option>
+        <option value="-3">Outnumbered 2:1+ (−3)</option>
+        <option value="-4">Leader Dead + Outnumbered (−4)</option>
+      </select>
+    </div>
+    <div class="ctrl-group"><label class="ctrl-lbl">Custom Mod</label>
+      <input type="number" id="mor-custom" value="0" min="-5" max="5">
+    </div>
+  </div>
+  <button class="roll-btn" onclick="rollMorale()" style="margin-bottom:.7rem;">Roll Morale Check</button>
+  <div class="cbt-result-box" id="mor-result-box">
+    <div class="round-card">
+      <div class="round-header">
+        <span class="round-num" id="mor-roll-num"></span>
+        <span class="round-label" id="mor-result-label"></span>
+      </div>
+      <div class="cas-line" id="mor-outcome"></div>
+    </div>
+  </div>
+
+  <div class="history-head" style="margin-top:.8rem;">
+    <span>Combat Roll History</span>
+    <button class="clear-btn" onclick="clearCombatHistory()">Clear</button>
+  </div>
+  <ul class="hist-list" id="cbt-hist-list">
+    <li class="cbt-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>
+  </ul>
+
+</div><!-- /tp-combat -->
+
+</div><!-- /tab-panels -->
+
+<footer>Dead Meridian · GM Roller · GM Edition · Local File Safe</footer>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// RESOURCE DEFINITIONS
+// diff = search target on D20
+// yMin/yMax = yield range mapped from D20 roll
+// ══════════════════════════════════════════════════════════════════════════
+const R = {
+  timber:           { name:'Timber / Scrap Wood',      diff:2,  yMin:8,  yMax:40, unit:'units' },
+  stone:            { name:'Stone',                    diff:2,  yMin:10, yMax:50, unit:'units' },
+  iron_ore:         { name:'Iron Ore',                 diff:7,  yMin:4,  yMax:20, unit:'units',  finite:true },
+  sand:             { name:'Sand',                     diff:2,  yMin:10, yMax:50, unit:'units' },
+  clay:             { name:'Clay',                     diff:4,  yMin:6,  yMax:25, unit:'units' },
+  charcoal:         { name:'Charcoal',                 diff:4,  yMin:6,  yMax:30, unit:'units' },
+  scrap_metal:      { name:'Scrap Metal',              diff:5,  yMin:5,  yMax:30, unit:'units' },
+  hides:            { name:'Hides / Pelts',            diff:4,  yMin:2,  yMax:12, unit:'hides',  prion:true },
+  crop_seeds:       { name:'Seeds (Crop)',             diff:4,  yMin:4,  yMax:20, unit:'units' },
+  medicinal_seeds:  { name:'Medicinal Seeds',          diff:7,  yMin:3,  yMax:12, unit:'units' },
+  live_animals:     { name:'Live Animals',             diff:7,  yMin:1,  yMax:6,  unit:'animals', prion:true },
+  salt:             { name:'Salt',                     diff:4,  yMin:4,  yMax:20, unit:'units' },
+  pitch:            { name:'Pitch / Resin / Tar',      diff:7,  yMin:2,  yMax:12, unit:'units' },
+  fertiliser:       { name:'Fertiliser',               diff:4,  yMin:4,  yMax:20, unit:'units' },
+  cloth:            { name:'Cloth',                    diff:4,  yMin:6,  yMax:25, unit:'units' },
+  rope:             { name:'Rope',                     diff:4,  yMin:5,  yMax:20, unit:'units' },
+  canvas:           { name:'Canvas',                   diff:5,  yMin:4,  yMax:18, unit:'units' },
+  glass:            { name:'Glass / Glazing',          diff:7,  yMin:4,  yMax:20, unit:'units' },
+  glass_panels:     { name:'Glass Panels',             diff:10, yMin:1,  yMax:8,  unit:'panels', finite:true },
+  clay_vessels:     { name:'Clay Vessels',             diff:4,  yMin:3,  yMax:15, unit:'vessels' },
+  glass_vessels:    { name:'Glass Vessels',            diff:10, yMin:2,  yMax:12, unit:'vessels', finite:true },
+  metal_instruments:{ name:'Metal Instruments',        diff:10, yMin:1,  yMax:8,  unit:'sets',   finite:true },
+  metal_pipe:       { name:'Metal Pipe',               diff:8,  yMin:3,  yMax:18, unit:'units' },
+  copper_pipe:      { name:'Copper Pipe',              diff:13, yMin:2,  yMax:14, unit:'units',  dive:true },
+  copper_wire:      { name:'Copper Wire',              diff:15, yMin:2,  yMax:12, unit:'units',  dive:'pressurised', finite:true },
+  salvaged_components:{ name:'Salvaged Components',   diff:13, yMin:1,  yMax:8,  unit:'sets',   finite:true },
+  precision_metal:  { name:'Precision Metal Parts',    diff:13, yMin:1,  yMax:6,  unit:'sets',   finite:true },
+  chemical_reagents:{ name:'Chemical Reagents',        diff:10, yMin:2,  yMax:12, unit:'units',  finite:true },
+  sealing_material: { name:'Sealing Material',         diff:13, yMin:2,  yMax:10, unit:'units' },
+  salvaged_medicine:{ name:'Salvaged Medicine',        diff:10, yMin:2,  yMax:12, unit:'units',  finite:true },
+  salvaged_books:   { name:'Salvaged Books',           diff:10, yMin:3,  yMax:20, unit:'books' },
+  ink_paper:        { name:'Ink / Dye · Paper',        diff:10, yMin:3,  yMax:15, unit:'units' },
+  prion_samples:    { name:'Prion Samples',            diff:15, yMin:1,  yMax:4,  unit:'samples', prion:true },
+  prion_samples_gz: { name:'Prion Samples (City Strain)', diff:12, yMin:1, yMax:4, unit:'samples', prion:true, special:'City strain — counts as 2 Research Points each' },
+  star_charts:      { name:'Star Charts / Sextant',    diff:17, yMin:1,  yMax:2,  unit:'sets',   finite:true },
+  saltpetre:        { name:'Saltpetre',                diff:10, yMin:3,  yMax:15, unit:'units' },
+  basic_gun_parts:  { name:'Basic Gun Parts',          diff:8,  yMin:2,  yMax:10, unit:'sets',   finite:true },
+  advanced_gun_parts:{ name:'Advanced Gun Parts',      diff:15, yMin:1,  yMax:6,  unit:'sets',   finite:true },
+  small_bullets:    { name:'Small Bullets',            diff:5,  yMin:5,  yMax:30, unit:'rounds', scavenged:true },
+  large_bullets:    { name:'Large Bullets',            diff:8,  yMin:3,  yMax:20, unit:'rounds', scavenged:true },
+  burn_notes:       { name:'Burn Team Field Notes',    diff:10, yMin:1,  yMax:1,  unit:'document', finite:true, special:'One Meridian reveal — GM chooses detail' },
+  gov_archive:      { name:'Government Archive (partial)', diff:17, yMin:1, yMax:1, unit:'document', finite:true, special:'Star charts or Project Meridian fragment — major find' },
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// LOCATION DATABASE
+// Each location: { name, desc, resources: [{ key, bonusDiff, bonusYield }] }
+// bonusDiff = negative number = easier to find, positive = harder
+// bonusYield = added to yield roll result
+// ══════════════════════════════════════════════════════════════════════════
+const LOCATIONS = {
+  urban: [
+    {
+      name:'Residential Block',
+      desc:'Terraced housing, flats, communal areas. Stripped of food long ago but structural materials remain.',
+      resources:[
+        {key:'timber', bonusDiff:0, bonusYield:5},
+        {key:'cloth', bonusDiff:-2, bonusYield:4},
+        {key:'rope', bonusDiff:0, bonusYield:0},
+        {key:'glass', bonusDiff:-1, bonusYield:0},
+        {key:'clay_vessels', bonusDiff:0, bonusYield:2},
+        {key:'salvaged_medicine', bonusDiff:2, bonusYield:-2},
+      ]
+    },
+    {
+      name:'Retail & Warehouse District',
+      desc:'Shopping centres, storage units, distribution warehouses. High cloth, rope, and tools. Often raider-occupied.',
+      resources:[
+        {key:'cloth', bonusDiff:-3, bonusYield:8},
+        {key:'rope', bonusDiff:-2, bonusYield:5},
+        {key:'canvas', bonusDiff:-1, bonusYield:3},
+        {key:'scrap_metal', bonusDiff:0, bonusYield:3},
+        {key:'small_bullets', bonusDiff:2, bonusYield:0},
+        {key:'salvaged_medicine', bonusDiff:1, bonusYield:0},
+        {key:'basic_gun_parts', bonusDiff:1, bonusYield:0},
+      ]
+    },
+    {
+      name:'Industrial Estate',
+      desc:'Factories, engineering workshops, scrap yards. Vehicle graveyards give +12 scrap. Best urban source for metal and pipe.',
+      resources:[
+        {key:'scrap_metal', bonusDiff:-3, bonusYield:10},
+        {key:'metal_pipe', bonusDiff:-2, bonusYield:6},
+        {key:'charcoal', bonusDiff:0, bonusYield:0},
+        {key:'clay', bonusDiff:0, bonusYield:0},
+        {key:'stone', bonusDiff:0, bonusYield:5},
+        {key:'salvaged_components', bonusDiff:2, bonusYield:0},
+        {key:'precision_metal', bonusDiff:2, bonusYield:0},
+        {key:'basic_gun_parts', bonusDiff:0, bonusYield:3},
+      ]
+    },
+    {
+      name:'Hospital Complex',
+      desc:'Multi-floor hospital. Surgical instruments, medicine, glass vessels. Non-renewable once swept.',
+      resources:[
+        {key:'salvaged_medicine', bonusDiff:-3, bonusYield:12},
+        {key:'metal_instruments', bonusDiff:-3, bonusYield:6},
+        {key:'glass_vessels', bonusDiff:-2, bonusYield:5},
+        {key:'chemical_reagents', bonusDiff:-1, bonusYield:4},
+        {key:'cloth', bonusDiff:-1, bonusYield:3},
+        {key:'salvaged_books', bonusDiff:0, bonusYield:0},
+      ]
+    },
+    {
+      name:'University / Library',
+      desc:'Academic buildings. Salvaged books in volume. Blueprints possible. Chemistry lab may have reagents.',
+      resources:[
+        {key:'salvaged_books', bonusDiff:-3, bonusYield:14},
+        {key:'chemical_reagents', bonusDiff:-1, bonusYield:3},
+        {key:'glass_vessels', bonusDiff:-1, bonusYield:3},
+        {key:'ink_paper', bonusDiff:-2, bonusYield:5},
+        {key:'salvaged_medicine', bonusDiff:2, bonusYield:-2},
+      ]
+    },
+    {
+      name:'Office Tower',
+      desc:'High-rise administrative building. Glass panels on upper floors. Paper, ink. Structural collapse risk.',
+      resources:[
+        {key:'glass_panels', bonusDiff:-2, bonusYield:4},
+        {key:'ink_paper', bonusDiff:-2, bonusYield:6},
+        {key:'salvaged_books', bonusDiff:0, bonusYield:4},
+        {key:'scrap_metal', bonusDiff:0, bonusYield:2},
+        {key:'cloth', bonusDiff:0, bonusYield:0},
+      ]
+    },
+    {
+      name:'Flooded District (Submerged)',
+      desc:'Ground floor and basement zones underwater. Standard dive gear: 1 block depth only. Pressurised gear: full access.',
+      resources:[
+        {key:'metal_pipe', bonusDiff:-3, bonusYield:8},
+        {key:'copper_pipe', bonusDiff:-4, bonusYield:8},
+        {key:'scrap_metal', bonusDiff:-1, bonusYield:4},
+        {key:'copper_wire', bonusDiff:-2, bonusYield:6},
+      ]
+    },
+  ],
+  rural: [
+    {
+      name:'Farmstead & Smallholding',
+      desc:'Working farm remnants. Animals may still be present. Seeds, tools, hides. Prion test on all live animals.',
+      resources:[
+        {key:'crop_seeds', bonusDiff:-3, bonusYield:8},
+        {key:'hides', bonusDiff:-2, bonusYield:4},
+        {key:'live_animals', bonusDiff:-2, bonusYield:2},
+        {key:'rope', bonusDiff:-1, bonusYield:3},
+        {key:'timber', bonusDiff:0, bonusYield:3},
+        {key:'fertiliser', bonusDiff:-1, bonusYield:3},
+        {key:'canvas', bonusDiff:0, bonusYield:0},
+      ]
+    },
+    {
+      name:'Old-Growth Woodland',
+      desc:'Dense woodland. Timber in large quantities. Pine provides pitch. Charcoal from burned sections.',
+      resources:[
+        {key:'timber', bonusDiff:-3, bonusYield:15},
+        {key:'pitch', bonusDiff:-2, bonusYield:5},
+        {key:'charcoal', bonusDiff:-1, bonusYield:5},
+        {key:'hides', bonusDiff:-1, bonusYield:3},
+        {key:'medicinal_seeds', bonusDiff:0, bonusYield:2},
+      ]
+    },
+    {
+      name:'Garden Centre & Allotments',
+      desc:'Seeds, clay pots, fertiliser. Low danger. Partially renewable each season if plants are left.',
+      resources:[
+        {key:'medicinal_seeds', bonusDiff:-3, bonusYield:6},
+        {key:'crop_seeds', bonusDiff:-2, bonusYield:8},
+        {key:'fertiliser', bonusDiff:-2, bonusYield:6},
+        {key:'clay_vessels', bonusDiff:-2, bonusYield:5},
+        {key:'clay', bonusDiff:0, bonusYield:3},
+      ]
+    },
+    {
+      name:'Village Centre',
+      desc:'Village buildings including a small clinic, a pub or social club, and residential homes.',
+      resources:[
+        {key:'salvaged_medicine', bonusDiff:-1, bonusYield:3},
+        {key:'salvaged_books', bonusDiff:0, bonusYield:2},
+        {key:'cloth', bonusDiff:-1, bonusYield:3},
+        {key:'timber', bonusDiff:0, bonusYield:4},
+        {key:'clay_vessels', bonusDiff:0, bonusYield:2},
+        {key:'basic_gun_parts', bonusDiff:1, bonusYield:0},
+      ]
+    },
+    {
+      name:'Rural Workshop & Barn',
+      desc:'Farm machinery, tools, stored rope and canvas. Occasional scrap metal from vehicles.',
+      resources:[
+        {key:'rope', bonusDiff:-2, bonusYield:5},
+        {key:'canvas', bonusDiff:-1, bonusYield:4},
+        {key:'timber', bonusDiff:-1, bonusYield:5},
+        {key:'scrap_metal', bonusDiff:0, bonusYield:3},
+        {key:'iron_ore', bonusDiff:2, bonusYield:0},
+      ]
+    },
+    {
+      name:'Open-Cast Mine / Rock Seam',
+      desc:'Stone and iron ore in quantity. Depletes after 3–4 visits — mark carefully.',
+      resources:[
+        {key:'stone', bonusDiff:-3, bonusYield:18},
+        {key:'iron_ore', bonusDiff:-3, bonusYield:10},
+        {key:'clay', bonusDiff:-1, bonusYield:5},
+        {key:'sand', bonusDiff:0, bonusYield:4},
+      ]
+    },
+    {
+      name:'Fertiliser Plant',
+      desc:'Industrial agricultural facility. Saltpetre at highest rural yield. Chemical reagents from storage.',
+      resources:[
+        {key:'saltpetre', bonusDiff:-4, bonusYield:8},
+        {key:'chemical_reagents', bonusDiff:-1, bonusYield:3},
+        {key:'fertiliser', bonusDiff:-3, bonusYield:8},
+        {key:'clay', bonusDiff:0, bonusYield:2},
+      ]
+    },
+  ],
+  coastal: [
+    {
+      name:'Harbour & Docklands',
+      desc:'Working harbour remnants. Canvas, rope, pitch for boat-building. The Drowned may patrol.',
+      resources:[
+        {key:'canvas', bonusDiff:-3, bonusYield:8},
+        {key:'rope', bonusDiff:-2, bonusYield:6},
+        {key:'pitch', bonusDiff:-2, bonusYield:5},
+        {key:'timber', bonusDiff:-1, bonusYield:5},
+        {key:'salt', bonusDiff:-2, bonusYield:8},
+        {key:'scrap_metal', bonusDiff:0, bonusYield:3},
+      ]
+    },
+    {
+      name:'Tidal Flats & Beachfront',
+      desc:'Sand and salt essentially free. No search roll needed — automatic yield on arrival.',
+      resources:[
+        {key:'sand', bonusDiff:-5, bonusYield:20},
+        {key:'salt', bonusDiff:-5, bonusYield:15},
+        {key:'pitch', bonusDiff:1, bonusYield:0},
+        {key:'timber', bonusDiff:2, bonusYield:-3},
+      ]
+    },
+    {
+      name:'Submerged City Grid',
+      desc:'Flooded coastal district. Standard dive gear: shallow only. Pressurised gear required for full access and copper wire.',
+      resources:[
+        {key:'copper_wire', bonusDiff:-4, bonusYield:10},
+        {key:'copper_pipe', bonusDiff:-4, bonusYield:8},
+        {key:'metal_pipe', bonusDiff:-3, bonusYield:6},
+        {key:'scrap_metal', bonusDiff:-1, bonusYield:4},
+        {key:'salvaged_components', bonusDiff:2, bonusYield:0},
+      ]
+    },
+    {
+      name:'Coastguard / Naval Base',
+      desc:'Pre-collapse maritime infrastructure. Star charts possible. Navigation equipment. Canvas stores.',
+      resources:[
+        {key:'star_charts', bonusDiff:-2, bonusYield:1},
+        {key:'canvas', bonusDiff:-2, bonusYield:5},
+        {key:'metal_pipe', bonusDiff:-1, bonusYield:4},
+        {key:'salvaged_components', bonusDiff:-1, bonusYield:3},
+        {key:'rope', bonusDiff:-1, bonusYield:4},
+        {key:'large_bullets', bonusDiff:0, bonusYield:0},
+      ]
+    },
+  ],
+  military: [
+    {
+      name:'Armoury',
+      desc:'Weapons storage. Advanced gun parts, bullets, basic gun parts. Contested — expect Reaper scouts.',
+      resources:[
+        {key:'advanced_gun_parts', bonusDiff:-3, bonusYield:4},
+        {key:'basic_gun_parts', bonusDiff:-3, bonusYield:6},
+        {key:'large_bullets', bonusDiff:-3, bonusYield:12},
+        {key:'small_bullets', bonusDiff:-2, bonusYield:15},
+        {key:'scrap_metal', bonusDiff:-1, bonusYield:5},
+      ]
+    },
+    {
+      name:'Motor Pool',
+      desc:'Vehicle maintenance facility. Largest single scrap metal deposit on the map. Concrete, canvas, rope.',
+      resources:[
+        {key:'scrap_metal', bonusDiff:-4, bonusYield:15},
+        {key:'canvas', bonusDiff:-2, bonusYield:5},
+        {key:'rope', bonusDiff:-1, bonusYield:4},
+        {key:'metal_pipe', bonusDiff:-2, bonusYield:6},
+        {key:'precision_metal', bonusDiff:-1, bonusYield:3},
+      ]
+    },
+    {
+      name:'NBC Stores',
+      desc:'Chemical decontamination facility. Primary source of Sealing Material. Chemical reagents in quantity.',
+      resources:[
+        {key:'sealing_material', bonusDiff:-4, bonusYield:6},
+        {key:'chemical_reagents', bonusDiff:-3, bonusYield:8},
+        {key:'canvas', bonusDiff:-1, bonusYield:3},
+        {key:'glass_panels', bonusDiff:-1, bonusYield:3},
+        {key:'salvaged_medicine', bonusDiff:0, bonusYield:2},
+      ]
+    },
+    {
+      name:'Field Hospital',
+      desc:'Military medical facility. Medicine, instruments, surgical glass. Non-renewable.',
+      resources:[
+        {key:'salvaged_medicine', bonusDiff:-3, bonusYield:10},
+        {key:'metal_instruments', bonusDiff:-3, bonusYield:5},
+        {key:'glass_vessels', bonusDiff:-2, bonusYield:4},
+        {key:'chemical_reagents', bonusDiff:-1, bonusYield:3},
+        {key:'cloth', bonusDiff:-1, bonusYield:4},
+      ]
+    },
+    {
+      name:'Engineering Compound',
+      desc:'Construction and engineering stores. Precision parts, salvaged components, glass panels.',
+      resources:[
+        {key:'precision_metal', bonusDiff:-3, bonusYield:5},
+        {key:'salvaged_components', bonusDiff:-3, bonusYield:6},
+        {key:'glass_panels', bonusDiff:-2, bonusYield:4},
+        {key:'scrap_metal', bonusDiff:-2, bonusYield:8},
+        {key:'stone', bonusDiff:0, bonusYield:5},
+        {key:'saltpetre', bonusDiff:-1, bonusYield:3},
+      ]
+    },
+  ],
+  wasteland: [
+    {
+      name:'Ash Fields',
+      desc:'Burned-out wasteland. Charcoal essentially free — no roll needed. Stone and scrap from ruins.',
+      resources:[
+        {key:'charcoal', bonusDiff:-6, bonusYield:18},
+        {key:'stone', bonusDiff:-2, bonusYield:8},
+        {key:'scrap_metal', bonusDiff:-1, bonusYield:4},
+        {key:'clay', bonusDiff:0, bonusYield:3},
+      ]
+    },
+    {
+      name:'Wasteland Settlement Ruins',
+      desc:'Collapsed survivor settlement. Mixed materials and occasional rare finds. Prion risk on all hides.',
+      resources:[
+        {key:'timber', bonusDiff:-1, bonusYield:5},
+        {key:'scrap_metal', bonusDiff:-1, bonusYield:5},
+        {key:'cloth', bonusDiff:0, bonusYield:3},
+        {key:'hides', bonusDiff:-1, bonusYield:3},
+        {key:'basic_gun_parts', bonusDiff:1, bonusYield:0},
+        {key:'small_bullets', bonusDiff:1, bonusYield:0},
+        {key:'salvaged_medicine', bonusDiff:2, bonusYield:-2},
+      ]
+    },
+    {
+      name:'Prion Den',
+      desc:'Infected wildlife territory. Hides and prion samples possible. High exposure risk. NBC gear strongly recommended.',
+      resources:[
+        {key:'hides', bonusDiff:-2, bonusYield:5},
+        {key:'prion_samples', bonusDiff:-3, bonusYield:2},
+      ]
+    },
+    {
+      name:'Wasteland Exposed Seam',
+      desc:'Stripped topsoil exposing stone and clay. Iron ore possible near old riverbeds.',
+      resources:[
+        {key:'stone', bonusDiff:-3, bonusYield:12},
+        {key:'clay', bonusDiff:-2, bonusYield:8},
+        {key:'sand', bonusDiff:-1, bonusYield:6},
+        {key:'iron_ore', bonusDiff:1, bonusYield:0},
+        {key:'charcoal', bonusDiff:0, bonusYield:4},
+      ]
+    },
+  ],
+  ground_zero: [
+    {
+      name:'Government Quarter',
+      desc:'Pre-collapse administrative complex. Sealed archive. Requires 3 expeditions to access fully. Remnant Authority aware after any visit.',
+      resources:[
+        {key:'gov_archive', bonusDiff:0, bonusYield:0},
+        {key:'star_charts', bonusDiff:-2, bonusYield:1},
+        {key:'salvaged_books', bonusDiff:-2, bonusYield:8},
+        {key:'ink_paper', bonusDiff:-1, bonusYield:5},
+        {key:'salvaged_medicine', bonusDiff:1, bonusYield:0},
+      ]
+    },
+    {
+      name:'Hospital Complex (Ground Zero)',
+      desc:'Largest medical site on map. City strain prion samples count as 2 Research Points each. Non-renewable once swept.',
+      resources:[
+        {key:'salvaged_medicine', bonusDiff:-4, bonusYield:14},
+        {key:'metal_instruments', bonusDiff:-3, bonusYield:7},
+        {key:'glass_vessels', bonusDiff:-3, bonusYield:6},
+        {key:'chemical_reagents', bonusDiff:-2, bonusYield:5},
+        {key:'prion_samples_gz', bonusDiff:-2, bonusYield:2},
+      ]
+    },
+    {
+      name:'University District (Ground Zero)',
+      desc:'Highest blueprint probability on map — T5 rolls at 3x standard. Scholar essential without −4 penalty.',
+      resources:[
+        {key:'salvaged_books', bonusDiff:-4, bonusYield:18},
+        {key:'chemical_reagents', bonusDiff:-2, bonusYield:5},
+        {key:'glass_vessels', bonusDiff:-2, bonusYield:4},
+        {key:'ink_paper', bonusDiff:-2, bonusYield:6},
+        {key:'salvaged_medicine', bonusDiff:1, bonusYield:0},
+      ]
+    },
+    {
+      name:'Industrial Core (Ground Zero)',
+      desc:'Largest Advanced Gun Parts deposit on map. Vast scrap metal. Precision parts and concrete.',
+      resources:[
+        {key:'advanced_gun_parts', bonusDiff:-4, bonusYield:5},
+        {key:'scrap_metal', bonusDiff:-4, bonusYield:18},
+        {key:'precision_metal', bonusDiff:-3, bonusYield:5},
+        {key:'metal_pipe', bonusDiff:-2, bonusYield:6},
+        {key:'stone', bonusDiff:-1, bonusYield:6},
+        {key:'saltpetre', bonusDiff:0, bonusYield:2},
+      ]
+    },
+    {
+      name:'Submerged Lower City (Ground Zero)',
+      desc:'Deepest submerged site. Highest copper wire concentration anywhere. Pressurised dive gear mandatory. Full city strain prion rules apply.',
+      resources:[
+        {key:'copper_wire', bonusDiff:-5, bonusYield:12},
+        {key:'copper_pipe', bonusDiff:-4, bonusYield:10},
+        {key:'metal_pipe', bonusDiff:-3, bonusYield:7},
+        {key:'scrap_metal', bonusDiff:-2, bonusYield:6},
+      ]
+    },
+    {
+      name:'Burn Team Perimeter (Ground Zero)',
+      desc:'Containment zone remnants. Sealing material, chemical reagents, and field notes. Each note reveals one Meridian detail.',
+      resources:[
+        {key:'sealing_material', bonusDiff:-3, bonusYield:7},
+        {key:'chemical_reagents', bonusDiff:-2, bonusYield:4},
+        {key:'burn_notes', bonusDiff:-2, bonusYield:0},
+        {key:'canvas', bonusDiff:-1, bonusYield:3},
+        {key:'prion_samples_gz', bonusDiff:-1, bonusYield:1},
+      ]
+    },
+  ],
+};
+
+// Ground Zero applies +4 to all difficulties (making things easier by reducing search threshold)
+const GZ_BONUS = 4;
+
+// ══════════════════════════════════════════════════════════════════════════
+// UI FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════
+// Location names indexed to match LOCATIONS object
+var LOCATION_NAMES = {
+  urban:       ['Residential Block','Retail & Warehouse District','Industrial Estate','Hospital Complex','University / Library','Office Tower','Flooded District (Submerged)'],
+  rural:       ['Farmstead & Smallholding','Old-Growth Woodland','Garden Centre & Allotments','Village Centre','Rural Workshop & Barn','Open-Cast Mine / Rock Seam','Fertiliser Plant'],
+  coastal:     ['Harbour & Docklands','Tidal Flats & Beachfront','Submerged City Grid','Coastguard / Naval Base'],
+  military:    ['Armoury','Motor Pool','NBC Stores','Field Hospital','Engineering Compound'],
+  wasteland:   ['Ash Fields','Wasteland Settlement Ruins','Prion Den','Wasteland Exposed Seam'],
+  ground_zero: ['Government Quarter','Hospital Complex (Ground Zero)','University District (Ground Zero)','Industrial Core (Ground Zero)','Submerged Lower City (Ground Zero)','Burn Team Perimeter (Ground Zero)'],
+};
+
+function updateStructures() {
+  var area  = document.getElementById('area-select').value;
+  var sel   = document.getElementById('struct-select');
+  var names = LOCATION_NAMES[area] || [];
+  sel.innerHTML = '';
+  names.forEach(function(name, i) {
+    var opt = document.createElement('option');
+    opt.value = area + ':' + i;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  updateLocInfo();
+}
+
+var LOCATION_NAMES = {
+  urban:       ['Residential Block','Retail & Warehouse District','Industrial Estate','Hospital Complex','University / Library','Office Tower','Flooded District (Submerged)'],
+  rural:       ['Farmstead & Smallholding','Old-Growth Woodland','Garden Centre & Allotments','Village Centre','Rural Workshop & Barn','Open-Cast Mine / Rock Seam','Fertiliser Plant'],
+  coastal:     ['Harbour & Docklands','Tidal Flats & Beachfront','Submerged City Grid','Coastguard / Naval Base'],
+  military:    ['Armoury','Motor Pool','NBC Stores','Field Hospital','Engineering Compound'],
+  wasteland:   ['Ash Fields','Wasteland Settlement Ruins','Prion Den','Wasteland Exposed Seam'],
+  ground_zero: ['Government Quarter','Hospital Complex (Ground Zero)','University District (Ground Zero)','Industrial Core (Ground Zero)','Submerged Lower City (Ground Zero)','Burn Team Perimeter (Ground Zero)'],
+};
+
+function updateStructures() {
+  var areaEl = document.getElementById('area-select');
+  var sel    = document.getElementById('struct-select');
+  if (!areaEl || !sel) return;
+  var area  = areaEl.value;
+  var names = LOCATION_NAMES[area] || [];
+  sel.innerHTML = '';
+  names.forEach(function(name, i) {
+    var opt = document.createElement('option');
+    opt.value = area + ':' + i;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  if (sel.options.length > 0) sel.selectedIndex = 0;
+  updateLocInfo();
+}
+
+function updateLocInfo() {
+  var structEl = document.getElementById('struct-select');
+  var strip    = document.getElementById('loc-strip');
+  var locName  = document.getElementById('loc-name');
+  var locDesc  = document.getElementById('loc-desc');
+  if (!structEl || !strip || !locName || !locDesc) return;
+  var val   = structEl.value || '';
+  var parts = val.split(':');
+  var area  = parts[0] || document.getElementById('area-select').value;
+  var idx   = parseInt(parts[1]) || 0;
+  if (!area || !LOCATIONS[area] || !LOCATIONS[area][idx]) return;
+  locName.textContent = LOCATIONS[area][idx].name;
+  locDesc.textContent = LOCATIONS[area][idx].desc;
+  strip.classList.add('visible');
+}
+
+function d20() { return Math.floor(Math.random() * 20) + 1; }
+
+function calcYield(resource, yRoll, bonusYield, isGZ, nat20) {
+  let yMin = resource.yMin;
+  let yMax = resource.yMax + bonusYield + (isGZ ? Math.round(resource.yMax * 0.3) : 0);
+  yMax = Math.max(yMin, yMax);
+  if (nat20) return yMax;
+  const frac = (yRoll - 1) / 19;
+  return Math.round(yMin + frac * (yMax - yMin));
+}
+
+function rollLocation() {
+  var val   = document.getElementById('struct-select').value || '';
+  var parts = val.split(':');
+  var area  = parts[0] || document.getElementById('area-select').value;
+  var idx   = parseInt(parts[1]) || 0;
+  if (!area || !LOCATIONS[area] || !LOCATIONS[area][idx]) { alert('Please select a location first.'); return; }
+  var loc   = LOCATIONS[area][idx];
+  const scholarB = parseInt(document.getElementById('scholar-bonus').value);
+  const scoutB   = parseInt(document.getElementById('scout-bonus').value);
+  const extraB   = parseInt(document.getElementById('extra-mod').value) || 0;
+  const totalBonus = scholarB + scoutB + extraB;
+  const isGZ = (area === 'ground_zero');
+
+  const results = [];
+  const haul    = [];
+  const notes   = [];
+  const locKey  = val;
+
+  loc.resources.forEach(entry => {
+    const res = R[entry.key];
+    if (!res) return;
+
+    const searchRoll = d20();
+    let   effectiveDiff = Math.max(1, res.diff + entry.bonusDiff - totalBonus - (isGZ ? GZ_BONUS : 0));
+
+    const nat20 = searchRoll === 20;
+    const nat1  = searchRoll === 1;
+    const found = nat20 ? true : nat1 ? false : (searchRoll >= effectiveDiff);
+
+    let yieldAmt = null;
+    let yieldStr = '—';
+    if (found) {
+      const yRoll = d20();
+      yieldAmt = calcYield(res, yRoll, entry.bonusYield, isGZ, nat20);
+      yieldStr = `${yieldAmt} ${res.unit}`;
+    }
+
+    let rowClass = found ? (nat20 ? 'nat20' : 'found') : (nat1 ? 'nat1' : 'not-found');
+    let status   = found ? (nat20 ? 'NAT 20' : 'FOUND') : (nat1 ? 'NAT 1' : 'NONE');
+
+    results.push({ res, searchRoll, found, nat20, nat1, yieldAmt, yieldStr, rowClass, status, entry });
+
+    if (found) {
+      haul.push({ name: res.name, amount: yieldStr, nat20, special: res.special });
+      if (res.finite)    notes.push(`⚠ ${res.name}: non-renewable — mark this site.`);
+      if (res.prion)     notes.push(`☣ ${res.name}: mandatory prion check on return.`);
+      if (res.dive)      notes.push(`🌊 ${res.name}: ${res.dive === 'pressurised' ? 'Pressurised dive gear required.' : 'Standard dive gear required.'}`);
+      if (res.scavenged) notes.push(`🔫 ${res.name}: scavenged ammo — 20% jam-risk batch.`);
+      if (res.special)   notes.push(`★ ${res.name}: ${res.special}`);
+    }
+  });
+
+  // Roll blueprints
+  const bpResults = rollBlueprints(locKey, scholarB);
+
+  renderResults(loc, results, haul, notes, isGZ, bpResults);
+  addHistory(loc.name, area, haul.length, loc.resources.length);
+}
+
+function renderResults(loc, results, haul, notes, isGZ, bpResults) {
+  // Haul summary
+  const haulBox   = document.getElementById('haul-box');
+  const haulTitle = document.getElementById('haul-title');
+  const haulItems = document.getElementById('haul-items');
+  haulBox.classList.add('visible');
+  haulTitle.textContent = `Haul from ${loc.name} — ${haul.length} of ${results.length} resources found`;
+  if (haul.length === 0) {
+    haulItems.innerHTML = '<span class="haul-none">Nothing recovered this expedition.</span>';
+  } else {
+    haulItems.innerHTML = haul.map(h =>
+      `<span class="haul-item${h.nat20 || h.special ? ' special' : ''}">${h.name}: ${h.amount}</span>`
+    ).join('');
+  }
+
+  // Blueprint results
+  const bpSection = document.getElementById('bp-section');
+  const bpGrid    = document.getElementById('bp-grid');
+  if (bpResults && bpResults.length > 0) {
+    bpSection.style.display = 'block';
+    const found = bpResults.filter(r => r.found);
+    bpGrid.innerHTML = bpResults.map(function(r) {
+      const col = r.nat20 ? '#c9952a' : r.found ? r.tier.color : 'var(--faded)';
+      const status = r.nat20 ? 'NAT 20' : r.nat1 ? 'NAT 1' : r.found ? 'FOUND' : 'NONE';
+      const bg = r.found ? 'rgba(200,168,75,.03)' : 'transparent';
+      return '<div style="display:grid;grid-template-columns:2rem 2.5rem 1fr 3rem;align-items:center;gap:.4rem;padding:.28rem .5rem;border:1px solid var(--border);background:' + bg + ';font-size:.62rem;">' +
+        '<span style="font-family:Georgia,serif;font-size:.8rem;color:' + col + ';">' + r.roll + '</span>' +
+        '<span style="font-family:Georgia,serif;font-size:.65rem;font-weight:bold;color:' + r.tier.color + ';">' + r.tier.label + '</span>' +
+        '<span style="color:var(--faded);font-size:.55rem;">Need ' + r.effectiveDiff + '+</span>' +
+        '<span style="font-family:Georgia,serif;font-size:.58rem;color:' + col + ';text-align:right;">' + status + '</span>' +
+        '</div>';
+    }).join('');
+    if (found.length > 0) {
+      found.forEach(function(r) {
+        haul.push({ name: r.tier.label + ' Blueprint Fragment', amount: '1 fragment', nat20: r.nat20, special: r.nat20 ? 'Nat 20 — complete blueprint, not just a fragment' : null });
+      });
+    }
+  } else if (bpResults !== null) {
+    bpSection.style.display = 'block';
+    bpGrid.innerHTML = '<span style="font-size:.58rem;color:var(--faded);font-style:italic;">No blueprints possible at this location.</span>';
+  } else {
+    bpSection.style.display = 'none';
+  }
+
+  // Notes
+  const notesSection = document.getElementById('notes-section');
+  const notesList    = document.getElementById('notes-list');
+  const uniqueNotes  = [...new Set(notes)];
+  if (uniqueNotes.length > 0) {
+    notesSection.style.display = 'block';
+    notesList.innerHTML = uniqueNotes.map(n => `<div class="note-item">${n}</div>`).join('');
+  } else {
+    notesSection.style.display = 'none';
+  }
+
+  // Ground Zero warning
+  if (isGZ) {
+    const gz = document.createElement('div');
+    gz.className = 'note-item';
+    gz.style.borderColor = 'rgba(160,58,42,.6)';
+    gz.style.color = '#c06020';
+    gz.textContent = '☣ Ground Zero — all prion thresholds +4. Quarantine Suite mandatory on return.';
+    notesList.prepend(gz);
+    notesSection.style.display = 'block';
+  }
+
+  // Full results grid
+  const panel  = document.getElementById('results-panel');
+  const grid   = document.getElementById('results-grid');
+  const summary = document.getElementById('roll-summary');
+  panel.classList.add('visible');
+  summary.textContent = `${haul.length} found / ${results.length} rolled`;
+
+  grid.innerHTML = results.map(r => `
+    <div class="rr ${r.rowClass}">
+      <span class="rr-name">${r.res.name}</span>
+      <span class="rr-roll">${r.searchRoll}</span>
+      <span class="rr-status">${r.status}</span>
+      <span class="rr-yield">${r.yieldStr}</span>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════════════════════════════════
+let history = [];
+function addHistory(locName, area, found, total) {
+  const now  = new Date();
+  const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  const areaLabel = { urban:'Urban', rural:'Rural', coastal:'Coastal', military:'Military', wasteland:'Wasteland', ground_zero:'Ground Zero' }[area];
+  history.unshift({ locName, areaLabel, found, total, time });
+  if (history.length > 15) history.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const list = document.getElementById('hist-list');
+  if (history.length === 0) {
+    list.innerHTML = '<li class="hist-item" style="justify-content:center;color:var(--faded);font-size:.57rem;font-style:italic;">— No rolls this session —</li>';
+    return;
+  }
+  list.innerHTML = history.map(h => `
+    <li class="hist-item">
+      <span class="h-loc">${h.locName}</span>
+      <span style="color:var(--faded);font-size:.55rem;">[${h.areaLabel}]</span>
+      <span class="h-found">${h.found}/${h.total} found</span>
+      <span class="h-time">${h.time}</span>
+    </li>
+  `).join('');
+}
+function clearHistory() { history = []; renderHistory(); }
+
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// BLUEPRINT SYSTEM
+// tiers: array of {tier, diff, label} — roll each separately
+// Scholar +4 applies to all BP rolls
+// ══════════════════════════════════════════════════════════════════════════
+const BP_TIERS = {
+  t1: { label:'T1', diff:7,  color:'#888888' },
+  t2: { label:'T2', diff:10, color:'#4a9e5c' },
+  t3: { label:'T3', diff:15, color:'#3a7abf' },
+  t4: { label:'T4', diff:17, color:'#8b5fcf' },
+  t5: { label:'T5', diff:19, color:'#c9952a' },
+};
+
+// Blueprint pool per location: array of tier keys available
+// Ground Zero University: T5 at 3x probability (roll 3 times for T5)
+const BP_LOCATIONS = {
+  'urban:0':  ['t1','t2'],
+  'urban:1':  ['t1','t2'],
+  'urban:2':  ['t1','t2'],
+  'urban:3':  ['t1','t2'],
+  'urban:4':  ['t1','t2','t3'],
+  'urban:5':  ['t1','t2'],
+  'urban:6':  ['t1'],
+  'rural:0':  ['t1'],
+  'rural:1':  ['t1'],
+  'rural:2':  ['t1'],
+  'rural:3':  ['t1','t2'],
+  'rural:4':  ['t1'],
+  'rural:5':  [],
+  'rural:6':  [],
+  'coastal:0':['t1','t2','t3'],
+  'coastal:1':[],
+  'coastal:2':[],
+  'coastal:3':['t2','t3','t4'],
+  'military:0':['t2','t3'],
+  'military:1':['t2','t3'],
+  'military:2':['t2','t3'],
+  'military:3':['t2','t3'],
+  'military:4':['t3','t4','t5'],
+  'wasteland:0':[],
+  'wasteland:1':['t1'],
+  'wasteland:2':[],
+  'wasteland:3':[],
+  'ground_zero:0':['t3','t4','t5'],
+  'ground_zero:1':['t2','t3'],
+  'ground_zero:2':['t2','t3','t4','t5','t5','t5'], // T5 at 3x probability
+  'ground_zero:3':['t3','t4'],
+  'ground_zero:4':['t1'],
+  'ground_zero:5':['t2','t3'],
+};
+
+function rollBlueprints(locKey, scholarBonus) {
+  const tiers = BP_LOCATIONS[locKey] || [];
+  if (tiers.length === 0) return null;
+  const results = [];
+  const seen = {};
+  tiers.forEach(function(tierKey) {
+    const bp = BP_TIERS[tierKey];
+    const roll = d20();
+    const effectiveDiff = Math.max(1, bp.diff - scholarBonus);
+    const found = roll === 20 ? true : roll === 1 ? false : roll >= effectiveDiff;
+    const id = tierKey + ':' + roll; // dedupe display only, allow multiple T5 rolls
+    results.push({ tierKey, tier: bp, roll, effectiveDiff, found, nat20: roll===20, nat1: roll===1 });
+  });
+  // Deduplicate same-tier results — keep the best roll per tier
+  const best = {};
+  results.forEach(function(r) {
+    if (!best[r.tierKey] || r.found && !best[r.tierKey].found || r.roll > best[r.tierKey].roll) {
+      best[r.tierKey] = r;
+    }
+  });
+  return Object.values(best);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PRION SYSTEM
+// ══════════════════════════════════════════════════════════════════════════
+const PRION_STAGES = {
+  clear:    { name:'Clear',    cls:'p-stage-clear',  next:'exposed',  label:'Exposed' },
+  exposed:  { name:'Exposed',  cls:'p-stage-exp',    next:'carrier',  label:'Carrier' },
+  carrier:  { name:'Carrier',  cls:'p-stage-carry',  next:'infected', label:'Infected' },
+  infected: { name:'Infected', cls:'p-stage-inf',    next:'terminal', label:'Terminal' },
+  terminal: { name:'Terminal', cls:'p-stage-term',   next:null,       label:null },
+};
+
+function rollPrion() {
+  const stage    = document.getElementById('p-stage').value;
+  const baseT    = parseInt(document.getElementById('p-threshold').value);
+  const bldRed   = parseInt(document.getElementById('p-buildings').value);
+  const nbcRed   = parseInt(document.getElementById('p-nbc').value);
+  const gzAdd    = parseInt(document.getElementById('p-gz').value);
+  const custom   = parseInt(document.getElementById('p-custom').value) || 0;
+  const ps       = PRION_STAGES[stage];
+
+  const effectiveT = Math.max(1, baseT + gzAdd - bldRed - nbcRed + custom);
+  const roll = d20();
+  const passes = roll >= effectiveT; // passes = safe (no progression)
+  const nat1   = roll === 1;
+  const nat20  = roll === 20;
+
+  const box       = document.getElementById('p-result-box');
+  const stageName = document.getElementById('p-stage-name');
+  const rollLine  = document.getElementById('p-roll-line');
+  const outcome   = document.getElementById('p-outcome');
+  const chainNote = document.getElementById('p-chain-note');
+  box.classList.add('visible');
+
+  stageName.className = 'p-stage-name ' + ps.cls;
+  stageName.textContent = ps.name + ' → ' + (passes ? '✓ Safe' : '✗ Progresses');
+
+  rollLine.innerHTML = `<b>Roll:</b> ${roll} &nbsp;·&nbsp; <b>Threshold:</b> ${effectiveT}+ to stay safe &nbsp;·&nbsp; <b>Base:</b> ${baseT} <b>Reductions:</b> −${bldRed+nbcRed} <b>GZ:</b> +${gzAdd}`;
+
+  let outcomeText = '';
+  if (nat20) {
+    outcomeText = '<b>Nat 20 — Full clear.</b> Stage resets to Clear regardless of current stage. Remove from tracking.';
+  } else if (nat1) {
+    outcomeText = '<b>Nat 1 — Rapid progression.</b> Advances TWO stages immediately.';
+    if (stage === 'infected' || stage === 'terminal') outcomeText = '<b>Nat 1 — Terminal.</b> Immediately moves to Terminal stage. Quarantine Suite required immediately.';
+  } else if (passes) {
+    outcomeText = '<b>Safe this season.</b> Stage unchanged. Re-roll next season if still in exposed zone.';
+  } else {
+    const next = ps.next;
+    if (!next) {
+      outcomeText = '<b>Terminal stage reached.</b> Without Vaccine Prototype: death within 1 season. Quarantine Suite and Neutralisation Compound may slow progression.';
+    } else {
+      const nextStage = PRION_STAGES[next];
+      outcomeText = `<b>Stage advances: ${ps.name} → ${nextStage.name}.</b> `;
+      if (next === 'carrier') outcomeText += 'Now infectious — Detection Lab check mandatory before re-entering settlement.';
+      if (next === 'infected') outcomeText += 'Symptoms developing. Cannot work at full capacity. Quarantine Suite required.';
+      if (next === 'terminal') outcomeText += 'Terminal. Quarantine Suite and Neutralisation Compound immediately. Vaccine Prototype is the only cure.';
+    }
+  }
+  outcome.innerHTML = outcomeText;
+
+  if (!passes && ps.next && !nat20) {
+    chainNote.style.display = 'block';
+    chainNote.innerHTML = `<b>Chain check:</b> Anyone in close contact with this person this season rolls a separate Exposed check at threshold ${Math.max(1, 6 - bldRed)}.`;
+  } else {
+    chainNote.style.display = 'none';
+  }
+
+  addPrionHistory(ps.name, roll, effectiveT, passes, nat20, nat1);
+}
+
+function rollOutbreak() {
+  const carriers = parseInt(document.getElementById('ob-carriers').value);
+  const lab      = parseInt(document.getElementById('ob-lab').value);
+  const morale   = parseInt(document.getElementById('ob-morale').value);
+
+  // Base threshold rises with carrier count
+  const baseT = carriers === 1 ? 8 : carriers === 2 ? 11 : 14;
+  const effectiveT = Math.max(1, baseT - lab + morale);
+  const roll = d20();
+  const outbreak = roll >= effectiveT;
+
+  const box       = document.getElementById('ob-result-box');
+  const stageName = document.getElementById('ob-stage-name');
+  const rollLine  = document.getElementById('ob-roll-line');
+  const outcome   = document.getElementById('ob-outcome');
+  box.classList.add('visible');
+
+  if (outbreak) {
+    stageName.className = 'p-stage-name p-stage-term';
+    stageName.textContent = '☣ Outbreak';
+    rollLine.innerHTML = `<b>Roll:</b> ${roll} &nbsp;·&nbsp; <b>Threshold:</b> ${effectiveT}+ triggers outbreak`;
+    const scale = carriers === 1 ? 'D3 additional Exposed cases' : carriers === 2 ? 'D6 Exposed, 1 Infected' : 'D6 Exposed, D3 Infected, morale −3';
+    outcome.innerHTML = `<b>Outbreak triggered.</b> ${scale}. Quarantine Suite immediately. All fighters who interacted with Carriers roll individual exposure checks this season. Morale −${carriers >= 3 ? 5 : 2}.`;
+  } else {
+    stageName.className = 'p-stage-name p-stage-clear';
+    stageName.textContent = '✓ Contained';
+    rollLine.innerHTML = `<b>Roll:</b> ${roll} &nbsp;·&nbsp; <b>Threshold was:</b> ${effectiveT}+`;
+    outcome.innerHTML = '<b>Carrier contained this season.</b> No spread. Carrier must still progress through their personal stage check.';
+  }
+}
+
+let prionHistory = [];
+function addPrionHistory(stage, roll, threshold, safe, nat20, nat1) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+  prionHistory.unshift({ stage, roll, threshold, safe, nat20, nat1, time });
+  if (prionHistory.length > 12) prionHistory.pop();
+  renderPrionHistory();
+}
+function renderPrionHistory() {
+  const list = document.getElementById('p-hist-list');
+  if (prionHistory.length === 0) {
+    list.innerHTML = '<li class="p-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>';
+    return;
+  }
+  list.innerHTML = prionHistory.map(h => {
+    const col = h.nat20 ? 'color:var(--amber)' : h.safe ? 'color:var(--green)' : 'color:var(--red)';
+    const label = h.nat20 ? 'NAT 20 — CLEAR' : h.nat1 ? 'NAT 1 — +2 STAGES' : h.safe ? 'SAFE' : 'PROGRESSES';
+    return `<li class="p-hist-item">
+      <span class="p-stage-tag" style="${col}">${h.stage}</span>
+      <span style="color:var(--faded)">roll ${h.roll} vs ${h.threshold}+</span>
+      <span style="${col};font-family:Georgia,serif;">${label}</span>
+      <span style="color:var(--faded);font-size:.5rem;margin-left:auto;">${h.time}</span>
+    </li>`;
+  }).join('');
+}
+function clearPrionHistory() { prionHistory = []; renderPrionHistory(); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// FACTION SYSTEM
+// ══════════════════════════════════════════════════════════════════════════
+const FACTIONS = {
+  reapers:  { name:'The Reapers',         aggr:5, strength:7,
+    actions: {
+      1:'Raid nearest player settlement — Standard Raid (10–20 fighters, mixed arms).',
+      2:'Raid nearest player settlement — Standard Raid (10–20 fighters, mixed arms).',
+      3:'Expand territory — claim a resource site within Zone 3. Mark it as Reaper-controlled.',
+      4:'Tribute demand — send a message demanding 20 Trade Goods or face a raid next season.',
+      5:'Probe expedition — scouts move toward Ground Zero outer perimeter. Reapers awareness check.',
+      6:'Internal conflict — Crowbar consolidates power. Aggression drops to 4 for 1 season.',
+    },
+    warAction:'Organised Assault on nearest settlement (20–40 fighters). Burn 1 building if they breach.',
+    alliedAction:'Never reaches Allied. Closest is Cautious — they tolerate you.',
+    gmNote:'The Reapers act on pure self-interest. Any action they take should feel like a threat or a demand, never an opportunity. They do not respect treaties unless you can hurt them.',
+  },
+  covenant: { name:'The Covenant',        aggr:2, strength:5,
+    actions: {
+      1:'Food surplus offer — trade 20 Food for 10 Trade Goods or equivalent.',
+      2:'Scout contact — a Covenant patrol makes non-hostile contact. Relationship +0.5 if handled well.',
+      3:'Diplomatic request — ask for medicine or salvaged books in exchange for ongoing food supply.',
+      4:'Territory concern — they ask you to avoid a specific rural zone they consider theirs.',
+      5:'Alliance feeler — Elder Council votes on formal contact. Roll negotiation at +2 next season.',
+      6:'No action — the Covenant focuses inward this season.',
+    },
+    warAction:'Defensive only — they do not attack. They fortify and request allied aid.',
+    alliedAction:'Sends 5 fighters to assist in any raid defence. Shares food surplus for free.',
+    gmNote:'The Covenant takes one extra season to confirm anything because the Elder Council votes. Roleplay the delay as bureaucratic caution, not hostility. They are the most reliable long-term partners.',
+  },
+  drowned:  { name:'The Drowned',         aggr:2, strength:6,
+    actions: {
+      1:'Toll demand — any player using coastal routes must pay 5 Trade Goods this season or face +2 aggression.',
+      2:'Trade offer — copper wire or star chart fragment available. Price is high.',
+      3:'Scout coastal expansion — The Captain extends their harbour perimeter. Marks a new coastal site.',
+      4:'Intel sale — they offer intelligence on another faction\'s movements for 15 Trade Goods.',
+      5:'Diplomatic overture — The Captain requests a meeting. Relationship could improve by +1 if attended.',
+      6:'No action — maritime patrol season. No contact made.',
+    },
+    warAction:'Blockade coastal access. No coastal scavenging until resolved. Send 15 fighters if pushed further.',
+    alliedAction:'The Captain escorts player vessels. +2 to all coastal expedition rolls. Access to star chart copy.',
+    gmNote:'The Drowned leverage their monopoly on copper wire and sea access. The Captain is calculating — every interaction should feel like a business deal, not a friendship. He will not fight a war he cannot win.',
+  },
+  silent:   { name:'The Silent',          aggr:3, strength:3,
+    actions: {
+      1:'Wasteland encounter — a cell of 4–8 appears near a player expedition. Roll D6: 1–3 hostile approach, 4–6 observation only.',
+      2:'Resource cache left — The Silent leave a small cache of prion samples near a player settlement. No contact made.',
+      3:'Warning sign — crude markings left near a hazardous zone. Players who investigate gain intel on a prion den location.',
+      4:'Settlement approach — a single Silent individual approaches the gate. They want food. This is a contact opportunity.',
+      5:'Ground Zero movement — a Silent cell moves deeper into the city. If players have an expedition there, they cross paths.',
+      6:'No action — The Silent withdraw to deeper city ruins for the season.',
+    },
+    warAction:'Withdraw entirely. They do not fight wars — they disappear. Aggression does not translate to organised assault.',
+    alliedAction:'Guide a player expedition through Ground Zero — reduces archive access from 3 expeditions to 1. Share interior layout.',
+    gmNote:'The Silent should feel like a mystery, not an enemy. Every contact is an opportunity the players can choose to take or ignore. Their prion samples are extraordinarily valuable — that is the lever.',
+  },
+  remnant:  { name:'Remnant Authority',   aggr:2, strength:9,
+    actions: {
+      1:'Tribute demand — 10% of visible surplus this season or relationship drops to Wary.',
+      2:'Loyalty declaration request — formal acknowledgement of Authority jurisdiction. Refusal: Hostile.',
+      3:'Blueprint offer — T2–T3 blueprint copy available in exchange for a loyalty pledge.',
+      4:'Scholar acquisition — The Director requests a Scholar for "collaboration." Refusal has no immediate cost but noted.',
+      5:'Archive push — Authority scouting party moves toward Ground Zero. Season counter advances by 1.',
+      6:'Surveillance — Authority scouts observed near a player settlement. They are cataloguing your buildings.',
+    },
+    warAction:'Full military deployment — 55 fighters, Masterwork rifles. 2 seasons warning always given first. This is the endgame threat.',
+    alliedAction:'Tribute eliminated. Blueprint library access. Pre-collapse records shared — one Project Meridian reveal per season.',
+    gmNote:'The Authority should always feel like bureaucratic pressure, not brute force — until they commit. The archive push counter is the most important mechanic: track it separately. Once they reach the archive first, the endgame changes.',
+  },
+};
+
+function rollFaction() {
+  const fkey    = document.getElementById('f-faction').value;
+  const rel     = document.getElementById('f-rel').value;
+  const season  = parseInt(document.getElementById('f-season').value) || 1;
+  const custom  = parseInt(document.getElementById('f-custom').value) || 0;
+  const faction = FACTIONS[fkey];
+
+  // Step 1: Does the faction act? D6 vs aggression
+  const aggrRoll = Math.floor(Math.random() * 6) + 1;
+  const relMods  = { war:2, hostile:1, wary:0, neutral:0, cautious:-1, friendly:-1, allied:-2 };
+  const effectiveAggr = Math.max(1, Math.min(6, faction.aggr + (relMods[rel] || 0) + custom));
+  const acts = aggrRoll <= effectiveAggr;
+
+  const box    = document.getElementById('f-result-box');
+  const aName  = document.getElementById('f-action-name');
+  const rLine  = document.getElementById('f-roll-line');
+  const outc   = document.getElementById('f-outcome');
+  const note   = document.getElementById('f-gm-note');
+  box.classList.add('visible');
+
+  rLine.innerHTML = `<b>Aggression roll:</b> ${aggrRoll} vs ${effectiveAggr}+ &nbsp;·&nbsp; <b>Base aggression:</b> ${faction.aggr} &nbsp;·&nbsp; <b>Relationship mod:</b> ${relMods[rel] >= 0 ? '+' : ''}${relMods[rel]}`;
+
+  if (!acts) {
+    aName.style.color = 'var(--faded)';
+    aName.textContent = faction.name + ' — No Action';
+    outc.innerHTML = 'The faction is quiet this season. No active move made against or toward any settlement.';
+    note.style.display = 'none';
+  } else {
+    // Determine action type based on relationship
+    let actionText = '';
+    if (rel === 'war') {
+      actionText = faction.warAction;
+      aName.style.color = 'var(--red)';
+      aName.textContent = faction.name + ' — War Action';
+    } else if (rel === 'allied') {
+      actionText = faction.alliedAction;
+      aName.style.color = 'var(--green)';
+      aName.textContent = faction.name + ' — Allied Support';
+    } else {
+      // Roll D6 for which action
+      const actionRoll = Math.floor(Math.random() * 6) + 1;
+      actionText = faction.actions[actionRoll];
+      aName.style.color = 'var(--ink)';
+      aName.textContent = faction.name + ' — Acts (D6: ' + actionRoll + ')';
+    }
+    outc.innerHTML = actionText;
+    note.style.display = 'block';
+    note.innerHTML = '<b>GM Note:</b> ' + faction.gmNote;
+  }
+
+  // Archive push tracker for Remnant
+  if (fkey === 'remnant' && acts) {
+    const archiveActions = ['archive push', 'scholar acquisition', 'surveillance'];
+    if (archiveActions.some(a => (outc.innerHTML || '').toLowerCase().includes(a.split(' ')[0]))) {
+      note.innerHTML += '<br><b>Archive Counter:</b> Remnant is advancing. Track separately — at 3 advances they reach the Government Quarter.';
+    }
+  }
+
+  addFactionHistory(faction.name, aggrRoll, effectiveAggr, acts);
+}
+
+function rollNegotiation() {
+  const fkey    = document.getElementById('n-faction').value;
+  const relMod  = parseInt(document.getElementById('n-rel').value);
+  const scholar = parseInt(document.getElementById('n-scholar').value);
+  const tp      = parseInt(document.getElementById('n-tp').value);
+  const faction = FACTIONS[fkey];
+
+  const roll     = d20();
+  const total    = roll + relMod + scholar + tp;
+
+  const box   = document.getElementById('n-result-box');
+  const aName = document.getElementById('n-action-name');
+  const rLine = document.getElementById('n-roll-line');
+  const outc  = document.getElementById('n-outcome');
+  const note  = document.getElementById('n-gm-note');
+  box.classList.add('visible');
+
+  rLine.innerHTML = `<b>Roll:</b> ${roll} + <b>Rel:</b> ${relMod >= 0 ? '+' : ''}${relMod} + <b>Scholar:</b> +${scholar} + <b>TP:</b> +${tp} = <b>${total}</b>`;
+
+  let result = '';
+  let noteText = '';
+  let col = 'var(--ink)';
+
+  if (roll === 1) {
+    result = 'Nat 1 — Refused & Insulted. Relationship drops 1 tier. Cannot reattempt same deal for 2 seasons.';
+    col = 'var(--red)';
+    noteText = 'The faction is offended. Do not push further this season.';
+  } else if (total <= 4) {
+    result = 'Refused — Insulted. Relationship drops 1 tier.';
+    col = 'var(--red)';
+    noteText = 'Cannot reattempt same deal for 2 seasons.';
+  } else if (total <= 8) {
+    result = 'Refused — Politely. No relationship change. Faction states their reason if Cautious or above.';
+    col = 'var(--amber)';
+    noteText = 'Their stated reason is useful intelligence. Reattempt next season with a modified offer.';
+  } else if (total <= 11) {
+    result = 'Counter-offer. Modified terms — 20–30% more favourable to them. Accept, negotiate further (−2 next roll), or decline with no penalty.';
+    col = 'var(--amber)';
+    noteText = 'They want more. Decide whether the deal is still worth it at their terms.';
+  } else if (total <= 14) {
+    result = 'Accepted — Standard terms. Deal proceeds as proposed. Relationship +0.5.';
+    col = 'var(--green)';
+    noteText = 'Two completions = +1 relationship tier. Record this deal.';
+  } else if (total <= 17) {
+    result = 'Accepted — Favourable. Small bonus: D6×5 Trade Goods or a useful rumour. Relationship +0.5.';
+    col = 'var(--green)';
+    noteText = 'Roll D6×5 = ' + (Math.floor(Math.random()*6)+1)*5 + ' bonus Trade Goods.';
+  } else if (roll === 20 || total >= 18) {
+    result = roll === 20
+      ? 'Nat 20 — Enthusiastic. Accepts and proposes an ongoing arrangement. First season +15% value. Relationship +1 immediately.'
+      : 'Enthusiastic. Accepts and proposes ongoing arrangement. First season +15% value. Relationship +1 immediately.';
+    col = 'var(--amber)';
+    noteText = roll === 20 ? 'Nat 20: faction makes an unsolicited offer in addition — GM determines what they bring to the table.' : 'Record the ongoing arrangement and its duration.';
+  }
+
+  aName.style.color = col;
+  aName.textContent = faction.name + ' — Negotiation';
+  outc.innerHTML = result;
+  note.style.display = 'block';
+  note.innerHTML = '<b>GM Note:</b> ' + noteText;
+
+  addFactionHistory(faction.name + ' (neg)', roll, total, total >= 12);
+}
+
+let factionHistory = [];
+function addFactionHistory(name, roll, target, acted) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+  factionHistory.unshift({ name, roll, target, acted, time });
+  if (factionHistory.length > 12) factionHistory.pop();
+  renderFactionHistory();
+}
+function renderFactionHistory() {
+  const list = document.getElementById('f-hist-list');
+  if (factionHistory.length === 0) {
+    list.innerHTML = '<li class="f-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>';
+    return;
+  }
+  list.innerHTML = factionHistory.map(h => {
+    const col = h.acted ? 'color:var(--red)' : 'color:var(--green)';
+    const label = h.acted ? 'ACTS' : 'QUIET';
+    return `<li class="f-hist-item">
+      <span style="color:var(--ink);font-family:Georgia,serif;">${h.name}</span>
+      <span style="color:var(--faded)">roll ${h.roll}</span>
+      <span style="${col};font-family:Georgia,serif;">${label}</span>
+      <span style="color:var(--faded);font-size:.5rem;margin-left:auto;">${h.time}</span>
+    </li>`;
+  }).join('');
+}
+function clearFactionHistory() { factionHistory = []; renderFactionHistory(); }
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// COMBAT SYSTEM
+// ══════════════════════════════════════════════════════════════════════════
+
+function getBand(margin) {
+  if (margin <= -3) return { label:'Miss',      cls:'band-miss',  cas:null };
+  if (margin <= 3)  return { label:'Graze',     cls:'band-graze', cas:'graze' };
+  if (margin <= 9)  return { label:'Hit',       cls:'band-hit',   cas:'hit' };
+  if (margin <= 14) return { label:'Solid Hit', cls:'band-solid', cas:'solid' };
+  return               { label:'Critical',   cls:'band-crit',  cas:'crit' };
+}
+
+function calcCasualties(band, fighters, roll) {
+  if (!band) return null;
+  let perFighters, dieResult, injChance, sevChance, killChance;
+  if (band === 'graze') {
+    perFighters = 5;
+    return { count: Math.max(1, Math.floor(fighters / perFighters)), type: 'Injured only — cannot kill on Graze.' };
+  }
+  if (band === 'hit')   { perFighters = 4; injChance=[1,3]; sevChance=[4,5]; killChance=[6,6]; }
+  if (band === 'solid') { perFighters = 3; injChance=[1,2]; sevChance=[3,4]; killChance=[5,6]; }
+  if (band === 'crit')  { perFighters = 2; injChance=[1,1]; sevChance=[2,3]; killChance=[4,6]; }
+  const count = Math.max(1, Math.floor(fighters / perFighters));
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const dr = Math.floor(Math.random() * 6) + 1;
+    if (dr >= killChance[0])     results.push('Killed');
+    else if (dr >= sevChance[0]) results.push('Severely Injured');
+    else                         results.push('Injured');
+  }
+  const killed  = results.filter(r => r === 'Killed').length;
+  const severe  = results.filter(r => r === 'Severely Injured').length;
+  const injured = results.filter(r => r === 'Injured').length;
+  return { count, killed, severe, injured,
+    type: `${count} casualty check${count>1?'s':''} — ${killed ? killed+' Killed' : ''}${killed&&severe?' · ':''}${severe ? severe+' Severely Injured' : ''}${(killed||severe)&&injured?' · ':''}${injured ? injured+' Injured' : ''}` };
+}
+
+function rollCombatRound() {
+  const atkUnit     = parseInt(document.getElementById('atk-unit').value);
+  const atkWpn      = parseInt(document.getElementById('atk-wpn').value);
+  const atkMod      = parseInt(document.getElementById('atk-mod').value) || 0;
+  const atkMomentum = parseInt(document.getElementById('atk-momentum').value);
+  const atkAction   = document.getElementById('atk-action').value;
+  const atkFighters = parseInt(document.getElementById('atk-fighters').value) || 10;
+
+  const defUnit   = parseInt(document.getElementById('def-unit').value);
+  const defFort   = parseInt(document.getElementById('def-fort').value);
+  const defMod    = parseInt(document.getElementById('def-mod').value) || 0;
+  const defHold   = parseInt(document.getElementById('def-hold').value);
+  const defFighters = parseInt(document.getElementById('def-fighters').value) || 10;
+
+  const nightMod  = parseInt(document.getElementById('def-night').value);
+  const roundNum  = parseInt(document.getElementById('cbt-round').value) || 1;
+  const location  = document.getElementById('cbt-location').value;
+
+  // Attacker rolls
+  const atkRoll = d20();
+  const atkTotal = atkUnit + atkWpn + atkMod + atkMomentum + nightMod;
+  const defTotal = defUnit + defFort + defHold + defMod;
+  const atkMargin = atkRoll + atkTotal - defTotal;
+  const atkBand   = getBand(atkMargin);
+
+  // Defender counter-attack (only if not withdrawing and attacker didn't miss)
+  const defRoll = d20();
+  const defAtkUnit = defUnit === 4 ? 3 : defUnit === 2 ? 2 : 0; // DEF unit → ATK equivalent
+  const defCounterMargin = defRoll + defAtkUnit - atkTotal + nightMod;
+  const defBand = getBand(defCounterMargin);
+
+  // Casualties
+  const atkCas = calcCasualties(atkBand.cas, defFighters, atkRoll);
+  const defCas = atkAction === 'withdraw' ? null : calcCasualties(defBand.cas, atkFighters, defRoll);
+
+  // Morale triggers
+  const atkMoraleTriggered = atkCas && atkCas.count >= Math.ceil(defFighters * 0.3);
+  const defMoraleTriggered = defCas && defCas.count >= Math.ceil(atkFighters * 0.3);
+
+  // Render
+  const box = document.getElementById('cbt-result-box');
+  box.classList.add('visible');
+
+  document.getElementById('cbt-rnum').textContent = 'Round ' + roundNum;
+  document.getElementById('cbt-rlabel').textContent = location === 'ground_zero' ? 'Ground Zero — Prion wound rules apply' : location === 'settlement' ? 'Settlement Raid' : 'Field Encounter';
+  document.getElementById('cbt-rmargin').textContent = 'ATK margin: ' + (atkMargin >= 0 ? '+' : '') + atkMargin;
+
+  // Attacker side
+  const atkRollEl = document.getElementById('cbt-atk-roll');
+  atkRollEl.textContent = atkRoll;
+  atkRollEl.className = 'side-roll ' + (atkRoll === 20 ? 'nat20' : atkRoll === 1 ? 'nat1' : atkMargin >= 4 ? 'hit' : 'miss');
+
+  document.getElementById('cbt-atk-detail').innerHTML =
+    `<b>Roll:</b> ${atkRoll} + <b>Bonuses:</b> ${atkTotal >= 0 ? '+' : ''}${atkTotal} − <b>DEF:</b> ${defTotal} = <b>Margin: ${atkMargin >= 0 ? '+' : ''}${atkMargin}</b>`;
+
+  const atkBandEl = document.getElementById('cbt-atk-band');
+  if (atkRoll === 1) {
+    atkBandEl.innerHTML = '<span class="result-band band-miss">Miss (Nat 1)</span>';
+    document.getElementById('cbt-atk-cas').innerHTML = '<b>Nat 1:</b> No casualties on defender. Attacker suffers 1 Injured (friendly fire). Defender gains +2 to next attack roll.';
+  } else if (atkRoll === 20) {
+    atkBandEl.innerHTML = '<span class="result-band band-crit">Critical (Nat 20)</span>';
+    const c = calcCasualties('crit', defFighters, atkRoll);
+    document.getElementById('cbt-atk-cas').innerHTML = `<b>Nat 20 — Critical:</b> ${c ? c.type : ''} · May name one specific individual as a casualty. Defender must Withdraw next round.`;
+  } else {
+    atkBandEl.innerHTML = `<span class="result-band ${atkBand.cls}">${atkBand.label}</span>`;
+    document.getElementById('cbt-atk-cas').innerHTML = atkCas
+      ? `<b>Casualties on defender:</b> ${atkCas.type}`
+      : '<b>No casualties</b> on defender this round.';
+  }
+
+  if (atkBand.label === 'Solid Hit' && atkRoll !== 1 && atkRoll !== 20) {
+    document.getElementById('cbt-atk-cas').innerHTML += ' · <b>Momentum:</b> +2 to attacker next round.';
+  }
+  if (atkBand.label === 'Critical' && atkRoll !== 20) {
+    document.getElementById('cbt-atk-cas').innerHTML += ' · <b>Overwhelming:</b> defender return roll −3. Forced Withdraw — free pursuit.';
+  }
+
+  const atkMoraleEl = document.getElementById('cbt-atk-morale');
+  if (atkMoraleTriggered && atkCas) {
+    atkMoraleEl.style.display = 'block';
+    atkMoraleEl.innerHTML = '<b>⚠ Defender Morale Check triggered</b> — took 30%+ casualties this round. Roll D20 + unit modifier.';
+  } else { atkMoraleEl.style.display = 'none'; }
+
+  // Defender side
+  const defRollEl = document.getElementById('cbt-def-roll');
+  if (atkAction === 'withdraw') {
+    defRollEl.textContent = '—';
+    defRollEl.className = 'side-roll miss';
+    document.getElementById('cbt-def-detail').innerHTML = '<b>Attacker declared Withdraw.</b> No counter-attack this round.';
+    document.getElementById('cbt-def-band').innerHTML = '';
+    document.getElementById('cbt-def-cas').innerHTML = atkBand.label === 'Critical'
+      ? '<b>Free pursuit:</b> Attacker rolled ' + atkRoll + '. Hit+ on a D20 vs retreating fighters = +D6 casualties.'
+      : 'No counter-attack.';
+    document.getElementById('cbt-def-morale').style.display = 'none';
+  } else {
+    defRollEl.textContent = defRoll;
+    defRollEl.className = 'side-roll ' + (defRoll === 20 ? 'nat20' : defRoll === 1 ? 'nat1' : defCounterMargin >= 4 ? 'hit' : 'miss');
+    document.getElementById('cbt-def-detail').innerHTML =
+      `<b>Roll:</b> ${defRoll} + <b>Bonuses:</b> ${defAtkUnit >= 0 ? '+' : ''}${defAtkUnit} − <b>ATK:</b> ${atkTotal} = <b>Margin: ${defCounterMargin >= 0 ? '+' : ''}${defCounterMargin}</b>`;
+
+    const defBandEl = document.getElementById('cbt-def-band');
+    if (defRoll === 1) {
+      defBandEl.innerHTML = '<span class="result-band band-miss">Miss (Nat 1)</span>';
+      document.getElementById('cbt-def-cas').innerHTML = '<b>Nat 1:</b> Defender suffers 1 Injured (friendly fire). Attacker gains +2 to next roll.';
+    } else if (defRoll === 20) {
+      defBandEl.innerHTML = '<span class="result-band band-crit">Critical (Nat 20)</span>';
+      const c = calcCasualties('crit', atkFighters, defRoll);
+      document.getElementById('cbt-def-cas').innerHTML = `<b>Nat 20 — Critical:</b> ${c ? c.type : ''} · May name one specific individual. Attacker must Withdraw next round.`;
+    } else {
+      defBandEl.innerHTML = `<span class="result-band ${defBand.cls}">${defBand.label}</span>`;
+      document.getElementById('cbt-def-cas').innerHTML = defCas
+        ? `<b>Casualties on attacker:</b> ${defCas.type}`
+        : '<b>No casualties</b> on attacker this round.';
+    }
+
+    const defMoraleEl = document.getElementById('cbt-def-morale');
+    if (defMoraleTriggered && defCas) {
+      defMoraleEl.style.display = 'block';
+      defMoraleEl.innerHTML = '<b>⚠ Attacker Morale Check triggered</b> — took 30%+ casualties this round. Roll D20 + unit modifier.';
+    } else { defMoraleEl.style.display = 'none'; }
+  }
+
+  // Ground Zero prion note
+  if (location === 'ground_zero') {
+    const gzNote = document.createElement('div');
+    gzNote.className = 'morale-note';
+    gzNote.style.marginTop = '.5rem';
+    gzNote.innerHTML = '<b>☣ Ground Zero:</b> Any fighter taking an Injury here rolls D6 — on a 1, city strain exposure: +2 to all future prion thresholds permanently.';
+    document.getElementById('cbt-round-card').appendChild(gzNote);
+  }
+
+  addCombatHistory(roundNum, atkBand.label, defBand.label, atkCas, defCas);
+  document.getElementById('cbt-round').value = roundNum + 1;
+}
+
+function rollMorale() {
+  const unitMod  = parseInt(document.getElementById('mor-unit').value);
+  const sitMod   = parseInt(document.getElementById('mor-mods').value);
+  const custom   = parseInt(document.getElementById('mor-custom').value) || 0;
+  const total    = unitMod + sitMod + custom;
+  const roll     = d20();
+  const final    = roll + total;
+
+  const box = document.getElementById('mor-result-box');
+  box.classList.add('visible');
+
+  const rollEl = document.getElementById('mor-roll-num');
+  const label  = document.getElementById('mor-result-label');
+  const outcome = document.getElementById('mor-outcome');
+
+  rollEl.textContent = roll + (total >= 0 ? ' +' : ' ') + total + ' = ' + final;
+
+  if (final >= 10) {
+    rollEl.style.color = 'var(--green)';
+    label.textContent = 'Hold Position';
+    label.style.color = 'var(--green)';
+    outcome.innerHTML = 'Unit holds. No involuntary action. Continue to next round.';
+  } else if (final >= 7) {
+    rollEl.style.color = 'var(--amber)';
+    label.textContent = 'Fall Back';
+    label.style.color = 'var(--amber)';
+    outcome.innerHTML = 'Unit falls back one position. Loses any Hold formation bonus. Still able to act next round but not from current position.';
+  } else {
+    rollEl.style.color = 'var(--red)';
+    label.textContent = 'Full Withdraw';
+    label.style.color = 'var(--red)';
+    outcome.innerHTML = 'Unit withdraws involuntarily. 25% chance of 1 additional casualty during flight (D4: on 1). Opposing side may pursue with Scouts — Hit or better deals +D6 casualties to retreating fighters.';
+  }
+}
+
+let combatHistory = [];
+function addCombatHistory(round, atkResult, defResult, atkCas, defCas) {
+  const now  = new Date();
+  const time = now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+  combatHistory.unshift({ round, atkResult, defResult, atkCas, defCas, time });
+  if (combatHistory.length > 12) combatHistory.pop();
+  renderCombatHistory();
+}
+function renderCombatHistory() {
+  const list = document.getElementById('cbt-hist-list');
+  if (combatHistory.length === 0) {
+    list.innerHTML = '<li class="cbt-hist-item" style="justify-content:center;font-style:italic;color:var(--faded);">— No rolls this session —</li>';
+    return;
+  }
+  list.innerHTML = combatHistory.map(h => {
+    const atkCol = ['Critical','Solid Hit','Hit'].includes(h.atkResult) ? 'color:var(--green)' : 'color:var(--red)';
+    const defCol = ['Critical','Solid Hit','Hit'].includes(h.defResult) ? 'color:var(--green)' : 'color:var(--red)';
+    const cas = h.atkCas ? h.atkCas.count + ' cas on def' : 'no cas';
+    return `<li class="cbt-hist-item">
+      <span style="color:var(--faded);">Rd ${h.round}</span>
+      <span style="${atkCol};font-family:Georgia,serif;">ATK: ${h.atkResult}</span>
+      <span style="${defCol};font-family:Georgia,serif;">DEF: ${h.defResult}</span>
+      <span style="color:var(--amber);">${cas}</span>
+      <span style="color:var(--faded);font-size:.5rem;margin-left:auto;">${h.time}</span>
+    </li>`;
+  }).join('');
+}
+function clearCombatHistory() { combatHistory = []; renderCombatHistory(); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// ALL EVENT BINDING — runs after full DOM parse, no inline handlers
+// Script is at end of body — DOM is ready, bind directly
+updateStructures();
+</script>
+
+</body>
+</html>
